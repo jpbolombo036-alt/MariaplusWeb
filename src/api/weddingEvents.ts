@@ -27,14 +27,19 @@ function num(v: unknown): number | null {
   return v != null ? Number(v) : null
 }
 
+/**
+ * Bascule Event : le backend expose désormais les sous-étapes via
+ * /api/events/{eventId}/sessions (EventSession, champ `sessionDate`).
+ * L'interface publique garde `eventDate` pour les composants existants.
+ */
 export function parseWeddingEvent(json: Record<string, unknown>): WeddingEventItem {
   return {
     id: Number(json.id ?? 0),
-    weddingId: Number(json.weddingId ?? 0),
+    weddingId: Number(json.eventId ?? json.weddingId ?? 0),
     type: String(json.type ?? 'OTHER'),
     name: String(json.name ?? ''),
     description: str(json.description),
-    eventDate: str(json.eventDate),
+    eventDate: str(json.sessionDate),
     startTime: str(json.startTime),
     endTime: str(json.endTime),
     venueName: str(json.venueName),
@@ -48,6 +53,17 @@ export function parseWeddingEvent(json: Record<string, unknown>): WeddingEventIt
   }
 }
 
+/** Traduit un payload `eventDate` → `sessionDate` pour l'API Event. */
+function toSessionPayload(payload: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...payload }
+  if (out.eventDate !== undefined) {
+    out.sessionDate = out.eventDate
+    delete out.eventDate
+  }
+  if (out.weddingId !== undefined) delete out.weddingId
+  return out
+}
+
 export async function listWeddingEvents(weddingId: number): Promise<WeddingEventItem[]> {
   const res = await http.get(ApiConfig.weddingEventsPath(weddingId), { params: { size: 100 } })
   const json = decodeMap(res.data)
@@ -55,7 +71,7 @@ export async function listWeddingEvents(weddingId: number): Promise<WeddingEvent
 }
 
 export async function createWeddingEvent(weddingId: number, payload: Record<string, unknown>): Promise<WeddingEventItem> {
-  const res = await http.post(ApiConfig.weddingEventsPath(weddingId), payload)
+  const res = await http.post(ApiConfig.weddingEventsPath(weddingId), toSessionPayload(payload))
   return parseWeddingEvent(decodeMap(res.data))
 }
 
@@ -64,7 +80,7 @@ export async function updateWeddingEvent(
   eventId: number,
   payload: Record<string, unknown>,
 ): Promise<WeddingEventItem> {
-  const res = await http.put(`${ApiConfig.weddingEventsPath(weddingId)}/${eventId}`, payload)
+  const res = await http.put(`${ApiConfig.weddingEventsPath(weddingId)}/${eventId}`, toSessionPayload(payload))
   return parseWeddingEvent(decodeMap(res.data))
 }
 
