@@ -7,13 +7,34 @@
     <div class="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
       <div class="flex items-center gap-5">
         <div class="relative">
-          <span class="w-16 h-16 rounded-2xl bg-primary-light text-primary grid place-items-center text-2xl font-bold ring-1 ring-primary/20">
+          <img
+            v-if="avatarSrc"
+            :src="avatarSrc"
+            alt="Photo de profil"
+            class="w-16 h-16 rounded-2xl object-cover ring-1 ring-primary/20"
+          />
+          <span v-else class="w-16 h-16 rounded-2xl bg-primary-light text-primary grid place-items-center text-2xl font-bold ring-1 ring-primary/20">
             {{ initials }}
           </span>
           <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-success grid place-items-center ring-2 ring-white dark:ring-[rgb(43_47_59)]">
             <span class="material-symbols-outlined text-white text-[12px]">check</span>
           </span>
+          <button
+            type="button"
+            title="Changer la photo"
+            class="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-primary text-white grid place-items-center shadow hover:bg-primary-dark transition-colors"
+            @click="fileInput?.click()"
+          >
+            <span class="material-symbols-outlined text-[14px]">photo_camera</span>
+          </button>
         </div>
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          class="hidden"
+          @change="onAvatarPick"
+        />
         <div class="min-w-0">
           <div class="text-[18px] font-bold text-slate-900 truncate">{{ auth.user?.firstName }} {{ auth.user?.lastName }}</div>
           <div class="text-[13px] text-slate-500 truncate">{{ auth.user?.email }}</div>
@@ -22,9 +43,20 @@
           </div>
         </div>
       </div>
-      <div class="mt-4 flex flex-wrap gap-2">
+      <div class="mt-4 flex flex-wrap gap-2 items-center">
         <span v-for="r in auth.roles" :key="r" class="px-2.5 py-1 rounded-full bg-primary-light text-primary text-xs font-semibold">{{ r }}</span>
+        <button
+          v-if="avatarSrc"
+          type="button"
+          :disabled="avatarBusy"
+          class="ml-auto text-xs font-semibold text-error hover:bg-error/10 rounded-lg px-2.5 py-1 transition-colors disabled:opacity-60"
+          @click="removeAvatar"
+        >Supprimer la photo</button>
       </div>
+      <p v-if="avatarMsg" class="mt-3 text-sm inline-flex items-center gap-1" :class="avatarErr ? 'text-error' : 'text-success'">
+        <span class="material-symbols-outlined text-[16px]">{{ avatarErr ? 'error' : 'check_circle' }}</span>
+        {{ avatarMsg }}
+      </p>
     </div>
 
     <!-- Formulaire profil -->
@@ -148,15 +180,75 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { updateMyProfile, changeMyPassword } from '../api/user'
+import { updateMyProfile, changeMyPassword, loadMyAvatar, uploadMyAvatar, deleteMyAvatar } from '../api/user'
 
 const auth = useAuthStore()
 const router = useRouter()
 
 const initials = computed(() => `${auth.user?.firstName?.[0] ?? ''}${auth.user?.lastName?.[0] ?? ''}`.toUpperCase())
+
+/* --- Photo de profil --- */
+const fileInput = ref<HTMLInputElement | null>(null)
+const avatarSrc = ref<string | null>(null)
+const avatarVersion = ref(Date.now())
+const avatarMsg = ref('')
+const avatarErr = ref(false)
+const avatarBusy = ref(false)
+
+onMounted(async () => {
+  avatarSrc.value = await loadMyAvatar(avatarVersion.value)
+})
+
+async function onAvatarPick(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  avatarMsg.value = ''
+  avatarErr.value = false
+  if (!/^image\/(jpeg|png|gif|webp)$/.test(file.type)) {
+    avatarErr.value = true
+    avatarMsg.value = 'Format non supporté (JPEG, PNG, GIF ou WebP attendu).'
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    avatarErr.value = true
+    avatarMsg.value = 'Image trop volumineuse (max 2 Mo).'
+    return
+  }
+  avatarBusy.value = true
+  try {
+    await uploadMyAvatar(file)
+    if (avatarSrc.value) URL.revokeObjectURL(avatarSrc.value)
+    avatarSrc.value = await loadMyAvatar(++avatarVersion.value)
+    avatarMsg.value = 'Photo mise à jour.'
+  } catch (e: any) {
+    avatarErr.value = true
+    avatarMsg.value = e?.response?.data?.error || e?.message || "Impossible d'envoyer la photo."
+  } finally {
+    avatarBusy.value = false
+  }
+}
+
+async function removeAvatar() {
+  avatarBusy.value = true
+  avatarMsg.value = ''
+  avatarErr.value = false
+  try {
+    await deleteMyAvatar()
+    if (avatarSrc.value) URL.revokeObjectURL(avatarSrc.value)
+    avatarSrc.value = null
+    avatarMsg.value = 'Photo supprimée.'
+  } catch (e: any) {
+    avatarErr.value = true
+    avatarMsg.value = e?.response?.data?.error || e?.message || 'Impossible de supprimer la photo.'
+  } finally {
+    avatarBusy.value = false
+  }
+}
 const phoneDisplay = computed(() => (auth.user as any)?.phone ?? '')
 
 /* --- Profil --- */
