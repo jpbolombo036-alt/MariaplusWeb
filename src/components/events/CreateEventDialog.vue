@@ -18,8 +18,32 @@
         <input v-model="form.brideLastName" required placeholder="Nom de la mariée" class="input" />
       </div>
 
-      <p class="text-xs font-semibold text-on-surface-variant mb-2 uppercase tracking-wide">Détails</p>
-      <input v-model="form.couplePhotoUrl" placeholder="URL photo du couple" class="input mb-3" />
+      <p class="text-xs font-semibold text-on-surface-variant mb-2 uppercase tracking-wide">Photo du couple</p>
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-surface-container grid place-items-center border border-outline-variant">
+          <img v-if="photoPreview" :src="photoPreview" alt="Aperçu" class="w-full h-full object-cover" />
+          <span v-else class="material-symbols-outlined text-3xl text-on-surface-variant/50">image</span>
+        </div>
+        <div class="min-w-0">
+          <button type="button" class="px-4 h-9 rounded-lg bg-primary/10 text-primary text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-primary/20 transition-colors" @click="fileInput?.click()">
+            <span class="material-symbols-outlined text-[17px]">photo_camera</span> Choisir une photo
+          </button>
+          <button
+            v-if="photoFile"
+            type="button"
+            class="ml-2 text-[12px] text-error hover:bg-error/10 rounded-lg px-2 py-1 transition-colors"
+            @click="clearPhoto"
+          >Retirer</button>
+          <p class="text-[11px] text-on-surface-variant mt-1.5">JPEG, PNG, GIF ou WebP — max 2 Mo</p>
+        </div>
+      </div>
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        class="hidden"
+        @change="onPhotoPick"
+      />
       <textarea v-model="form.description" rows="2" placeholder="Description (optionnel)" class="input mb-3 resize-none"></textarea>
       <textarea v-model="form.message" rows="2" placeholder="Message d'invitation (optionnel)" class="input resize-none"></textarea>
 
@@ -36,21 +60,50 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { createEvent, type Event } from '../../api/events'
+import { createEvent, uploadEventImage, type Event as EventModel } from '../../api/events'
 
-const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: Event): void }>()
+const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: EventModel): void }>()
 
 const form = reactive({
   groomFirstName: '',
   groomLastName: '',
   brideFirstName: '',
   brideLastName: '',
-  couplePhotoUrl: '',
   description: '',
   message: '',
 })
 const loading = ref(false)
 const error = ref('')
+
+/* --- Photo de couverture --- */
+const fileInput = ref<HTMLInputElement | null>(null)
+const photoFile = ref<File | null>(null)
+const photoPreview = ref<string | null>(null)
+
+function onPhotoPick(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  if (!/^image\/(jpeg|png|gif|webp)$/.test(file.type)) {
+    error.value = 'Format non supporté (JPEG, PNG, GIF ou WebP attendu).'
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    error.value = 'Image trop volumineuse (max 2 Mo).'
+    return
+  }
+  error.value = ''
+  photoFile.value = file
+  if (photoPreview.value) URL.revokeObjectURL(photoPreview.value)
+  photoPreview.value = URL.createObjectURL(file)
+}
+
+function clearPhoto() {
+  photoFile.value = null
+  if (photoPreview.value) URL.revokeObjectURL(photoPreview.value)
+  photoPreview.value = null
+}
 
 async function submit() {
   loading.value = true
@@ -61,10 +114,15 @@ async function submit() {
       groomLastName: form.groomLastName,
       brideFirstName: form.brideFirstName,
       brideLastName: form.brideLastName,
-      couplePhotoUrl: form.couplePhotoUrl || null,
+      couplePhotoUrl: null,
       description: form.description || null,
       message: form.message || null,
     })
+    if (photoFile.value) {
+      try {
+        await uploadEventImage(w.id, photoFile.value)
+      } catch { /* la création reste valide même si l'upload échoue */ }
+    }
     emit('created', w)
   } catch (e: any) {
     error.value = e?.response?.data?.error || 'Création impossible'

@@ -64,7 +64,7 @@
               <td class="px-6 py-4">
                 <router-link :to="`/dashboard/events/${ev.id}`" class="flex items-center gap-4 group/ev">
                   <div class="w-[125px] h-[78px] rounded-lg overflow-hidden shrink-0">
-                    <img v-if="ev.weddingDetails?.couplePhotoUrl" :src="ev.weddingDetails.couplePhotoUrl" class="w-full h-full object-cover group-hover/ev:scale-105 transition-transform duration-300" alt="" />
+                    <img v-if="imageUrls[ev.id] || ev.weddingDetails?.couplePhotoUrl" :src="imageUrls[ev.id] || ev.weddingDetails?.couplePhotoUrl || undefined" class="w-full h-full object-cover group-hover/ev:scale-105 transition-transform duration-300" alt="" />
                     <div v-else class="w-full h-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
                       <span class="material-symbols-outlined text-2xl text-white/50">favorite</span>
                     </div>
@@ -118,9 +118,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { listEvents, type Event } from '../api/events'
+import { listEvents, loadEventImage, type Event } from '../api/events'
 import PermGuard from '../components/common/PermGuard.vue'
 import StatusBadge from '../components/common/StatusBadge.vue'
 import CreateEventDialog from '../components/events/CreateEventDialog.vue'
@@ -133,6 +133,7 @@ const error = ref('')
 const createOpen = ref(false)
 const query = ref('')
 const statusFilter = ref('')
+const imageUrls = reactive<Record<number, string>>({})
 
 if (route.query.new === '1') {
   createOpen.value = true
@@ -175,6 +176,12 @@ async function load() {
   error.value = ''
   try {
     events.value = await listEvents()
+    // Charge les photos de couverture uploadées (une requête blob par événement)
+    const withImage = events.value.filter((e) => e.hasImage)
+    await Promise.allSettled(withImage.map(async (e) => {
+      const url = await loadEventImage(e.id)
+      if (url) imageUrls[e.id] = url
+    }))
   } catch (e: any) {
     error.value = e?.message || 'Erreur de chargement'
   } finally {

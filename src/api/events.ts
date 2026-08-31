@@ -59,8 +59,31 @@ export interface Event {
   active?: boolean | null
   createdAt?: string | null
   updatedAt?: string | null
+  hasImage?: boolean | null
   weddingDetails?: WeddingDetails | null
   sessions?: EventSession[] | null
+}
+
+/** Charge la photo de couverture en blob URL (null si 404 = pas de photo). */
+export async function loadEventImage(eventId: number): Promise<string | null> {
+  try {
+    const res = await http.get(`${ApiConfig.eventsPath}/${eventId}/image`, { responseType: 'blob' })
+    return URL.createObjectURL(res.data as Blob)
+  } catch {
+    return null
+  }
+}
+
+export async function uploadEventImage(eventId: number, file: File): Promise<void> {
+  const form = new FormData()
+  form.append('file', file)
+  await http.put(`${ApiConfig.eventsPath}/${eventId}/image`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export async function deleteEventImage(eventId: number): Promise<void> {
+  await http.delete(`${ApiConfig.eventsPath}/${eventId}/image`)
 }
 
 export interface PageData<T> {
