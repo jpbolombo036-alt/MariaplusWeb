@@ -64,12 +64,29 @@ export async function deleteInvitation(eventId: number, invitationId: number): P
 
 export async function sendInvitation(eventId: number, invitationId: number): Promise<SendResult> {
   const res = await http.post(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/send`)
-  return decodeMap(res.data) as unknown as SendResult
+  return normalizeSendResult(decodeMap(res.data) as unknown as SendResult)
 }
 
 export async function resendInvitation(eventId: number, invitationId: number): Promise<SendResult> {
   const res = await http.post(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/resend`)
-  return decodeMap(res.data) as unknown as SendResult
+  return normalizeSendResult(decodeMap(res.data) as unknown as SendResult)
+}
+
+/**
+ * Si le backend n'a pas encore FRONTEND_URL configuré (ou ancien déploiement),
+ * il peut renvoyer un lien "localhost" inutilisable par l'invité. On reconstruit
+ * alors le lien à partir du domaine sur lequel l'organisateur se trouve.
+ */
+function normalizeSendResult(r: SendResult): SendResult {
+  const url = r.publicInviteUrl
+  if (!url) return r
+  const isLocal = url.includes('localhost') || url.includes('127.0.0.1')
+  if (!isLocal) return r
+  const marker = '/invitations/'
+  const idx = url.indexOf(marker)
+  const token = idx >= 0 ? url.slice(idx + marker.length).split('?')[0] : ''
+  r.publicInviteUrl = `${window.location.origin}/invitations/${token}`
+  return r
 }
 
 export async function cancelInvitation(eventId: number, invitationId: number): Promise<Invitation> {
