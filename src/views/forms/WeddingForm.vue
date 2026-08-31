@@ -87,19 +87,25 @@
           </div>
 
           <div v-if="form.type === 'WEDDING'" class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Photo du marié (URL)</span>
-              <input v-model="form.groomPhotoUrl" placeholder="https://..." class="input" />
-            </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Photo de la mariée (URL)</span>
-              <input v-model="form.bridePhotoUrl" placeholder="https://..." class="input" />
-            </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Photo du couple (URL)</span>
-              <input v-model="form.couplePhotoUrl" placeholder="https://..." class="input" />
-            </label>
+            <div v-for="p in photoFields" :key="p.kind">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">{{ p.label }}</span>
+              <div class="w-full aspect-[4/3] rounded-lg overflow-hidden bg-slate-50 border border-slate-200 grid place-items-center mb-2">
+                <img v-if="photoState[p.kind].preview" :src="photoState[p.kind].preview!" alt="Aperçu" class="w-full h-full object-cover" />
+                <span v-else class="material-symbols-outlined text-3xl text-slate-300">image</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" class="px-3 h-8 rounded-lg bg-primary/10 text-primary text-[12px] font-semibold inline-flex items-center gap-1 hover:bg-primary/20 transition-colors" @click="pickPhoto(p.kind)">
+                  <span class="material-symbols-outlined text-[15px]">photo_camera</span> Choisir
+                </button>
+                <button v-if="photoState[p.kind].file" type="button" class="text-[12px] text-error hover:bg-error/10 rounded-lg px-2 py-1 transition-colors" @click="clearPhoto(p.kind)">Retirer</button>
+              </div>
+              <input :id="`photo-input-${p.kind}`" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onPick(p.kind, $event)" />
+            </div>
           </div>
+
+          <p v-if="photoError" class="text-error text-[13px] inline-flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">error</span>{{ photoError }}
+          </p>
 
           <div class="flex justify-end gap-3 pt-2">
             <button type="button" @click="$router.back()" class="px-4 h-10 text-slate-500 text-[13px] font-medium hover:text-slate-700 transition-colors">Annuler</button>
@@ -112,9 +118,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { createEvent } from '../../api/events'
+import { createEvent, uploadEventPhoto } from '../../api/events'
 
 const router = useRouter()
 const form = reactive({
@@ -137,11 +143,48 @@ const form = reactive({
   groomLastName: '',
   brideFirstName: '',
   brideLastName: '',
-  groomPhotoUrl: '',
-  bridePhotoUrl: '',
-  couplePhotoUrl: '',
   welcomeMessage: '',
 })
+
+/* --- Photos de la fiche mariage (upload, pas d'URL) --- */
+const photoFields = [
+  { kind: 'groom', label: 'Photo du marié' },
+  { kind: 'bride', label: 'Photo de la mariée' },
+  { kind: 'couple', label: 'Photo du couple' },
+] as const
+const photoState = reactive<Record<string, { file: File | null; preview: string | null }>>({
+  groom: { file: null, preview: null },
+  bride: { file: null, preview: null },
+  couple: { file: null, preview: null },
+})
+const photoError = ref('')
+
+function pickPhoto(kind: string) {
+  document.getElementById(`photo-input-${kind}`)?.click()
+}
+function onPick(kind: string, e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  if (!/^image\/(jpeg|png|gif|webp)$/.test(file.type)) {
+    photoError.value = 'Format non supporté (JPEG, PNG, GIF ou WebP attendu).'
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    photoError.value = 'Image trop volumineuse (max 2 Mo).'
+    return
+  }
+  photoError.value = ''
+  photoState[kind].file = file
+  if (photoState[kind].preview) URL.revokeObjectURL(photoState[kind].preview!)
+  photoState[kind].preview = URL.createObjectURL(file)
+}
+function clearPhoto(kind: string) {
+  photoState[kind].file = null
+  if (photoState[kind].preview) URL.revokeObjectURL(photoState[kind].preview!)
+  photoState[kind].preview = null
+}
 
 async function submitCreate() {
   const payload: Record<string, unknown> = {
@@ -166,12 +209,20 @@ async function submitCreate() {
     payload.groomLastName = form.groomLastName
     payload.brideFirstName = form.brideFirstName
     payload.brideLastName = form.brideLastName
-    payload.groomPhotoUrl = form.groomPhotoUrl || null
-    payload.bridePhotoUrl = form.bridePhotoUrl || null
-    payload.couplePhotoUrl = form.couplePhotoUrl || null
     payload.welcomeMessage = form.welcomeMessage || null
   }
   const created = await createEvent(payload)
+  // Upload des photos choisies (la création reste valide même si un upload échoue)
+  if (form.type === 'WEDDING') {
+    for (const p of photoFields) {
+      const file = photoState[p.kind].file
+      if (file) {
+        try {
+          await uploadEventPhoto(created.id, p.kind, file)
+        } catch { /* ignore : photo non bloquante */ }
+      }
+    }
+  }
   router.push(`/dashboard/events/${created.id}`)
 }
 </script>

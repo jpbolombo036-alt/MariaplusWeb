@@ -3,7 +3,7 @@
     <div class="relative w-full h-[320px] rounded-xl overflow-hidden mb-6 shadow-sm border border-outline-variant/30 flex items-end">
       <div
         class="absolute inset-0 bg-cover bg-center"
-        :style="event?.weddingDetails?.couplePhotoUrl ? { backgroundImage: `url(${event.weddingDetails.couplePhotoUrl})` } : undefined"
+        :style="event?.weddingDetails?.couplePhotoUrl ? { backgroundImage: `url(${absolutePhotoUrl(event.weddingDetails.couplePhotoUrl)})` } : undefined"
       ></div>
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
 
@@ -116,7 +116,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getEvent, updateEventStatus, type Event } from '../../api/events'
+import { getEvent, updateEventStatus, absolutePhotoUrl, type Event } from '../../api/events'
 import { getDashboard, type Dashboard } from '../../api/dashboard'
 import PermGuard from '../../components/common/PermGuard.vue'
 

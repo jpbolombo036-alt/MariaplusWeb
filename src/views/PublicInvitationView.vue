@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-full grid place-items-center bg-background px-4 py-10">
     <div class="w-full max-w-lg bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant shadow-sm">
-      <img v-if="inv?.couplePhotoUrl" :src="inv.couplePhotoUrl" class="w-full h-56 object-cover" />
+      <img v-if="inv?.couplePhotoUrl" :src="absolutePhotoUrl(inv.couplePhotoUrl)" class="w-full h-56 object-cover" />
       <div class="p-6">
         <div class="text-sm text-on-surface-variant">Bonjour {{ inv?.guestFirstName }},</div>
         <h1 class="mt-1 text-2xl font-bold text-on-surface">{{ inv?.weddingDisplayName }}</h1>
@@ -56,6 +56,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getPublicInvitation, listPublicDrinks, submitPublicRsvp, type PublicInvitation } from '../api/publicInvitation'
+import { absolutePhotoUrl } from '../api/events'
 import QRCode from 'qrcode'
 
 const route = useRoute()

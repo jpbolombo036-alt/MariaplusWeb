@@ -86,6 +86,21 @@ export async function deleteEventImage(eventId: number): Promise<void> {
   await http.delete(`${ApiConfig.eventsPath}/${eventId}/image`)
 }
 
+export type EventPhotoKind = 'groom' | 'bride' | 'couple'
+
+export async function uploadEventPhoto(eventId: number, kind: EventPhotoKind, file: File): Promise<void> {
+  const form = new FormData()
+  form.append('file', file)
+  await http.put(`${ApiConfig.eventsPath}/${eventId}/photos/${kind}`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+/** URL absolue affichable d'une photo (le backend peut renvoyer un chemin relatif). */
+export function absolutePhotoUrl(url: string): string {
+  return url.startsWith('http') ? url : ApiConfig.baseUrl + url
+}
+
 export interface PageData<T> {
   content: T[]
   totalElements: number

@@ -60,7 +60,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { createEvent, uploadEventImage, type Event as EventModel } from '../../api/events'
+import { createEvent, uploadEventImage, uploadEventPhoto, type Event as EventModel } from '../../api/events'
 
 const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: EventModel): void }>()
 
@@ -121,6 +121,7 @@ async function submit() {
     if (photoFile.value) {
       try {
         await uploadEventImage(w.id, photoFile.value)
+        await uploadEventPhoto(w.id, 'couple', photoFile.value)
       } catch { /* la création reste valide même si l'upload échoue */ }
     }
     emit('created', w)
