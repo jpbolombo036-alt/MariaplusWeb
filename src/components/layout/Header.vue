@@ -1,9 +1,15 @@
 <template>
   <header class="flex items-center gap-4 px-4 md:px-6 h-14 bg-white border-b border-slate-200 shrink-0 relative z-50">
-    <span class="material-symbols-outlined md:hidden text-slate-500 cursor-pointer" @click="$emit('menu')">menu</span>
+    <!-- Mobile : logo seul (comme la landing), pas de bouton menu -->
+    <RouterLink to="/dashboard" class="md:hidden flex items-center gap-2">
+      <span class="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-primary/20 grid place-items-center">
+        <img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" />
+      </span>
+      <span class="font-bold text-slate-800 tracking-tight">Mariage<span class="text-primary">Plus</span></span>
+    </RouterLink>
 
-    <!-- Titre de la page courante -->
-    <h1 class="text-[15px] font-bold text-slate-800 tracking-tight">{{ pageTitle }}</h1>
+    <!-- Titre de la page courante (desktop) -->
+    <h1 class="hidden md:block text-[15px] font-bold text-slate-800 tracking-tight">{{ pageTitle }}</h1>
 
     <div class="flex-1"></div>
 
@@ -83,8 +89,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { initialsOf } from '../../utils/initials'
 import { useThemeStore } from '../../stores/theme'
-
-defineEmits<{ (e: 'menu'): void }>()
 
 const auth = useAuthStore()
 const route = useRoute()

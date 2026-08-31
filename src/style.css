@@ -2,6 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Thème — tokens sémantiques (triplets RGB "R G B")
+   :root = clair · .dark = sombre (classe posée sur <html> par stores/theme.ts)
+   ============================================================ */
+:root {
+  --c-primary: 91 46 204;            /* #5b2ecc */
+  --c-primary-dark: 69 32 165;       /* #4520a5 */
+  --c-primary-light: 240 235 255;    /* #f0ebff */
+  --c-primary-fixed-dim: 205 189 255;
+  --c-on-primary-fixed: 32 0 95;
+  --c-inverse-primary: 205 189 255;
+  --c-error-container: 255 225 225;
+  --c-attention-light: 253 243 227;
+  --c-success-light: 227 242 238;
+  --c-error-light: 253 236 236;
+  --c-line: 232 234 240;
+  --c-background: 247 248 252;
+  --c-surface: 247 248 252;
+  --c-on-surface: 31 41 55;
+  --c-surface-bright: 247 248 252;
+  --c-surface-dim: 233 234 240;
+  --c-surface-container: 238 240 246;
+  --c-surface-container-low: 243 244 249;
+  --c-surface-container-lowest: 255 255 255;
+  --c-surface-container-high: 233 234 240;
+  --c-surface-container-highest: 226 228 236;
+  --c-surface-variant: 233 234 240;
+  --c-on-surface-variant: 107 114 128;
+  --c-outline: 154 160 170;
+  --c-outline-variant: 233 234 240;
+  --c-inverse-surface: 24 28 37;
+  --c-inverse-on-surface: 245 245 247;
+  color-scheme: light;
+}
+
+.dark {
+  --c-primary: 151 118 255;          /* #9776ff — plus clair pour le contraste */
+  --c-primary-dark: 108 82 235;
+  --c-primary-light: 46 38 84;       /* fond "violet doux" des badges/icônes */
+  --c-primary-fixed-dim: 205 189 255;
+  --c-on-primary-fixed: 233 226 255;
+  --c-inverse-primary: 91 46 204;
+  --c-error-container: 103 24 30;
+  --c-attention-light: 66 49 16;
+  --c-success-light: 24 54 47;
+  --c-error-light: 64 29 29;
+  --c-line: 60 66 82;
+  --c-background: 28 31 40;          /* #1c1f28 — anthracite doux, pas de noir profond */
+  --c-surface: 28 31 40;
+  --c-on-surface: 235 237 243;
+  --c-surface-bright: 40 44 55;
+  --c-surface-dim: 24 27 35;
+  --c-surface-container: 38 42 53;
+  --c-surface-container-low: 33 37 47;
+  --c-surface-container-lowest: 43 47 59;   /* cartes légèrement plus claires que le fond */
+  --c-surface-container-high: 46 51 63;
+  --c-surface-container-highest: 54 59 72;
+  --c-surface-variant: 40 44 55;
+  --c-on-surface-variant: 168 175 189;
+  --c-outline: 122 129 143;
+  --c-outline-variant: 55 61 76;
+  --c-inverse-surface: 235 237 243;
+  --c-inverse-on-surface: 34 38 48;
+  color-scheme: dark;
+}
+
 *,
 *::before,
 *::after {
@@ -16,10 +82,7 @@ body,
 
 body {
   @apply bg-background text-on-surface font-sans;
-}
-
-.dark {
-  color-scheme: dark;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 img,
@@ -36,3 +99,67 @@ section,
 article {
   contain: layout;
 }
+
+/* ============================================================
+   Mode sombre — surcharge des utilitaires de couleur bruts
+   (bg-white, text-slate-*, border-slate-*) utilisés dans les vues.
+   Préfixe html.dark + !important : priorité garantie sur les
+   styles scopés des composants (injection après style.css).
+   ============================================================ */
+
+/* --- Champs de formulaire : priorité absolue (sinon ils restent blancs) --- */
+html.dark input:not([type='checkbox']):not([type='radio']),
+html.dark textarea,
+html.dark select {
+  background-color: rgb(43 47 59) !important;
+  border-color: rgb(66 72 88) !important;
+  color: rgb(235 237 243) !important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: rgb(120 127 142) !important;
+  opacity: 1;
+}
+html.dark input:focus:not([type='checkbox']):not([type='radio']),
+html.dark textarea:focus,
+html.dark select:focus {
+  border-color: rgb(151 118 255) !important;
+}
+
+/* --- Surfaces --- */
+html.dark .bg-white { background-color: rgb(43 47 59) !important; }        /* cartes */
+html.dark .bg-slate-50 { background-color: rgb(50 55 68) !important; }
+html.dark .bg-slate-100 { background-color: rgb(58 64 79) !important; }
+html.dark .bg-slate-200 { background-color: rgb(66 72 88) !important; }
+html.dark .bg-slate-300 { background-color: rgb(76 83 100) !important; }
+html.dark .bg-gray-100 { background-color: rgb(58 64 79) !important; }
+html.dark .bg-slate-50\/60 { background-color: rgb(50 55 68 / 0.6) !important; }
+html.dark .bg-slate-50\/80 { background-color: rgb(50 55 68 / 0.8) !important; }
+
+/* --- Bordures & séparateurs --- */
+html.dark .border-slate-100 { border-color: rgb(58 64 79) !important; }
+html.dark .border-slate-200 { border-color: rgb(66 72 88) !important; }
+html.dark .ring-slate-200 { --tw-ring-color: rgb(66 72 88) !important; }
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(58 64 79) !important; }
+
+/* --- Textes (inversés pour le contraste) --- */
+html.dark .text-slate-900 { color: rgb(241 243 249) !important; }
+html.dark .text-slate-800 { color: rgb(228 231 240) !important; }
+html.dark .text-slate-700 { color: rgb(211 215 226) !important; }
+html.dark .text-slate-600 { color: rgb(168 174 186) !important; }
+html.dark .text-slate-500 { color: rgb(139 145 160) !important; }
+html.dark .text-slate-400 { color: rgb(107 113 128) !important; }
+html.dark .text-slate-300 { color: rgb(74 79 92) !important; }
+
+/* --- États hover --- */
+html.dark .hover\:bg-slate-50:hover { background-color: rgb(54 59 72) !important; }
+html.dark .hover\:bg-slate-50\/60:hover { background-color: rgb(54 59 72 / 0.6) !important; }
+html.dark .hover\:bg-slate-50\/80:hover { background-color: rgb(54 59 72 / 0.8) !important; }
+html.dark .hover\:bg-slate-100:hover { background-color: rgb(66 72 88) !important; }
+html.dark .hover\:bg-white:hover { background-color: rgb(54 59 72) !important; }
+
+/* --- Ombres douces : atténuées sur fond sombre --- */
+html.dark .shadow-soft { box-shadow: 0 1px 3px rgb(0 0 0 / 0.3), 0 1px 2px rgb(0 0 0 / 0.2); }
+html.dark .shadow-card { box-shadow: 0 1px 3px rgb(0 0 0 / 0.35), 0 4px 16px rgb(0 0 0 / 0.3); }
+html.dark .shadow-sm { box-shadow: 0 1px 2px rgb(0 0 0 / 0.3); }
+

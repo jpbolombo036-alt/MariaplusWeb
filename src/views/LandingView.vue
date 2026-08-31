@@ -16,10 +16,19 @@
           <RouterLink :to="{ hash: '#temoignages' }" class="hover:text-primary transition-colors">Témoignages</RouterLink>
           <RouterLink :to="{ hash: '#contact' }" class="hover:text-primary transition-colors">Contact</RouterLink>
         </nav>
-        <RouterLink to="/login"
-          class="px-5 h-10 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
-          Se connecter <span class="material-symbols-outlined text-base">arrow_forward</span>
-        </RouterLink>
+        <div class="flex items-center gap-3">
+          <button
+            class="w-10 h-10 rounded-full grid place-items-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
+            title="Thème sombre / clair"
+            @click="themeStore.toggle()"
+          >
+            <span class="material-symbols-outlined text-[20px]">{{ themeStore.dark ? 'light_mode' : 'dark_mode' }}</span>
+          </button>
+          <RouterLink to="/login"
+            class="px-5 h-10 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
+            Se connecter <span class="material-symbols-outlined text-base">arrow_forward</span>
+          </RouterLink>
+        </div>
       </div>
     </header>
 
@@ -195,6 +204,9 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useThemeStore } from '../stores/theme'
+
+const themeStore = useThemeStore()
 
 const stats = [
   { value: '500+', label: 'Événements organisés' },

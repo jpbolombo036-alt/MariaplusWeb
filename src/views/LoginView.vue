@@ -58,32 +58,45 @@
             <h2 class="text-2xl font-bold text-on-surface mb-1">Bon retour parmi nous</h2>
             <p class="text-on-surface-variant mb-8">Accédez à votre espace de gestion</p>
 
+            <!-- Alerte d'erreur -->
+            <div v-if="error" class="mb-5 flex items-start gap-2.5 p-3.5 rounded-xl bg-error-light border border-error/20 text-error text-sm">
+              <span class="material-symbols-outlined text-[19px] shrink-0">error</span>
+              <span>{{ error }}</span>
+            </div>
+
             <form class="space-y-4" @submit.prevent="onSubmit">
             <label class="block">
               <span class="text-sm font-medium text-on-surface mb-1 block">Email</span>
-              <input
-                v-model="email" type="email" required
-                class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                placeholder="vous@exemple.com"
-              />
+              <div class="relative">
+                <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">mail</span>
+                <input
+                  v-model="email" type="email" required autocomplete="email"
+                  class="w-full h-11 pl-11 pr-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary/20 text-body-lg transition-all"
+                  placeholder="vous@exemple.com"
+                />
+              </div>
             </label>
 
             <label class="block">
               <span class="text-sm font-medium text-on-surface mb-1 block">Mot de passe</span>
-              <input
-                v-model="password" type="password" required
-                class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                placeholder="••••••••"
-              />
+              <div class="relative">
+                <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">lock</span>
+                <input
+                  v-model="password" :type="showPwd ? 'text' : 'password'" required autocomplete="current-password"
+                  class="w-full h-11 pl-11 pr-11 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary/20 text-body-lg transition-all"
+                  placeholder="••••••••"
+                />
+                <button type="button" @click="showPwd = !showPwd"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors"
+                  :title="showPwd ? 'Masquer' : 'Afficher'">
+                  <span class="material-symbols-outlined text-[19px]">{{ showPwd ? 'visibility_off' : 'visibility' }}</span>
+                </button>
+              </div>
             </label>
-
-            <p v-if="error" class="text-sm text-error flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-base">error</span>{{ error }}
-            </p>
 
             <button
               type="submit" :disabled="loading"
-              class="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-sm font-semibold text-white bg-primary hover:opacity-90 disabled:opacity-60 transition-colors"
+              class="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed transition-all"
             >
               <span v-if="loading" class="material-symbols-outlined animate-spin text-base">progress_activity</span>
               {{ loading ? 'Connexion…' : 'Se connecter' }}
@@ -92,7 +105,7 @@
 
             <p class="mt-6 text-sm text-on-surface-variant text-center">
               Vous n'avez pas de compte ?
-              <button type="button" class="font-semibold text-primary hover:underline" @click="mode = 'register'">Créez-en un gratuitement</button>
+              <button type="button" class="font-semibold text-primary hover:underline" @click="mode = 'register'; error = ''">Créez-en un gratuitement</button>
             </p>
           </template>
 
@@ -134,15 +147,44 @@
               <div class="grid grid-cols-2 gap-3">
                 <label class="block">
                   <span class="text-sm font-medium text-on-surface mb-1 block">Mot de passe *</span>
-                  <input v-model="reg.password" type="password" required minlength="8" autocomplete="new-password"
-                    class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                    placeholder="8 caractères minimum" />
+                  <div class="relative">
+                    <input v-model="reg.password" :type="showRegPwd ? 'text' : 'password'" required minlength="8" autocomplete="new-password"
+                      class="w-full h-11 px-4 pr-11 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary/20 text-body-lg transition-all"
+                      placeholder="8 caractères minimum" />
+                    <button type="button" @click="showRegPwd = !showRegPwd"
+                      class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors"
+                      :title="showRegPwd ? 'Masquer' : 'Afficher'">
+                      <span class="material-symbols-outlined text-[19px]">{{ showRegPwd ? 'visibility_off' : 'visibility' }}</span>
+                    </button>
+                  </div>
+                  <!-- Jauge de robustesse -->
+                  <div v-if="reg.password" class="mt-2 flex items-center gap-2">
+                    <div class="flex-1 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+                      <div class="h-full rounded-full transition-all duration-300" :class="strength.bar" :style="{ width: strength.percent + '%' }"></div>
+                    </div>
+                    <span class="text-[11px] font-semibold" :class="strength.text">{{ strength.label }}</span>
+                  </div>
                 </label>
                 <label class="block">
                   <span class="text-sm font-medium text-on-surface mb-1 block">Confirmation *</span>
-                  <input v-model="reg.confirm" type="password" required autocomplete="new-password"
-                    class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                    placeholder="••••••••" />
+                  <div class="relative">
+                    <input v-model="reg.confirm" :type="showRegConfirm ? 'text' : 'password'" required autocomplete="new-password"
+                      :class="['w-full h-11 px-4 pr-11 rounded-xl border bg-surface focus:ring-1 text-body-lg transition-all',
+                               confirmState === 'mismatch' ? 'border-error focus:border-error focus:ring-error/20' : '',
+                               confirmState === 'ok' ? 'border-success focus:border-success focus:ring-success/20' : 'border-outline-variant focus:border-primary focus:ring-primary/20']"
+                      placeholder="••••••••" />
+                    <button type="button" @click="showRegConfirm = !showRegConfirm"
+                      class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors"
+                      :title="showRegConfirm ? 'Masquer' : 'Afficher'">
+                      <span class="material-symbols-outlined text-[19px]">{{ showRegConfirm ? 'visibility_off' : 'visibility' }}</span>
+                    </button>
+                  </div>
+                  <span v-if="confirmState === 'mismatch'" class="block mt-1.5 text-[12px] text-error inline-flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">error</span>Ne correspond pas
+                  </span>
+                  <span v-else-if="confirmState === 'ok'" class="block mt-1.5 text-[12px] text-success inline-flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">check_circle</span>Correspond
+                  </span>
                 </label>
               </div>
 
@@ -180,13 +222,14 @@
                 </label>
               </div>
 
-              <p v-if="error" class="text-sm text-error flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-base">error</span>{{ error }}
-              </p>
+              <div v-if="error" class="flex items-start gap-2.5 p-3.5 rounded-xl bg-error-light border border-error/20 text-error text-sm">
+                <span class="material-symbols-outlined text-[19px] shrink-0">error</span>
+                <span>{{ error }}</span>
+              </div>
 
               <button
-                type="submit" :disabled="loading"
-                class="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-sm font-semibold text-white bg-primary hover:opacity-90 disabled:opacity-60 transition-colors"
+                type="submit" :disabled="loading || confirmState === 'mismatch'"
+                class="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed transition-all"
               >
                 <span v-if="loading" class="material-symbols-outlined animate-spin text-base">progress_activity</span>
                 {{ loading ? 'Création…' : 'Créer mon compte' }}
@@ -207,7 +250,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -220,6 +263,34 @@ const password = ref('')
 const loading = ref(false)
 const error = ref('')
 const mode = ref<'login' | 'register'>('login')
+const showPwd = ref(false)
+const showRegPwd = ref(false)
+const showRegConfirm = ref(false)
+
+/* Jauge de robustesse du mot de passe (inscription). */
+const strength = computed(() => {
+  const p = reg.value.password
+  if (!p) return { percent: 0, label: '', bar: '', text: '' }
+  let score = 0
+  if (p.length >= 8) score++
+  if (p.length >= 12) score++
+  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) score++
+  if (/\d/.test(p)) score++
+  if (/[^A-Za-z0-9]/.test(p)) score++
+  const levels = [
+    { percent: 20, label: 'Très faible', bar: 'bg-error', text: 'text-error' },
+    { percent: 40, label: 'Faible', bar: 'bg-error', text: 'text-error' },
+    { percent: 60, label: 'Moyen', bar: 'bg-attention', text: 'text-attention-dark' },
+    { percent: 80, label: 'Bon', bar: 'bg-success', text: 'text-success' },
+    { percent: 100, label: 'Fort', bar: 'bg-success', text: 'text-success' },
+  ]
+  return levels[Math.max(0, Math.min(score, 5) - 1)]
+})
+
+const confirmState = computed<'idle' | 'mismatch' | 'ok'>(() => {
+  if (!reg.value.confirm) return 'idle'
+  return reg.value.confirm === reg.value.password ? 'ok' : 'mismatch'
+})
 
 const reg = ref({
   firstName: '',

@@ -21,6 +21,11 @@ export const useThemeStore = defineStore('theme', () => {
     const saved = localStorage.getItem('theme')
     if (saved === 'dark') {
       dark.value = true
+    } else if (saved === null) {
+      // Première visite : suit la préférence du système d'exploitation.
+      if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+        dark.value = true
+      }
     }
   }
 
