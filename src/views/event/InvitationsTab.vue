@@ -47,52 +47,98 @@
       <p class="text-sm text-on-surface-variant mt-1">Créez une invitation pour un invité puis envoyez-la.</p>
     </div>
 
-    <div v-else class="bg-surface-container-lowest border border-outline-variant/50 rounded-2xl overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-surface-container text-left text-on-surface-variant">
-          <tr>
-            <th class="px-5 py-3.5">Invité</th>
-            <th class="px-5 py-3.5">Code</th>
-            <th class="px-5 py-3.5">Statut</th>
-            <th class="px-5 py-3.5">Relances</th>
-            <th class="px-5 py-3.5">Ouvert</th>
-            <th class="px-5 py-3.5 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-outline-variant">
-          <tr v-for="i in filtered" :key="i.id" class="text-on-surface hover:bg-surface-container/40">
-            <td class="px-5 py-3.5">
-              <div class="flex items-center gap-3">
-                <span class="w-8 h-8 rounded-full grid place-items-center text-xs font-bold text-white shrink-0" :style="{ background: avatarColor(i.id) }">{{ initialsFor(i) }}</span>
-                <span>{{ guestNameFor(i) }}</span>
+    <div v-else>
+      <!-- Desktop : tableau -->
+      <div class="hidden md:block bg-surface-container-lowest border border-outline-variant/50 rounded-2xl overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-surface-container text-left text-on-surface-variant">
+            <tr>
+              <th class="px-5 py-3.5">Invité</th>
+              <th class="px-5 py-3.5">Code</th>
+              <th class="px-5 py-3.5">Statut</th>
+              <th class="px-5 py-3.5">Relances</th>
+              <th class="px-5 py-3.5">Ouvert</th>
+              <th class="px-5 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant">
+            <tr v-for="i in filtered" :key="i.id" class="text-on-surface hover:bg-surface-container/40">
+              <td class="px-5 py-3.5">
+                <div class="flex items-center gap-3">
+                  <span class="w-8 h-8 rounded-full grid place-items-center text-xs font-bold text-white shrink-0" :style="{ background: avatarColor(i.id) }">{{ initialsFor(i) }}</span>
+                  <span>{{ guestNameFor(i) }}</span>
+                </div>
+              </td>
+              <td class="px-5 py-3.5 font-mono text-xs">{{ i.invitationCode }}</td>
+              <td class="px-5 py-3.5"><StatusBadge :status="i.status" /></td>
+              <td class="px-5 py-3.5">{{ i.reminderCount }}</td>
+              <td class="px-5 py-3.5">{{ i.openedAt ? 'Oui' : 'Non' }}</td>
+              <td class="px-5 py-3.5 text-right">
+                <div class="inline-flex items-center gap-1">
+                  <PermGuard :allow="['INVITATION_SEND']">
+                    <button v-if="i.status==='GENERATED' || i.status==='DRAFT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1" title="Envoyer" @click="send(i)"><span class="material-symbols-outlined text-base">send</span></button>
+                  </PermGuard>
+                  <PermGuard :allow="['INVITATION_RESEND']">
+                    <button v-if="i.status==='SENT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1" title="Relancer" @click="resend(i)"><span class="material-symbols-outlined text-base">refresh</span></button>
+                  </PermGuard>
+                  <PermGuard :allow="['INVITATION_SEND']">
+                    <button v-if="i.status==='SENT' || i.status==='GENERATED' || i.status==='DRAFT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg" title="QR" @click="showQr(i)"><span class="material-symbols-outlined text-base">qr_code</span></button>
+                  </PermGuard>
+                  <PermGuard :allow="['INVITATION_CANCEL']">
+                    <button v-if="i.status!=='CANCELLED'" class="px-2 py-1 text-amber-500 hover:bg-amber-50 rounded-lg" title="Annuler" @click="cancel(i)"><span class="material-symbols-outlined text-base">block</span></button>
+                  </PermGuard>
+                  <PermGuard :allow="['INVITATION_DELETE']">
+                    <button class="px-2 py-1 text-error hover:bg-error/10 rounded-lg" title="Supprimer" @click="remove(i)"><span class="material-symbols-outlined text-base">delete</span></button>
+                  </PermGuard>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile : cartes -->
+      <div class="md:hidden space-y-3">
+        <div
+          v-for="i in filtered"
+          :key="i.id"
+          class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-4"
+        >
+          <!-- En-tête carte : avatar + nom + statut -->
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="w-10 h-10 rounded-full grid place-items-center text-sm font-bold text-white shrink-0" :style="{ background: avatarColor(i.id) }">{{ initialsFor(i) }}</span>
+              <div class="min-w-0">
+                <p class="font-semibold text-on-surface truncate">{{ guestNameFor(i) }}</p>
+                <p class="text-xs text-on-surface-variant font-mono">{{ i.invitationCode }}</p>
               </div>
-            </td>
-            <td class="px-5 py-3.5 font-mono text-xs">{{ i.invitationCode }}</td>
-            <td class="px-5 py-3.5"><StatusBadge :status="i.status" /></td>
-            <td class="px-5 py-3.5">{{ i.reminderCount }}</td>
-            <td class="px-5 py-3.5">{{ i.openedAt ? 'Oui' : 'Non' }}</td>
-            <td class="px-5 py-3.5 text-right">
-              <div class="inline-flex items-center gap-1">
-                <PermGuard :allow="['INVITATION_SEND']">
-                  <button v-if="i.status==='GENERATED' || i.status==='DRAFT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1" title="Envoyer" @click="send(i)"><span class="material-symbols-outlined text-base">send</span></button>
-                </PermGuard>
-                <PermGuard :allow="['INVITATION_RESEND']">
-                  <button v-if="i.status==='SENT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1" title="Relancer" @click="resend(i)"><span class="material-symbols-outlined text-base">refresh</span></button>
-                </PermGuard>
-                <PermGuard :allow="['INVITATION_SEND']">
-                  <button v-if="i.status==='SENT' || i.status==='GENERATED' || i.status==='DRAFT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg" title="QR" @click="showQr(i)"><span class="material-symbols-outlined text-base">qr_code</span></button>
-                </PermGuard>
-                <PermGuard :allow="['INVITATION_CANCEL']">
-                  <button v-if="i.status!=='CANCELLED'" class="px-2 py-1 text-amber-500 hover:bg-amber-50 rounded-lg" title="Annuler" @click="cancel(i)"><span class="material-symbols-outlined text-base">block</span></button>
-                </PermGuard>
-                <PermGuard :allow="['INVITATION_DELETE']">
-                  <button class="px-2 py-1 text-error hover:bg-error/10 rounded-lg" title="Supprimer" @click="remove(i)"><span class="material-symbols-outlined text-base">delete</span></button>
-                </PermGuard>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+            <StatusBadge :status="i.status" />
+          </div>
+
+          <!-- Infos -->
+          <div class="flex items-center gap-4 text-xs text-on-surface-variant mb-4">
+            <span class="inline-flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">refresh</span>
+              {{ i.reminderCount }} relance(s)
+            </span>
+            <span class="inline-flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">visibility</span>
+              {{ i.openedAt ? 'Ouverte' : 'Non ouverte' }}
+            </span>
+          </div>
+
+          <!-- Actions -->
+          <InvitationActions
+            :i="i"
+            @send="send"
+            @resend="resend"
+            @qr="showQr"
+            @cancel="cancel"
+            @delete="remove"
+          />
+        </div>
+      </div>
     </div>
 
     <!-- Détail QR -->
@@ -136,6 +182,7 @@ import {
 import { listGuests, type Guest } from '../../api/guests'
 import PermGuard from '../../components/common/PermGuard.vue'
 import StatusBadge from '../../components/common/StatusBadge.vue'
+import InvitationActions from '../../components/invitations/InvitationActions.vue'
 
 const route = useRoute()
 const id = Number(route.params.id)

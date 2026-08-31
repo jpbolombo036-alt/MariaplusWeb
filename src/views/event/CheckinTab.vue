@@ -71,6 +71,51 @@
     <div v-if="checkinMsg" class="bg-success-light border border-success/20 text-success rounded-xl p-4 text-sm inline-flex items-center gap-2 w-full">
       <span class="material-symbols-outlined text-[19px]">check_circle</span>{{ checkinMsg }}
     </div>
+
+    <!-- Présents dans la salle -->
+    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mt-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="font-bold text-slate-900 text-[15px] inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-success">how_to_reg</span>Présents dans la salle
+          </h3>
+          <p class="text-[13px] text-slate-500 mt-0.5">
+            {{ present.length }} invité(s) entré(s) · {{ totalPresent }} personne(s)
+          </p>
+        </div>
+        <button class="h-9 px-3 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 text-[13px]" @click="loadPresent">
+          <span class="material-symbols-outlined text-[17px]">refresh</span>
+          <span class="hidden sm:inline">Actualiser</span>
+        </button>
+      </div>
+
+      <p v-if="presentLoading" class="text-slate-400 text-sm py-4 text-center">Chargement…</p>
+      <div v-else-if="present.length === 0" class="text-slate-400 text-sm py-6 text-center">
+        Aucune entrée enregistrée pour le moment.
+      </div>
+      <ul v-else class="divide-y divide-slate-100">
+        <li v-for="p in present" :key="p.invitationId" class="py-3 flex items-center gap-3 flex-wrap">
+          <span class="w-9 h-9 rounded-lg bg-success-light text-success grid place-items-center text-[13px] font-bold shrink-0">
+            <span class="material-symbols-outlined text-[18px]">check</span>
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="font-semibold text-slate-800 text-[14px] truncate">{{ p.guestName }}</p>
+            <p class="text-[12px] text-slate-500">
+              {{ p.numberOfAttendees }} personne(s)
+              <template v-if="p.lastCheckedInAt"> · {{ formatTime(p.lastCheckedInAt) }}</template>
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span v-if="p.tableName" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-light text-primary text-[12px] font-semibold">
+              <span class="material-symbols-outlined text-[14px]">table_restaurant</span>Table {{ p.tableName }}
+            </span>
+            <span v-if="p.drinkChoice" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-attention-light text-attention-dark text-[12px] font-semibold">
+              <span class="material-symbols-outlined text-[14px]">local_bar</span>{{ p.drinkChoice }}
+            </span>
+          </div>
+        </li>
+      </ul>
+    </div>
   </div>
 
 <!-- ===== Modal scanner caméra ===== -->
@@ -112,10 +157,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
-import { scan, checkIn, type CheckInScan } from '../../api/checkin'
+import { scan, checkIn, listPresent, type CheckInScan, type PresentGuest } from '../../api/checkin'
 import PermGuard from '../../components/common/PermGuard.vue'
 
 const route = useRoute()
@@ -126,6 +171,26 @@ const result = ref<CheckInScan | null>(null)
 const scanError = ref('')
 const checkinMsg = ref('')
 const checkingIn = ref(false)
+
+/* --- Présents dans la salle --- */
+const present = ref<PresentGuest[]>([])
+const presentLoading = ref(true)
+const totalPresent = computed(() => present.value.reduce((s, p) => s + p.numberOfAttendees, 0))
+
+async function loadPresent() {
+  presentLoading.value = true
+  try {
+    present.value = await listPresent(id)
+  } catch {
+    present.value = []
+  } finally {
+    presentLoading.value = false
+  }
+}
+function formatTime(d: string): string {
+  return new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+}
+onMounted(loadPresent)
 
 /* --- Scanner caméra (@zxing/browser) --- */
 const cameraOpen = ref(false)
@@ -228,6 +293,7 @@ async function doCheckIn() {
     const res = await checkIn(extractToken(qr.value), id, 1)
     checkinMsg.value = `Entrée validée pour ${res.guestName} (${res.numberOfAttendees} personne(s)).`
     result.value = await scan(extractToken(qr.value), id)
+    await loadPresent()
   } catch (e: any) {
     scanError.value = e?.response?.data?.error || e?.message || 'Erreur lors du check-in.'
   } finally {

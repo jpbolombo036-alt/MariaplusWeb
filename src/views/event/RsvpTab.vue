@@ -56,7 +56,8 @@
     <div v-else-if="filtered.length === 0" class="bg-surface-container-lowest border border-outline-variant/50 rounded-2xl p-10 text-center text-on-surface-variant">
       Aucune réponse pour l'instant.
     </div>
-    <div v-else class="bg-surface-container-lowest border border-outline-variant/50 rounded-2xl overflow-hidden">
+    <!-- Desktop : tableau -->
+    <div v-else class="hidden md:block bg-surface-container-lowest border border-outline-variant/50 rounded-2xl overflow-hidden">
       <table class="w-full text-sm">
         <thead class="bg-surface-container text-left text-on-surface-variant">
           <tr>
@@ -80,6 +81,36 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile : cartes -->
+    <div v-if="!loading && filtered.length > 0" class="md:hidden space-y-3">
+      <div
+        v-for="r in filtered"
+        :key="r.invitationId"
+        class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-4"
+      >
+        <!-- En-tête : avatar + nom + statut -->
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-10 h-10 rounded-lg grid place-items-center text-sm font-bold text-white shrink-0" :style="{ background: avatarColor(r.guestId) }">{{ guestInitials(r) }}</span>
+            <p class="font-semibold text-on-surface truncate">{{ guestName(r) }}</p>
+          </div>
+          <StatusBadge :status="r.status || 'PENDING'" />
+        </div>
+
+        <!-- Infos -->
+        <div class="flex items-center gap-4 text-xs text-on-surface-variant">
+          <span class="inline-flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">group</span>
+            {{ r.numberOfAttendees ?? 0 }} personne(s)
+          </span>
+          <span class="inline-flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">schedule</span>
+            {{ r.respondedAt ? formatDate(r.respondedAt) : 'Pas encore répondu' }}
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 </template>

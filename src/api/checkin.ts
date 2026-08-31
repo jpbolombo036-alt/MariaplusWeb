@@ -55,3 +55,27 @@ export async function checkIn(qrToken: string, eventId: number, numberOfAttendee
 export async function cancelCheckIn(checkInId: number): Promise<void> {
   await http.delete(`${ApiConfig.checkinsPath}/${checkInId}`)
 }
+
+export interface PresentGuest {
+  invitationId: number
+  guestId: number
+  guestName: string
+  numberOfAttendees: number
+  lastCheckedInAt: string | null
+  tableName?: string | null
+  drinkChoice?: string | null
+}
+
+export async function listPresent(eventId: number): Promise<PresentGuest[]> {
+  const res = await http.get(`${ApiConfig.checkinsPath}/event/${eventId}`)
+  if (!Array.isArray(res.data)) return []
+  return res.data.map((j: any) => ({
+    invitationId: Number(j.invitationId ?? 0),
+    guestId: Number(j.guestId ?? 0),
+    guestName: String(j.guestName ?? ''),
+    numberOfAttendees: Number(j.numberOfAttendees ?? 0),
+    lastCheckedInAt: typeof j.lastCheckedInAt === 'string' ? j.lastCheckedInAt : null,
+    tableName: typeof j.tableName === 'string' ? j.tableName : null,
+    drinkChoice: typeof j.drinkChoice === 'string' ? j.drinkChoice : null,
+  }))
+}

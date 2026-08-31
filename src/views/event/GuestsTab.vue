@@ -48,8 +48,8 @@
       <p class="text-[13px] text-slate-400 mt-1">Ajoutez votre premier invité ou importez une liste.</p>
     </div>
 
-    <!-- Tableau d'invités -->
-    <div v-else class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+    <!-- Desktop : tableau -->
+    <div v-else class="hidden md:block bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
       <table class="w-full text-sm">
         <thead class="bg-slate-50 text-left text-slate-500">
           <tr>
@@ -82,6 +82,51 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile : cartes -->
+    <div v-if="!loading && filtered.length > 0" class="md:hidden space-y-3">
+      <div
+        v-for="g in filtered"
+        :key="g.id"
+        class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
+      >
+        <!-- En-tête : avatar + nom -->
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-10 h-10 rounded-lg bg-primary-light text-primary grid place-items-center text-sm font-bold shrink-0">{{ initials(g) }}</span>
+          <p class="font-semibold text-slate-700 text-[15px] truncate">{{ g.firstName }} {{ g.lastName }}</p>
+        </div>
+
+        <!-- Coordonnées -->
+        <div class="space-y-1.5 text-[13px] text-slate-600 mb-4">
+          <p class="inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px] text-slate-400">mail</span>
+            {{ g.email || '—' }}
+          </p>
+          <p class="inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px] text-slate-400">call</span>
+            {{ g.phone || '—' }}
+          </p>
+          <p class="inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px] text-slate-400">group</span>
+            {{ g.allowedCompanions ?? 0 }} accompagnant(s)
+          </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-wrap gap-2">
+          <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
+            <span class="hidden sm:inline">Modifier</span>
+          </button>
+          <PermGuard :allow="['GUEST_DELETE']">
+            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-medium" @click="remove(g)">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+              <span class="hidden sm:inline">Supprimer</span>
+            </button>
+          </PermGuard>
+        </div>
+      </div>
     </div>
   </div>
 </template>
