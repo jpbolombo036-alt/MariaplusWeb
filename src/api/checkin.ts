@@ -10,6 +10,8 @@ export interface CheckInScan {
   checkedInAttendees: number
   remainingAttendees: number
   canCheckIn: boolean
+  tableName?: string | null
+  drinkChoice?: string | null
 }
 
 export interface CheckInResult {
@@ -33,6 +35,8 @@ export async function scan(qrToken: string, eventId: number): Promise<CheckInSca
     checkedInAttendees: Number(j.checkedInAttendees ?? 0),
     remainingAttendees: Number(j.remainingAttendees ?? 0),
     canCheckIn: Boolean(j.canCheckIn),
+    tableName: typeof j.tableName === 'string' ? j.tableName : null,
+    drinkChoice: typeof j.drinkChoice === 'string' ? j.drinkChoice : null,
   }
 }
 

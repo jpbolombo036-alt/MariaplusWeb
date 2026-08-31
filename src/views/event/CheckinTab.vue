@@ -46,6 +46,14 @@
           <div class="text-[13px] text-slate-500">
             Attendus : {{ result.expectedAttendees }} · Check-in : {{ result.checkedInAttendees }} · Restants : {{ result.remainingAttendees }}
           </div>
+          <div v-if="result.tableName || result.drinkChoice" class="mt-1.5 flex flex-wrap gap-2">
+            <span v-if="result.tableName" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-light text-primary text-[12px] font-semibold">
+              <span class="material-symbols-outlined text-[14px]">table_restaurant</span>Table {{ result.tableName }}
+            </span>
+            <span v-if="result.drinkChoice" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-attention-light text-attention-dark text-[12px] font-semibold">
+              <span class="material-symbols-outlined text-[14px]">local_bar</span>{{ result.drinkChoice }}
+            </span>
+          </div>
         </div>
         <span class="ml-auto material-symbols-outlined text-[28px]" :class="result.canCheckIn ? 'text-success' : 'text-error'">
           {{ result.canCheckIn ? 'check_circle' : 'cancel' }}
