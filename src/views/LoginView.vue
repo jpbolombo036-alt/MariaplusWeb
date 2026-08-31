@@ -1,9 +1,5 @@
 <template>
   <div class="min-h-screen flex items-center justify-center p-4 md:p-8 font-sans text-on-surface">
-    <button type="button" class="fixed top-4 left-4 z-50 h-10 px-4 rounded-lg bg-white/80 backdrop-blur border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-white inline-flex items-center gap-2 shadow-sm" @click="router.push('/')">
-      <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-      Retour
-    </button>
     <main class="w-full max-w-[1400px] min-h-[760px] bg-surface-container-lowest rounded-3xl shadow-2xl flex flex-col lg:flex-row overflow-hidden relative">
       <!-- Hero gauche (masqué < lg) -->
       <section class="hidden lg:flex w-full lg:w-5/12 bg-image-overlay p-12 flex-col justify-between text-white relative">
@@ -32,8 +28,15 @@
       </section>
 
       <!-- Formulaire droit -->
-      <section class="flex-1 flex flex-col justify-center px-6 md:px-16 py-12 bg-surface-container-lowest">
+      <section class="flex-1 flex flex-col justify-center px-6 md:px-16 py-10 md:py-12 bg-surface-container-lowest">
         <div class="max-w-md w-full mx-auto">
+          <!-- Retour à l'accueil : intégré en haut du formulaire -->
+          <RouterLink to="/"
+            class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-on-surface-variant hover:text-primary transition-colors mb-6 lg:mb-4 -ml-1">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Retour à l'accueil
+          </RouterLink>
+
           <div class="flex lg:hidden items-center justify-center gap-2 mb-6">
             <span class="w-9 h-9 rounded-lg overflow-hidden grid place-items-center"><img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" /></span>
             <span class="text-xl font-bold">MariagePlus</span>
