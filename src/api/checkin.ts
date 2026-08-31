@@ -20,7 +20,9 @@ export interface CheckInResult {
 }
 
 export async function scan(qrToken: string, eventId: number): Promise<CheckInScan> {
-  const res = await http.post(`${ApiConfig.checkinsPath}/scan`, { qrToken, eventId })
+  // Le backend (ScanCheckInRequest) attend le champ weddingId (même sémantique
+  // que l'événement actif côté front).
+  const res = await http.post(`${ApiConfig.checkinsPath}/scan`, { qrToken, weddingId: eventId })
   const j = decodeMap(res.data)
   return {
     guestName: String(j.guestName ?? ''),
@@ -35,7 +37,8 @@ export async function scan(qrToken: string, eventId: number): Promise<CheckInSca
 }
 
 export async function checkIn(qrToken: string, eventId: number, numberOfAttendees: number): Promise<CheckInResult> {
-  const res = await http.post(ApiConfig.checkinsPath, { qrToken, eventId, numberOfAttendees })
+  // CheckInRequest attend aussi weddingId.
+  const res = await http.post(ApiConfig.checkinsPath, { qrToken, weddingId: eventId, numberOfAttendees })
   const j = decodeMap(res.data)
   return {
     checkInId: Number(j.checkInId ?? 0),
