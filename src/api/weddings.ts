@@ -67,13 +67,13 @@ export function parseWedding(json: Record<string, unknown>): Wedding {
 }
 
 export async function listWeddings(page = 0, size = 25): Promise<Wedding[]> {
-  const res = await http.get(ApiConfig.weddingsPath, { params: { page, size } })
+  const res = await http.get(ApiConfig.eventsPath, { params: { page, size } })
   const json = decodeMap(res.data)
   return decodeList(json.content).map((e) => parseWedding(e as Record<string, unknown>))
 }
 
 export async function getWedding(id: number): Promise<Wedding> {
-  const res = await http.get(`${ApiConfig.weddingsPath}/${id}`)
+  const res = await http.get(`${ApiConfig.eventsPath}/${id}`)
   return parseWedding(decodeMap(res.data))
 }
 
@@ -89,7 +89,7 @@ export async function createWedding(payload: Record<string, unknown>): Promise<W
   }
   if (payload.description !== undefined) eventPayload.description = payload.description
   if (payload.message !== undefined) eventPayload.message = payload.message
-  const res = await http.post(ApiConfig.weddingsPath, eventPayload)
+  const res = await http.post(ApiConfig.eventsPath, eventPayload)
   return parseWedding(decodeMap(res.data))
 }
 
@@ -103,15 +103,15 @@ export async function updateWedding(id: number, payload: Record<string, unknown>
   if (payload.description !== undefined) eventPayload.description = payload.description
   if (payload.message !== undefined) eventPayload.message = payload.message
   if (Object.keys(weddingDetails).length > 0) eventPayload.weddingDetails = weddingDetails
-  const res = await http.put(`${ApiConfig.weddingsPath}/${id}`, eventPayload)
+  const res = await http.put(`${ApiConfig.eventsPath}/${id}`, eventPayload)
   return parseWedding(decodeMap(res.data))
 }
 
 export async function updateWeddingStatus(id: number, status: string): Promise<Wedding> {
-  const res = await http.patch(`${ApiConfig.weddingsPath}/${id}/status`, { status })
+  const res = await http.patch(`${ApiConfig.eventsPath}/${id}/status`, { status })
   return parseWedding(decodeMap(res.data))
 }
 
 export async function deleteWedding(id: number): Promise<void> {
-  await http.delete(`${ApiConfig.weddingsPath}/${id}`)
+  await http.delete(`${ApiConfig.eventsPath}/${id}`)
 }

@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import { ref, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import { BrowserMultiFormatReader } from '@zxing/browser'
+import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { scan, checkIn, type CheckInScan } from '../../api/checkin'
 import PermGuard from '../../components/common/PermGuard.vue'
 
@@ -125,6 +125,7 @@ const cameraLoading = ref(false)
 const cameraError = ref('')
 const videoEl = ref<HTMLVideoElement | null>(null)
 let reader: BrowserMultiFormatReader | null = null
+let controls: IScannerControls | null = null
 
 /** Extrait le token public depuis un QR : token brut ou lien .../invitations/<token>. */
 function extractToken(raw: string): string {
@@ -151,7 +152,7 @@ async function openScanner() {
     }
     const reader2 = new BrowserMultiFormatReader()
     reader = reader2
-    await reader.decodeFromVideoDevice(undefined, videoEl.value!, (res) => {
+    controls = await reader2.decodeFromVideoDevice(undefined, videoEl.value!, (res) => {
       if (!res) return
       const token = extractToken(res.getText())
       if (token) {
@@ -179,8 +180,9 @@ async function openScanner() {
 
 function stopCamera() {
   try {
-    reader?.reset()
+    controls?.stop()
   } catch { /* ignore */ }
+  controls = null
   reader = null
   const v = videoEl.value
   if (v?.srcObject) {

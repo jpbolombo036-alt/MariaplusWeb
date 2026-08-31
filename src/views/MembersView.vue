@@ -149,13 +149,13 @@ import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { Perm } from '../permissions'
 import { listMembers, removeMember, updateMemberWedding, type OrgMember } from '../api/organization'
-import { listEvents, type Event } from '../api/events'
+import { listEvents, type Event as EventModel } from '../api/events'
 import { initialsOf } from '../utils/initials'
 
 const auth = useAuthStore()
 
 const members = ref<OrgMember[]>([])
-const weddings = ref<Event[]>([])
+const weddings = ref<EventModel[]>([])
 const loading = ref(true)
 const savingId = ref<number | null>(null)
 
@@ -203,7 +203,7 @@ async function load() {
   }
 }
 
-async function onAssign(m: OrgMember, ev: Event) {
+async function onAssign(m: OrgMember, ev: globalThis.Event) {
   if (orgId.value == null) return
   const eventId = Number((ev.target as HTMLSelectElement).value)
   if (!eventId || eventId === m.eventId) return

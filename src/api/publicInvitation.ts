@@ -58,7 +58,7 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
 export async function listPublicDrinks(token: string): Promise<PublicDrink[]> {
   const res = await http.get(`${ApiConfig.publicInvitationsPath}/${token}/drinks`)
   const j = decodeList(res.data)
-  return j.map((d: Record<string, unknown>) => ({
+  return (decodeList(res.data) as Record<string, unknown>[]).map((d) => ({
     id: Number(d.id ?? 0),
     name: String(d.name ?? ''),
     description: d.description ? String(d.description) : null,

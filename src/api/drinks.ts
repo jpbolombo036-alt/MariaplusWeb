@@ -26,7 +26,7 @@ export interface UpdateDrinkRequest {
 export async function listDrinks(eventId: number): Promise<Drink[]> {
   const res = await http.get(`${ApiConfig.weddingDrinksPath(eventId)}`, { params: { size: 200 } })
   const json = decodeMap(res.data)
-  return decodeList(json.content).map((e: Record<string, unknown>) => ({
+  return (decodeList(json.content) as Record<string, unknown>[]).map((e) => ({
     id: Number(e.id ?? 0),
     weddingId: Number(e.weddingId ?? 0),
     name: String(e.name ?? ''),
