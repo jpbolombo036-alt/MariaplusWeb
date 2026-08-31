@@ -36,9 +36,9 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { createWedding, type Wedding } from '../../api/weddings'
+import { createEvent, type Event } from '../../api/events'
 
-const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: Wedding): void }>()
+const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: Event): void }>()
 
 const form = reactive({
   groomFirstName: '',
@@ -56,7 +56,7 @@ async function submit() {
   loading.value = true
   error.value = ''
   try {
-    const w = await createWedding({
+    const w = await createEvent({
       groomFirstName: form.groomFirstName,
       groomLastName: form.groomLastName,
       brideFirstName: form.brideFirstName,

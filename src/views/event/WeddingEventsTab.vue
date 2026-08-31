@@ -1,25 +1,44 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-5">
-      <div>
-        <h2 class="text-lg font-bold text-on-surface">Événements internes</h2>
-        <p class="text-sm text-on-surface-variant">Cérémonies, réception et temps forts de votre événement.</p>
+    <!-- En-tête style Prosoc -->
+    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mb-5">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 class="text-[22px] font-bold text-slate-900 tracking-tight">Événements internes</h2>
+          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">Cérémonies, réception et temps forts de votre événement.</p>
+        </div>
+        <PermGuard :allow="['EVENT_CREATE']">
+          <button
+            class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all"
+            @click="$router.push(`/dashboard/events/${id}/internal-events/new`)"
+          >
+            <span class="material-symbols-outlined text-[18px]">add</span> Ajouter un événement
+          </button>
+        </PermGuard>
       </div>
-      <PermGuard :allow="['EVENT_CREATE']">
-        <button
-          class="h-11 px-5 rounded-xl bg-primary text-on-primary text-sm font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:opacity-90 transition"
-          @click="openCreate"
-        >
-          <span class="material-symbols-outlined text-lg">add</span> Ajouter un événement
+    </div>
+
+    <!-- Recherche style Prosoc -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm mb-5">
+      <div class="flex items-center gap-3">
+        <div class="flex-1 relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <span class="material-symbols-outlined text-[20px]">search</span>
+          </span>
+          <input v-model="query" placeholder="Rechercher un événement..." class="h-11 pl-10 pr-4 rounded-lg border border-slate-200 bg-white text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 w-full transition-all" />
+        </div>
+        <button class="h-11 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
+          <span class="material-symbols-outlined text-[18px]">search</span>
+          <span class="hidden sm:inline">Rechercher</span>
         </button>
-      </PermGuard>
+      </div>
     </div>
 
     <p v-if="loading" class="text-on-surface-variant">Chargement…</p>
 
-    <div v-else-if="items.length === 0" class="bg-surface-container-lowest border border-outline-variant/50 rounded-2xl p-10 text-center">
-      <div class="w-16 h-16 mx-auto rounded-full bg-surface-container-high grid place-items-center mb-4">
-        <span class="material-symbols-outlined text-3xl text-on-surface-variant">event</span>
+    <div v-else-if="items.length === 0" class="bg-white border border-slate-200 rounded-xl p-10 text-center">
+      <div class="w-16 h-16 mx-auto rounded-lg bg-slate-50 grid place-items-center mb-4 ring-1 ring-slate-100">
+        <span class="material-symbols-outlined text-3xl text-slate-300">event</span>
       </div>
       <h3 class="font-semibold text-on-surface">Aucun événement programmé</h3>
       <p class="text-sm text-on-surface-variant mt-1 max-w-xs mx-auto">Ajoutez votre première cérémonie ou réception pour structurer le déroulé de la journée.</p>
@@ -27,7 +46,7 @@
 
     <div v-else class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       <article
-        v-for="e in sorted"
+        v-for="e in filtered"
         :key="e.id"
         class="group bg-surface-container-lowest border border-outline-variant/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-card hover:-translate-y-0.5 transition-all duration-300"
       >
@@ -70,78 +89,25 @@
         </div>
       </article>
     </div>
-
-    <!-- Modal création -->
-    <div v-if="formOpen" class="fixed inset-0 bg-black/40 z-50 grid place-items-center px-4" @click.self="formOpen=false">
-      <form class="w-full max-w-lg bg-surface-container-lowest rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto" @submit.prevent="create">
-        <div class="flex items-center justify-between mb-5">
-          <h3 class="font-bold text-on-surface text-lg">Nouvel événement</h3>
-          <button type="button" class="text-on-surface-variant hover:text-on-surface" @click="formOpen=false"><span class="material-symbols-outlined">close</span></button>
-        </div>
-
-        <label class="block text-xs font-semibold text-on-surface-variant mb-1">Nom *</label>
-        <input v-model="form.name" required placeholder="Ex : Cérémonie religieuse" class="input mb-3" />
-
-        <label class="block text-xs font-semibold text-on-surface-variant mb-1">Type</label>
-        <select v-model="form.type" class="input mb-3">
-          <option v-for="t in types" :key="t.value" :value="t.value">{{ t.label }}</option>
-        </select>
-
-        <label class="block text-xs font-semibold text-on-surface-variant mb-1">Date</label>
-        <input v-model="form.eventDate" type="date" class="input mb-3" />
-
-        <div class="grid grid-cols-2 gap-3 mb-3">
-          <div>
-            <label class="block text-xs font-semibold text-on-surface-variant mb-1">Début</label>
-            <input v-model="form.startTime" type="time" class="input" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-on-surface-variant mb-1">Fin</label>
-            <input v-model="form.endTime" type="time" class="input" />
-          </div>
-        </div>
-
-        <label class="block text-xs font-semibold text-on-surface-variant mb-1">Lieu</label>
-        <input v-model="form.venueName" placeholder="Ex : Église Saint-Roch" class="input mb-3" />
-        <input v-model="form.city" placeholder="Ville" class="input mb-3" />
-
-        <label class="block text-xs font-semibold text-on-surface-variant mb-1">Description</label>
-        <textarea v-model="form.description" rows="2" placeholder="Détails (optionnel)" class="input mb-4 resize-none"></textarea>
-
-        <div class="flex justify-end gap-2">
-          <button type="button" class="px-4 h-10 text-on-surface-variant" @click="formOpen=false">Annuler</button>
-          <button type="submit" class="px-5 h-10 rounded-lg bg-primary text-on-primary font-semibold">Créer</button>
-        </div>
-      </form>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import {
-  listWeddingEvents,
-  createWeddingEvent,
-  deleteWeddingEvent,
-  type WeddingEventItem,
-} from '../../api/weddingEvents'
+import { listWeddingEvents, deleteWeddingEvent, type WeddingEventItem } from '../../api/weddingEvents'
 import PermGuard from '../../components/common/PermGuard.vue'
 
 const route = useRoute()
 const id = Number(route.params.id)
 const items = ref<WeddingEventItem[]>([])
 const loading = ref(true)
-const formOpen = ref(false)
-const form = reactive({
-  name: '',
-  type: 'OTHER',
-  eventDate: '',
-  startTime: '',
-  endTime: '',
-  venueName: '',
-  city: '',
-  description: '',
+const query = ref('')
+
+const filtered = computed(() => {
+  const q = query.value.trim().toLowerCase()
+  if (!q) return sorted.value
+  return sorted.value.filter((e) => e.name.toLowerCase().includes(q) || (e.venueName ?? '').toLowerCase().includes(q))
 })
 
 const types = [
@@ -190,25 +156,6 @@ async function load() {
   } finally {
     loading.value = false
   }
-}
-function openCreate() {
-  Object.assign(form, { name: '', type: 'OTHER', eventDate: '', startTime: '', endTime: '', venueName: '', city: '', description: '' })
-  formOpen.value = true
-}
-async function create() {
-  const payload: Record<string, unknown> = {
-    name: form.name,
-    type: form.type,
-    description: form.description || null,
-    eventDate: form.eventDate || null,
-    startTime: form.startTime || null,
-    endTime: form.endTime || null,
-    venueName: form.venueName || null,
-    city: form.city || null,
-  }
-  await createWeddingEvent(id, payload)
-  formOpen.value = false
-  await load()
 }
 async function remove(e: WeddingEventItem) {
   if (!confirm(`Supprimer l'événement « ${e.name} » ?`)) return

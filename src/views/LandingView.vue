@@ -1,24 +1,25 @@
 <template>
-  <div class="min-h-screen bg-background font-sans text-on-surface overflow-x-hidden">
+  <div class="min-h-screen bg-background font-sans text-on-surface overflow-x-clip">
     <!-- ===== NAVBAR ===== -->
     <header class="sticky top-0 z-50 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/50">
       <div class="max-w-content mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-        <a href="/" class="flex items-center gap-2 group">
+        <RouterLink to="/" class="flex items-center gap-2 group">
           <span class="w-9 h-9 rounded-xl overflow-hidden ring-1 ring-primary/20 grid place-items-center group-hover:scale-105 transition-transform">
             <img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" />
           </span>
           <span class="text-lg font-bold tracking-tight">Mariage<span class="text-primary">Plus</span></span>
-        </a>
+        </RouterLink>
         <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-on-surface-variant">
-          <a href="#fonctionnalites" class="hover:text-primary transition-colors">Fonctionnalités</a>
-          <a href="#comment" class="hover:text-primary transition-colors">Comment ça marche</a>
-          <a href="#temoignages" class="hover:text-primary transition-colors">Témoignages</a>
-          <a href="#contact" class="hover:text-primary transition-colors">Contact</a>
+          <RouterLink to="/" class="hover:text-primary transition-colors">Accueil</RouterLink>
+          <RouterLink :to="{ hash: '#fonctionnalites' }" class="hover:text-primary transition-colors">Fonctionnalités</RouterLink>
+          <RouterLink :to="{ hash: '#comment' }" class="hover:text-primary transition-colors">Comment ça marche</RouterLink>
+          <RouterLink :to="{ hash: '#temoignages' }" class="hover:text-primary transition-colors">Témoignages</RouterLink>
+          <RouterLink :to="{ hash: '#contact' }" class="hover:text-primary transition-colors">Contact</RouterLink>
         </nav>
-        <a href="/login"
+        <RouterLink to="/login"
           class="px-5 h-10 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
           Se connecter <span class="material-symbols-outlined text-base">arrow_forward</span>
-        </a>
+        </RouterLink>
       </div>
     </header>
 
@@ -123,7 +124,7 @@
           <div class="text-amber-400 mb-3 text-lg">★★★★★</div>
           <p class="text-sm text-on-surface-variant italic leading-relaxed">“{{ t.text }}”</p>
           <div class="mt-5 flex items-center gap-3">
-            <span class="w-10 h-10 rounded-full grid place-items-center text-sm font-bold text-white" :style="{ background: t.color }">{{ t.initials }}</span>
+            <span class="w-10 h-10 rounded-lg grid place-items-center text-sm font-bold text-white" :style="{ background: t.color }">{{ t.initials }}</span>
             <div>
               <div class="font-semibold text-sm">{{ t.name }}</div>
               <div class="text-xs text-on-surface-variant">{{ t.role }}</div>
@@ -141,9 +142,23 @@
         <span class="material-symbols-outlined text-5xl mb-4 relative">celebration</span>
         <h2 class="text-3xl md:text-4xl font-extrabold relative">Prêt à célébrer en toute sérénité ?</h2>
         <p class="mt-4 text-white/80 max-w-xl mx-auto relative">Rejoignez MariagePlus et prenez le contrôle de vos événements dès aujourd'hui.</p>
-        <a href="/login" class="mt-8 inline-flex items-center gap-2 px-8 h-12 rounded-full bg-white text-primary-dark font-bold shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all relative">
+        <RouterLink to="/login" class="mt-8 inline-flex items-center gap-2 px-8 h-12 rounded-full bg-white text-primary-dark font-bold shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all relative">
           Créer mon espace <span class="material-symbols-outlined">arrow_forward</span>
-        </a>
+        </RouterLink>
+
+        <!-- Contacts -->
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-6 text-white/90 relative">
+          <a href="tel:+243847381745" class="inline-flex items-center gap-2 text-sm font-medium hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-lg">call</span>
+            +243 847 381 745
+          </a>
+          <span class="w-1 h-1 rounded-full bg-white/50"></span>
+          <a href="https://www.facebook.com/EventiaEasy" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-2 text-sm font-medium hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-lg">thumb_up</span>
+            Facebook · EventiaEasy
+          </a>
+        </div>
       </div>
     </section>
 
@@ -155,12 +170,21 @@
             <span class="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-primary/20 grid place-items-center"><img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" /></span>
             <span class="font-bold">Mariage<span class="text-primary">Plus</span></span>
           </div>
-          <div class="flex flex-wrap justify-center gap-6 text-sm text-on-surface-variant">
-            <a href="#fonctionnalites" class="hover:text-primary transition-colors">Fonctionnalités</a>
-            <a href="#comment" class="hover:text-primary transition-colors">Comment ça marche</a>
-            <a href="#temoignages" class="hover:text-primary transition-colors">Témoignages</a>
-            <a href="/login" class="hover:text-primary transition-colors">Connexion</a>
+
+          <!-- Contacts -->
+          <div class="flex flex-wrap items-center justify-center gap-5 text-sm text-on-surface-variant">
+            <a href="tel:+243847381745"
+               class="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-base">call</span>
+              +243 847 381 745
+            </a>
+            <a href="https://www.facebook.com/EventiaEasy" target="_blank" rel="noopener"
+               class="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-base">thumb_up</span>
+              Facebook · EventiaEasy
+            </a>
           </div>
+
           <div class="text-sm text-on-surface-variant">© 2026 MariagePlus. Tous droits réservés.</div>
         </div>
       </div>

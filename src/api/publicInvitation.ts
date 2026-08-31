@@ -1,4 +1,4 @@
-import { http, decodeMap } from './http'
+import { http, decodeMap, decodeList } from './http'
 import { ApiConfig } from './config'
 
 export interface PublicInvitation {
@@ -15,12 +15,22 @@ export interface PublicInvitation {
   status: string
   rsvpStatus?: string | null
   rsvpNumberOfAttendees?: number | null
+  rsvpDrinkChoice?: string | null
+  publicToken?: string | null
 }
 
 export interface PublicRsvp {
   invitationStatus: string
   rsvpStatus: string
   numberOfAttendees: number
+}
+
+export interface PublicDrink {
+  id: number
+  name: string
+  description?: string | null
+  displayOrder?: number | null
+  active: boolean
 }
 
 export async function getPublicInvitation(token: string): Promise<PublicInvitation> {
@@ -40,13 +50,28 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
     status: String(j.status ?? ''),
     rsvpStatus: j.rsvpStatus ? String(j.rsvpStatus) : null,
     rsvpNumberOfAttendees: j.rsvpNumberOfAttendees != null ? Number(j.rsvpNumberOfAttendees) : null,
+    rsvpDrinkChoice: j.rsvpDrinkChoice ? String(j.rsvpDrinkChoice) : null,
+    publicToken: j.publicToken ? String(j.publicToken) : null,
   }
 }
 
-export async function submitPublicRsvp(token: string, status: string, attendees: number): Promise<PublicRsvp> {
+export async function listPublicDrinks(token: string): Promise<PublicDrink[]> {
+  const res = await http.get(`${ApiConfig.publicInvitationsPath}/${token}/drinks`)
+  const j = decodeList(res.data)
+  return j.map((d: Record<string, unknown>) => ({
+    id: Number(d.id ?? 0),
+    name: String(d.name ?? ''),
+    description: d.description ? String(d.description) : null,
+    displayOrder: d.displayOrder != null ? Number(d.displayOrder) : null,
+    active: Boolean(d.active ?? true),
+  }))
+}
+
+export async function submitPublicRsvp(token: string, status: string, attendees: number, drinkChoice?: string): Promise<PublicRsvp> {
   const res = await http.post(`${ApiConfig.publicInvitationsPath}/${token}/rsvp`, {
     status,
     numberOfAttendees: attendees,
+    drinkChoice,
   })
   const j = decodeMap(res.data)
   return {

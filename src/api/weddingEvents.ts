@@ -3,7 +3,7 @@ import { ApiConfig } from './config'
 
 export interface WeddingEventItem {
   id: number
-  weddingId: number
+  eventId: number
   type: string
   name: string
   description?: string | null
@@ -35,7 +35,7 @@ function num(v: unknown): number | null {
 export function parseWeddingEvent(json: Record<string, unknown>): WeddingEventItem {
   return {
     id: Number(json.id ?? 0),
-    weddingId: Number(json.eventId ?? json.weddingId ?? 0),
+    eventId: Number(json.eventId ?? json.weddingId ?? 0),
     type: String(json.type ?? 'OTHER'),
     name: String(json.name ?? ''),
     description: str(json.description),
@@ -64,26 +64,26 @@ function toSessionPayload(payload: Record<string, unknown>): Record<string, unkn
   return out
 }
 
-export async function listWeddingEvents(weddingId: number): Promise<WeddingEventItem[]> {
-  const res = await http.get(ApiConfig.weddingEventsPath(weddingId), { params: { size: 100 } })
+export async function listWeddingEvents(eventId: number): Promise<WeddingEventItem[]> {
+  const res = await http.get(ApiConfig.weddingEventsPath(eventId), { params: { size: 100 } })
   const json = decodeMap(res.data)
   return decodeList(json.content).map((e) => parseWeddingEvent(e as Record<string, unknown>))
 }
 
-export async function createWeddingEvent(weddingId: number, payload: Record<string, unknown>): Promise<WeddingEventItem> {
-  const res = await http.post(ApiConfig.weddingEventsPath(weddingId), toSessionPayload(payload))
+export async function createWeddingEvent(eventId: number, payload: Record<string, unknown>): Promise<WeddingEventItem> {
+  const res = await http.post(ApiConfig.weddingEventsPath(eventId), toSessionPayload(payload))
   return parseWeddingEvent(decodeMap(res.data))
 }
 
 export async function updateWeddingEvent(
-  weddingId: number,
   eventId: number,
+  sessionId: number,
   payload: Record<string, unknown>,
 ): Promise<WeddingEventItem> {
-  const res = await http.put(`${ApiConfig.weddingEventsPath(weddingId)}/${eventId}`, toSessionPayload(payload))
+  const res = await http.put(`${ApiConfig.weddingEventsPath(eventId)}/${sessionId}`, toSessionPayload(payload))
   return parseWeddingEvent(decodeMap(res.data))
 }
 
-export async function deleteWeddingEvent(weddingId: number, eventId: number): Promise<void> {
-  await http.delete(`${ApiConfig.weddingEventsPath(weddingId)}/${eventId}`)
+export async function deleteWeddingEvent(eventId: number, sessionId: number): Promise<void> {
+  await http.delete(`${ApiConfig.weddingEventsPath(eventId)}/${sessionId}`)
 }

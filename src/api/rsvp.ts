@@ -9,8 +9,8 @@ export interface RsvpRow {
   respondedAt?: string | null
 }
 
-export async function listRsvps(weddingId: number): Promise<RsvpRow[]> {
-  const res = await http.get(ApiConfig.weddingRsvpsPath(weddingId))
+export async function listRsvps(eventId: number): Promise<RsvpRow[]> {
+  const res = await http.get(ApiConfig.weddingRsvpsPath(eventId))
   return decodeList(res.data).map((e) => {
     const j = e as Record<string, unknown>
     return {

@@ -19,8 +19,8 @@ export interface CheckInResult {
   remainingAttendees: number
 }
 
-export async function scan(qrToken: string, weddingId: number): Promise<CheckInScan> {
-  const res = await http.post(`${ApiConfig.checkinsPath}/scan`, { qrToken, weddingId })
+export async function scan(qrToken: string, eventId: number): Promise<CheckInScan> {
+  const res = await http.post(`${ApiConfig.checkinsPath}/scan`, { qrToken, eventId })
   const j = decodeMap(res.data)
   return {
     guestName: String(j.guestName ?? ''),
@@ -34,8 +34,8 @@ export async function scan(qrToken: string, weddingId: number): Promise<CheckInS
   }
 }
 
-export async function checkIn(qrToken: string, weddingId: number, numberOfAttendees: number): Promise<CheckInResult> {
-  const res = await http.post(ApiConfig.checkinsPath, { qrToken, weddingId, numberOfAttendees })
+export async function checkIn(qrToken: string, eventId: number, numberOfAttendees: number): Promise<CheckInResult> {
+  const res = await http.post(ApiConfig.checkinsPath, { qrToken, eventId, numberOfAttendees })
   const j = decodeMap(res.data)
   return {
     checkInId: Number(j.checkInId ?? 0),

@@ -1,17 +1,17 @@
 <template>
-  <div class="bg-white border border-outline-variant/60 rounded-card p-5 shadow-card flex flex-col">
-    <div class="flex items-center justify-between mb-4">
-      <span class="w-10 h-10 rounded-lg grid place-items-center" :class="iconBg">
-        <span class="material-symbols-outlined" :class="'text-' + tone">{{ icon }}</span>
+  <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col hover:shadow-md transition-all">
+    <div class="flex items-center justify-between mb-5">
+      <span class="w-12 h-12 rounded-xl grid place-items-center shrink-0" :class="iconBg">
+        <span class="material-symbols-outlined" :class="iconTone">{{ icon }}</span>
       </span>
-      <span v-if="badge" class="px-2 py-1 rounded-md text-[11px] font-semibold" :class="badgeClass">{{ badge }}</span>
+      <span v-if="badge" class="px-2.5 py-1 rounded-lg text-[11px] font-bold" :class="badgeClass">{{ badge }}</span>
     </div>
-    <span class="text-sm text-on-surface-variant">{{ label }}</span>
-    <div class="mt-1 flex items-baseline gap-2">
-      <span class="text-2xl font-bold text-on-surface">{{ value }}</span>
-      <span v-if="total" class="text-sm text-on-surface-variant">/ {{ total }}</span>
+    <span class="text-[13px] text-slate-500 font-medium">{{ label }}</span>
+    <div class="mt-2 flex items-baseline gap-2">
+      <span class="text-[28px] font-bold text-slate-900">{{ value }}</span>
+      <span v-if="total" class="text-sm text-slate-500">/ {{ total }}</span>
     </div>
-    <div v-if="progress !== null" class="mt-3 w-full h-2 rounded-full bg-surface-variant/60 overflow-hidden">
+    <div v-if="progress !== null" class="mt-4 w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
       <div class="h-full rounded-full transition-all" :class="barClass" :style="{ width: pct + '%' }"></div>
     </div>
   </div>
@@ -27,7 +27,7 @@ const props = defineProps<{
   icon: string
   tone?: 'primary' | 'success' | 'attention' | 'error'
   badge?: string
-  progress?: number // 0-100, ou null pour pas de barre
+  progress?: number | null
 }>()
 
 const iconBg = computed(() => {
@@ -43,7 +43,7 @@ const iconBg = computed(() => {
   }
 })
 
-const toneClass = computed(() => {
+const iconTone = computed(() => {
   switch (props.tone) {
     case 'success':
       return 'text-green-600'
@@ -57,14 +57,10 @@ const toneClass = computed(() => {
 })
 
 const badgeClass = computed(() => {
-  switch (props.tone) {
-    case 'success':
-    case 'attention':
-    case 'error':
-      return 'bg-opacity-10 ' + toneClass.value
-    default:
-      return 'bg-green-50 text-green-700'
-  }
+  if (!props.badge) return ''
+  if (props.badge.startsWith('+')) return 'bg-green-50 text-green-700'
+  if (props.badge.startsWith('-')) return 'bg-red-50 text-red-700'
+  return 'bg-slate-50 text-slate-700'
 })
 
 const barClass = computed(() => {

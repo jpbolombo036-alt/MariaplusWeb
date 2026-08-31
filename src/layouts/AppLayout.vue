@@ -1,9 +1,9 @@
 <template>
-  <div class="flex h-full">
+  <div class="flex h-full w-full overflow-hidden">
     <Sidebar @create="createNew" />
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0 h-full">
       <Header @menu="menuOpen = true" />
-      <main class="flex-1 overflow-y-auto p-4 md:p-6">
+      <main class="flex-1 overflow-y-auto p-4 md:p-4">
         <div class="mx-auto max-w-content">
           <router-view />
         </div>
@@ -13,7 +13,7 @@
 
   <!-- Drawer mobile -->
   <div v-if="menuOpen" class="md:hidden fixed inset-0 bg-black/40 z-40" @click="menuOpen = false">
-    <div class="w-4/5 max-w-[300px] h-full bg-surface-container-lowest" @click.stop>
+    <div class="w-4/5 max-w-[300px] h-full bg-white" @click.stop>
       <Sidebar @create="createNew" />
     </div>
   </div>

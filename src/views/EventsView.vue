@@ -1,58 +1,46 @@
 <template>
   <div>
-    <!-- En-tête -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-8">
-      <div>
-        <h1 style="font-size:28px;font-weight:700;color:#1F2937">Mes Événements</h1>
-        <p style="font-size:15px;color:#667085;margin-top:6px">Gérez et suivez tous vos événements en un seul endroit.</p>
-      </div>
-
-      <!-- Header droite : recherche + notifications + avatar -->
-      <div class="flex items-center gap-5">
-        <div class="relative w-full lg:w-[360px]">
-          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#9aa0aa]"><span class="material-symbols-outlined text-[22px]">search</span></span>
-          <input
-            v-model="query"
-            placeholder="Rechercher un événement..."
-            class="w-full h-12 pl-12 pr-4 rounded-[10px] border border-[#e8eaf0] bg-white text-sm outline-none focus:border-primary placeholder:text-[#9aa0aa]"
-          />
+    <!-- En-tête style Prosoc -->
+    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mb-6">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 class="text-[22px] font-bold text-slate-900 tracking-tight">Mes Événements</h1>
+          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">Gérez et suivez tous vos événements en un seul endroit.</p>
         </div>
-        <button class="relative text-on-surface-variant hover:text-primary">
-          <span class="material-symbols-outlined text-[22px]">notifications</span>
-          <span class="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-error text-white text-[10px] font-bold grid place-items-center">3</span>
-        </button>
-        <span class="w-9 h-9 rounded-full bg-surface-container grid place-items-center overflow-hidden shrink-0">
-          <span class="material-symbols-outlined text-on-surface-variant">person</span>
-        </span>
+        <div class="flex items-center gap-3">
+          <button @click="$router.push({name:'events-new'})" class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all">
+            <span class="material-symbols-outlined text-[18px]">add</span> Nouvel événement
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- 4 cartes statistiques -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
-      <div v-for="s in statCards" :key="s.label" class="bg-white border border-[#e8eaf0] rounded-[14px] p-6 flex items-center gap-4">
-        <span class="w-14 h-14 rounded-full grid place-items-center shrink-0" :style="{ background: s.bg, color: s.color }">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div v-for="s in statCards" :key="s.label" class="bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-5 shadow-sm hover:shadow-md transition-all">
+        <span class="w-14 h-14 rounded-lg grid place-items-center shrink-0" :style="{ background: s.bg, color: s.color }">
           <span class="material-symbols-outlined text-[26px]">{{ s.icon }}</span>
         </span>
         <div>
-          <div style="font-size:13px;color:#667085">{{ s.label }}</div>
-          <div style="font-size:24px;font-weight:700;color:#1F2937">{{ s.value }}</div>
-          <div style="font-size:13px;color:#9aa0aa">{{ s.sub }}</div>
+          <div class="text-[13px] text-slate-500 font-medium">{{ s.label }}</div>
+          <div class="text-[24px] font-bold text-slate-900 mt-0.5">{{ s.value }}</div>
+          <div class="text-[13px] text-slate-400 mt-0.5">{{ s.sub }}</div>
         </div>
       </div>
     </div>
 
-    <p v-if="loading" class="text-on-surface-variant py-16 text-center">Chargement…</p>
-    <p v-else-if="error" class="text-error py-16 text-center">{{ error }}</p>
-<!-- Liste en tableau -->
-    <div v-else class="bg-white border border-[#e8eaf0] rounded-[14px] overflow-hidden">
-      <div class="px-6 pt-6 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 style="font-size:18px;font-weight:700;color:#1F2937">Liste de vos événements</h2>
+    <p v-if="loading" class="text-slate-400 py-16 text-center text-sm">Chargement…</p>
+    <p v-else-if="error" class="text-error py-16 text-center text-sm">{{ error }}</p>
+    <!-- Liste en tableau -->
+    <div v-else class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <div class="px-6 pt-6 pb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 class="text-[18px] font-bold text-slate-900">Liste de vos événements</h2>
         <div class="flex items-center gap-3">
-          <button class="h-[42px] px-4 rounded-lg border border-[#e8eaf0] bg-white text-sm text-[#1F2937] inline-flex items-center gap-2">
+          <button class="h-[42px] px-4 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 inline-flex items-center gap-2 hover:bg-slate-50 transition-colors">
             <span class="material-symbols-outlined text-[18px]">filter_list</span> Tous les statuts
             <span class="material-symbols-outlined text-[18px]">expand_more</span>
           </button>
-          <button class="h-[42px] px-4 rounded-lg bg-[#4B24B5] text-white text-sm font-semibold inline-flex items-center gap-2">
+          <button class="h-[42px] px-4 rounded-lg bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
             <span class="material-symbols-outlined text-[18px]">calendar_today</span> Trier par date
           </button>
         </div>
@@ -61,41 +49,41 @@
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
-            <tr class="bg-[#f9fafb]" style="font-size:13px;font-weight:600;color:#475467">
-              <th class="px-6 py-3 text-left">Événement</th>
-              <th class="px-6 py-3 text-left">Date &amp; Heure</th>
-              <th class="px-6 py-3 text-left">Lieu</th>
-              <th class="px-6 py-3 text-left">Statut</th>
-              <th class="px-6 py-3 text-left">Invités</th>
-              <th class="px-6 py-3 text-right">Actions</th>
+            <tr class="bg-slate-50/80 text-left text-[13px] font-semibold text-slate-500">
+              <th class="px-6 py-3.5">Événement</th>
+              <th class="px-6 py-3.5">Date &amp; Heure</th>
+              <th class="px-6 py-3.5">Lieu</th>
+              <th class="px-6 py-3.5">Statut</th>
+              <th class="px-6 py-3.5">Invités</th>
+              <th class="px-6 py-3.5 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-[#eef0f6]">
-            <tr v-for="ev in paginated" :key="ev.id">
+          <tbody class="divide-y divide-slate-100">
+            <tr v-for="ev in paginated" :key="ev.id" class="hover:bg-slate-50/80 transition-colors">
               <!-- Événement -->
               <td class="px-6 py-4">
-                <div class="flex items-center gap-4">
+                <router-link :to="`/dashboard/events/${ev.id}`" class="flex items-center gap-4 group/ev">
                   <div class="w-[125px] h-[78px] rounded-lg overflow-hidden shrink-0">
-                    <img v-if="ev.couplePhotoUrl" :src="ev.couplePhotoUrl" class="w-full h-full object-cover" alt="" />
+                    <img v-if="ev.weddingDetails?.couplePhotoUrl" :src="ev.weddingDetails.couplePhotoUrl" class="w-full h-full object-cover group-hover/ev:scale-105 transition-transform duration-300" alt="" />
                     <div v-else class="w-full h-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
                       <span class="material-symbols-outlined text-2xl text-white/50">favorite</span>
                     </div>
                   </div>
                   <div>
-                    <div style="font-size:16px;font-weight:600;color:#1F2937">{{ ev.displayName || 'Sans nom' }}</div>
-                    <div style="font-size:12px;font-weight:600;color:#4B24B5;letter-spacing:0.04em">• WEDDING</div>
+                    <div class="text-[16px] font-semibold text-slate-700 group-hover/ev:text-primary transition-colors">{{ ev.weddingDetails?.displayName || ev.name || 'Sans nom' }}</div>
+                    <div class="text-[12px] font-bold text-primary tracking-wide">• {{ ev.type }}</div>
                   </div>
-                </div>
+                </router-link>
               </td>
               <!-- Date & heure -->
               <td class="px-6 py-4">
-                <div class="flex items-center gap-2 text-[14px] text-[#475467]"><span class="material-symbols-outlined text-[18px] text-[#98A2B3]">calendar_today</span> {{ dateLabel(ev) }}</div>
-                <div class="flex items-center gap-2 text-[14px] text-[#98A2B3] mt-2"><span class="material-symbols-outlined text-[18px] text-[#98A2B3]">schedule</span> —</div>
+                <div class="flex items-center gap-2 text-[14px] text-slate-600"><span class="material-symbols-outlined text-[18px] text-slate-400">calendar_today</span> {{ dateLabel(ev) }}</div>
+                <div class="flex items-center gap-2 text-[14px] text-slate-400 mt-2"><span class="material-symbols-outlined text-[18px] text-slate-400">schedule</span> —</div>
               </td>
               <!-- Lieu -->
               <td class="px-6 py-4">
-                <div class="flex items-start gap-2 text-[14px] text-[#475467]">
-                  <span class="material-symbols-outlined text-[18px] text-[#98A2B3]">place</span>
+                <div class="flex items-start gap-2 text-[14px] text-slate-600">
+                  <span class="material-symbols-outlined text-[18px] text-slate-400">place</span>
                   <span>Non renseigné</span>
                 </div>
               </td>
@@ -103,12 +91,12 @@
               <td class="px-6 py-4"><StatusBadge :status="ev.status" /></td>
               <!-- Invités -->
               <td class="px-6 py-4">
-                <div style="font-size:16px;font-weight:600;color:#1F2937">—</div>
-                <div style="font-size:13px;color:#98A2B3">Invités attendus</div>
+                <div class="text-[16px] font-semibold text-slate-700">—</div>
+                <div class="text-[13px] text-slate-400">Invités attendus</div>
               </td>
               <!-- Actions -->
               <td class="px-6 py-4 text-right">
-                <button class="text-[#98A2B3] hover:text-[#1F2937]"><span class="material-symbols-outlined">more_vert</span></button>
+                <router-link to="#" @click.prevent="goDetail(ev)" class="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100 transition-colors" title="Voir les détails"><span class="material-symbols-outlined text-[20px]">more_vert</span></router-link>
               </td>
             </tr>
           </tbody>
@@ -116,12 +104,12 @@
       </div>
 
       <!-- Pagination -->
-      <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-[#eef0f6]">
-        <div style="font-size:13px;color:#667085">Affichage 1 - {{ filtered.length }} sur {{ filtered.length }} événements</div>
+      <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-slate-100">
+        <div class="text-[13px] text-slate-500 font-medium">Affichage 1 - {{ filtered.length }} sur {{ filtered.length }} événements</div>
         <div class="flex items-center gap-2">
-          <button class="w-9 h-9 rounded-lg border border-[#e8eaf0] bg-white text-[#1F2937] inline-flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
-          <button class="w-9 h-9 rounded-lg bg-[#4B24B5] text-white inline-flex items-center justify-center text-sm font-semibold">1</button>
-          <button class="w-9 h-9 rounded-lg border border-[#e8eaf0] bg-white text-[#1F2937] inline-flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+          <button class="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center hover:bg-slate-50 transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+          <button class="w-9 h-9 rounded-lg bg-primary text-white inline-flex items-center justify-center text-sm font-semibold shadow-sm shadow-primary/20">1</button>
+          <button class="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center hover:bg-slate-50 transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
         </div>
       </div>
     </div>
@@ -132,21 +120,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { listWeddings, type Wedding } from '../api/weddings'
+import { listEvents, type Event } from '../api/events'
 import PermGuard from '../components/common/PermGuard.vue'
 import StatusBadge from '../components/common/StatusBadge.vue'
 import CreateEventDialog from '../components/events/CreateEventDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
-const events = ref<Wedding[]>([])
+const events = ref<Event[]>([])
 const loading = ref(true)
 const error = ref('')
 const createOpen = ref(false)
 const query = ref('')
 const statusFilter = ref('')
 
-// Ouvre le dialogue si arrivé via le bouton sidebar (…?new=1).
 if (route.query.new === '1') {
   createOpen.value = true
   router.replace({ query: {} })
@@ -157,7 +144,7 @@ const filtered = computed(() => {
   const st = statusFilter.value
   return events.value.filter((ev) => {
     if (st && ev.status !== st) return false
-    if (q && !ev.displayName.toLowerCase().includes(q)) return false
+    if (q && !ev.name.toLowerCase().includes(q)) return false
     return true
   })
 })
@@ -178,7 +165,7 @@ const statCards = computed(() => {
   ]
 })
 
-function dateLabel(ev: Wedding): string {
+function dateLabel(ev: Event): string {
   return ev.createdAt || ev.updatedAt ? new Date(ev.createdAt || ev.updatedAt || '').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Non renseigné'
 }
 
@@ -187,7 +174,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    events.value = await listWeddings()
+    events.value = await listEvents()
   } catch (e: any) {
     error.value = e?.message || 'Erreur de chargement'
   } finally {
@@ -195,9 +182,13 @@ async function load() {
   }
 }
 
-function onCreated(w: Wedding) {
+function onCreated(w: Event) {
   createOpen.value = false
   router.push(`/dashboard/events/${w.id}`)
+}
+
+function goDetail(ev: Event) {
+  router.push(`/dashboard/events/${ev.id}`)
 }
 </script>
 

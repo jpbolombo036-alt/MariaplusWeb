@@ -3,7 +3,7 @@
     <div class="relative w-full h-[320px] rounded-xl overflow-hidden mb-6 shadow-sm border border-outline-variant/30 flex items-end">
       <div
         class="absolute inset-0 bg-cover bg-center"
-        :style="event?.couplePhotoUrl ? { backgroundImage: `url(${event.couplePhotoUrl})` } : undefined"
+        :style="event?.weddingDetails?.couplePhotoUrl ? { backgroundImage: `url(${event.weddingDetails.couplePhotoUrl})` } : undefined"
       ></div>
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
 
@@ -39,72 +39,84 @@
     </div>
 
 
-    <div v-if="stats" class="grid grid-cols-12 gap-6">
-      <div class="col-span-12 md:col-span-4 bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-5 shadow-sm flex flex-col justify-between min-h-[160px]">
+    <div v-if="stats" class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h3 class="text-[15px] font-bold text-slate-800">Aperçu de l'événement</h3>
+          <p class="text-[13px] text-slate-500 mt-0.5">Statistiques et progression</p>
+        </div>
+        <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+          <span class="material-symbols-outlined text-[16px]">refresh</span> Actualiser
+        </button>
+      </div>
+
+      <div class="grid grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-4 bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between min-h-[160px]">
         <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2 text-on-surface-variant text-sm"><span class="material-symbols-outlined text-base">group</span> Participation</div>
-          <span class="text-xs font-semibold text-secondary px-2 py-1 bg-secondary-container/20 rounded-md">{{ participationTotal }} acc.</span>
+          <div class="flex items-center gap-2 text-slate-500 text-sm"><span class="material-symbols-outlined text-base">group</span> Participation</div>
+          <span class="text-xs font-semibold text-green-700 px-2 py-1 bg-green-50 rounded-md">{{ participationTotal }} acc.</span>
         </div>
         <div>
           <div class="flex items-baseline gap-2">
-            <span class="text-2xl font-bold text-on-surface">{{ stats.attendance.checkedIn }}</span>
-            <span class="text-sm text-on-surface-variant">/ {{ stats.attendance.expected }} attendus</span>
+            <span class="text-2xl font-bold text-slate-900">{{ stats.attendance.checkedIn }}</span>
+            <span class="text-sm text-slate-500">/ {{ stats.attendance.expected }} attendus</span>
           </div>
-          <div class="w-full bg-surface-variant h-2 rounded-full mt-3 overflow-hidden"><div class="bg-primary h-full rounded-full" :style="{ width: pctParticipation + '%' }"></div></div>
+          <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden"><div class="bg-primary h-full rounded-full" :style="{ width: pctParticipation + '%' }"></div></div>
         </div>
       </div>
 
-      <div class="col-span-12 md:col-span-4 bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-5 shadow-sm flex flex-col justify-between min-h-[160px]">
+      <div class="col-span-12 md:col-span-4 bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between min-h-[160px]">
         <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2 text-on-surface-variant text-sm"><span class="material-symbols-outlined text-base">mail</span> Invitations</div>
-          <span class="text-xs px-2 py-1 bg-error/10 text-error rounded-md">{{ stats.invitations.pending }} en attente</span>
+          <div class="flex items-center gap-2 text-slate-500 text-sm"><span class="material-symbols-outlined text-base">mail</span> Invitations</div>
+          <span class="text-xs px-2 py-1 bg-red-50 text-red-700 rounded-md">{{ stats.invitations.pending }} en attente</span>
         </div>
         <div class="space-y-1">
-          <div class="flex justify-between text-sm"><span class="text-on-surface-variant">Acceptées</span><span class="font-semibold text-on-surface">{{ stats.invitations.accepted }}</span></div>
-          <div class="flex justify-between text-sm"><span class="text-on-surface-variant">Déclinées</span><span class="font-semibold text-on-surface">{{ stats.invitations.declined }}</span></div>
+          <div class="flex justify-between text-sm"><span class="text-slate-500">Acceptées</span><span class="font-semibold text-slate-900">{{ stats.invitations.accepted }}</span></div>
+          <div class="flex justify-between text-sm"><span class="text-slate-500">Déclinées</span><span class="font-semibold text-slate-900">{{ stats.invitations.declined }}</span></div>
         </div>
       </div>
 
-      <div class="col-span-12 md:col-span-4 bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-5 shadow-sm flex flex-col justify-between min-h-[160px]">
+      <div class="col-span-12 md:col-span-4 bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between min-h-[160px]">
         <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2 text-on-surface-variant text-sm"><span class="material-symbols-outlined text-base">bar_chart</span> Statistiques</div>
+          <div class="flex items-center gap-2 text-slate-500 text-sm"><span class="material-symbols-outlined text-base">bar_chart</span> Statistiques</div>
         </div>
         <div>
-          <div class="flex items-baseline gap-2"><span class="text-2xl font-bold text-on-surface">{{ pctRsvp }}%</span><span class="text-sm text-on-surface-variant">de réponse</span></div>
-          <div class="w-full bg-surface-variant h-2 rounded-full mt-3 overflow-hidden"><div class="bg-secondary h-full rounded-full" :style="{ width: pctRsvp + '%' }"></div></div>
+          <div class="flex items-baseline gap-2"><span class="text-2xl font-bold text-slate-900">{{ pctRsvp }}%</span><span class="text-sm text-slate-500">de réponse</span></div>
+          <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden"><div class="bg-secondary h-full rounded-full" :style="{ width: pctRsvp + '%' }"></div></div>
         </div>
       </div>
 
-      <div class="col-span-12 lg:col-span-8 bg-surface-container-lowest border border-outline-variant/20 rounded-xl shadow-sm flex flex-col overflow-hidden h-[320px]">
-        <div class="px-5 py-4 border-b border-outline-variant/20 bg-surface flex justify-between items-center">
-          <h3 class="font-semibold text-on-surface">Progression & Tables</h3>
+      <div class="col-span-12 lg:col-span-8 bg-slate-50 border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden h-[320px]">
+        <div class="px-5 py-4 border-b border-slate-200 bg-white flex justify-between items-center">
+          <h3 class="font-semibold text-slate-800">Progression & Tables</h3>
           <router-link to="tables" class="text-primary text-sm hover:underline">Voir tout</router-link>
         </div>
         <div class="p-5 flex-1 grid grid-cols-2 gap-4">
-          <div class="bg-surface-container-low rounded-xl p-4"><span class="material-symbols-outlined text-on-surface-variant">grid_view</span><div class="mt-2 text-xl font-bold text-on-surface">{{ stats.tables.total }}</div><div class="text-xs text-on-surface-variant">Tables créées</div></div>
-          <div class="bg-surface-container-low rounded-xl p-4"><span class="material-symbols-outlined text-on-surface-variant">group</span><div class="mt-2 text-xl font-bold text-on-surface">{{ stats.tables.assignedGuests }}/{{ stats.tables.capacity }}</div><div class="text-xs text-on-surface-variant">Places occupées</div></div>
-          <div class="bg-surface-container-low rounded-xl p-4"><span class="material-symbols-outlined text-on-surface-variant">percent</span><div class="mt-2 text-xl font-bold text-on-surface">{{ tableFillRate }}%</div><div class="text-xs text-on-surface-variant">Taux de remplissage</div></div>
-          <div class="bg-surface-container-low rounded-xl p-4"><span class="material-symbols-outlined text-on-surface-variant">event_seat</span><div class="mt-2 text-xl font-bold text-on-surface">{{ stats.tables.capacity }}</div><div class="text-xs text-on-surface-variant">Capacité totale</div></div>
+          <div class="bg-white rounded-xl p-4 border border-slate-100"><span class="material-symbols-outlined text-slate-400">grid_view</span><div class="mt-2 text-xl font-bold text-slate-900">{{ stats.tables.total }}</div><div class="text-xs text-slate-500">Tables créées</div></div>
+          <div class="bg-white rounded-xl p-4 border border-slate-100"><span class="material-symbols-outlined text-slate-400">group</span><div class="mt-2 text-xl font-bold text-slate-900">{{ stats.tables.assignedGuests }}/{{ stats.tables.capacity }}</div><div class="text-xs text-slate-500">Places occupées</div></div>
+          <div class="bg-white rounded-xl p-4 border border-slate-100"><span class="material-symbols-outlined text-slate-400">percent</span><div class="mt-2 text-xl font-bold text-slate-900">{{ tableFillRate }}%</div><div class="text-xs text-slate-500">Taux de remplissage</div></div>
+          <div class="bg-white rounded-xl p-4 border border-slate-100"><span class="material-symbols-outlined text-slate-400">event_seat</span><div class="mt-2 text-xl font-bold text-slate-900">{{ stats.tables.capacity }}</div><div class="text-xs text-slate-500">Capacité totale</div></div>
         </div>
       </div>
 
-      <div class="col-span-12 lg:col-span-4 bg-surface-container-lowest border border-outline-variant/20 rounded-xl shadow-sm flex flex-col overflow-hidden h-[320px]">
-        <div class="px-5 py-4 border-b border-outline-variant/20 bg-surface"><h3 class="font-semibold text-on-surface">Événements programmés</h3></div>
+      <div class="col-span-12 lg:col-span-4 bg-slate-50 border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden h-[320px]">
+        <div class="px-5 py-4 border-b border-slate-200 bg-white"><h3 class="font-semibold text-slate-800">Événements programmés</h3></div>
         <div class="flex-1 flex flex-col justify-center items-center p-5">
-          <div class="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center mb-4 border border-outline-variant/30"><span class="material-symbols-outlined text-outline text-3xl">event</span></div>
-          <p class="text-on-surface-variant text-center text-sm max-w-[200px]">Les cérémonies / événements programmés seront listés ici.</p>
+          <div class="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center mb-4 border border-slate-200"><span class="material-symbols-outlined text-slate-400 text-3xl">event</span></div>
+          <p class="text-slate-500 text-center text-sm max-w-[200px]">Les cérémonies / événements programmés seront listés ici.</p>
         </div>
       </div>
     </div>
+    </div>
 
-    <p v-else-if="loading" class="text-on-surface-variant">Chargement…</p>
+    <p v-else-if="loading" class="text-slate-400">Chargement…</p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getWedding, updateWeddingStatus, type Wedding } from '../../api/weddings'
+import { getEvent, updateEventStatus, type Event } from '../../api/events'
 import { getDashboard, type Dashboard } from '../../api/dashboard'
 import PermGuard from '../../components/common/PermGuard.vue'
 
@@ -112,11 +124,11 @@ const route = useRoute()
 const id = Number(route.params.id)
 
 const stats = ref<Dashboard | null>(null)
-const event = ref<Wedding | null>(null)
+const event = ref<Event | null>(null)
 const loading = ref(true)
 
-const eventDisplayName = computed(() => event.value?.displayName || '')
-const eventType = computed(() => (event.value ? 'Mariage' : 'Événement'))
+const eventDisplayName = computed(() => event.value?.weddingDetails?.displayName || event.value?.name || '')
+const eventType = computed(() => event.value?.type || 'ÉVÉNEMENT')
 const statusLabel = computed(() => (event.value?.status || 'DRAFT').toUpperCase())
 
 const pctParticipation = computed(() => {
@@ -132,7 +144,7 @@ const tableFillRate = computed(() => {
 
 onMounted(async () => {
   try {
-    const [w, d] = await Promise.all([getWedding(id), getDashboard(id)])
+    const [w, d] = await Promise.all([getEvent(id), getDashboard(id)])
     event.value = w
     stats.value = d
   } catch {
@@ -144,7 +156,7 @@ onMounted(async () => {
 
 async function publish() {
   try {
-    event.value = await updateWeddingStatus(id, 'PUBLISHED')
+    event.value = await updateEventStatus(id, 'PUBLISHED')
   } catch {
     /* ignoré */
   }

@@ -24,16 +24,16 @@ export const ApiConfig = {
   // Bascule Event (racine unifiée) : les mariages sont désormais des
   // événements de type WEDDING servis par /api/events (voir
   // docs/DESIGN_EVENT_AS_ROOT.md côté backend).
-  weddingsPath: '/api/events',
-
-  weddingGuestsPath: (weddingId: number) => `/api/events/${weddingId}/guests`,
-  weddingCategoriesPath: (weddingId: number) => `/api/events/${weddingId}/guest-categories`,
-  weddingInvitationsPath: (weddingId: number) => `/api/events/${weddingId}/invitations`,
-  weddingEventsPath: (weddingId: number) => `/api/events/${weddingId}/sessions`,
-  weddingTablesPath: (weddingId: number) => `/api/events/${weddingId}/tables`,
-  weddingAssignmentsPath: (weddingId: number) => `/api/events/${weddingId}/assignments`,
-  weddingDashboardPath: (weddingId: number) => `/api/events/${weddingId}/dashboard`,
-  weddingRsvpsPath: (weddingId: number) => `/api/events/${weddingId}/rsvps`,
+  eventsPath: '/api/events',
+  weddingGuestsPath: (eventId: number) => `/api/events/${eventId}/guests`,
+  weddingCategoriesPath: (eventId: number) => `/api/events/${eventId}/guest-categories`,
+  weddingInvitationsPath: (eventId: number) => `/api/events/${eventId}/invitations`,
+  weddingEventsPath: (eventId: number) => `/api/events/${eventId}/sessions`,
+  weddingTablesPath: (eventId: number) => `/api/events/${eventId}/tables`,
+  weddingAssignmentsPath: (eventId: number) => `/api/events/${eventId}/assignments`,
+  weddingDashboardPath: (eventId: number) => `/api/events/${eventId}/dashboard`,
+  weddingRsvpsPath: (eventId: number) => `/api/events/${eventId}/rsvps`,
+  weddingDrinksPath: (eventId: number) => `/api/events/${eventId}/drinks`,
 
   checkinsPath: '/api/checkins',
   publicInvitationsPath: '/api/public/invitations',

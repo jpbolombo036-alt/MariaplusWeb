@@ -3,7 +3,7 @@ import { ApiConfig } from './config'
 
 export interface Invitation {
   id: number
-  weddingId: number
+  eventId: number
   guestId: number
   invitationCode: string
   status: string
@@ -26,7 +26,7 @@ export interface QrCode {
 function parseInv(json: Record<string, unknown>): Invitation {
   return {
     id: Number(json.id ?? 0),
-    weddingId: Number(json.weddingId ?? 0),
+    eventId: Number(json.eventId ?? json.weddingId ?? 0),
     guestId: Number(json.guestId ?? 0),
     invitationCode: String(json.invitationCode ?? ''),
     status: String(json.status ?? 'DRAFT'),
@@ -37,52 +37,52 @@ function parseInv(json: Record<string, unknown>): Invitation {
   }
 }
 
-export async function listInvitations(weddingId: number): Promise<Invitation[]> {
-  const res = await http.get(ApiConfig.weddingInvitationsPath(weddingId), { params: { size: 200 } })
+export async function listInvitations(eventId: number): Promise<Invitation[]> {
+  const res = await http.get(ApiConfig.weddingInvitationsPath(eventId), { params: { size: 200 } })
   const json = decodeMap(res.data)
   return decodeList(json.content).map((e) => parseInv(e as Record<string, unknown>))
 }
 
-export async function listNonResponders(weddingId: number): Promise<Invitation[]> {
-  const res = await http.get(`${ApiConfig.weddingInvitationsPath(weddingId)}/pending-rsvp`)
+export async function listNonResponders(eventId: number): Promise<Invitation[]> {
+  const res = await http.get(`${ApiConfig.weddingInvitationsPath(eventId)}/pending-rsvp`)
   return decodeList(res.data).map((e) => parseInv(e as Record<string, unknown>))
 }
 
-export async function createInvitation(weddingId: number, guestId: number): Promise<Invitation> {
-  const res = await http.post(ApiConfig.weddingInvitationsPath(weddingId), { guestId })
+export async function createInvitation(eventId: number, guestId: number): Promise<Invitation> {
+  const res = await http.post(ApiConfig.weddingInvitationsPath(eventId), { guestId })
   return parseInv(decodeMap(res.data))
 }
 
-export async function updateInvitation(weddingId: number, invitationId: number, payload: Record<string, unknown>): Promise<Invitation> {
-  const res = await http.put(`${ApiConfig.weddingInvitationsPath(weddingId)}/${invitationId}`, payload)
+export async function updateInvitation(eventId: number, invitationId: number, payload: Record<string, unknown>): Promise<Invitation> {
+  const res = await http.put(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}`, payload)
   return parseInv(decodeMap(res.data))
 }
 
-export async function deleteInvitation(weddingId: number, invitationId: number): Promise<void> {
-  await http.delete(`${ApiConfig.weddingInvitationsPath(weddingId)}/${invitationId}`)
+export async function deleteInvitation(eventId: number, invitationId: number): Promise<void> {
+  await http.delete(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}`)
 }
 
-export async function sendInvitation(weddingId: number, invitationId: number): Promise<SendResult> {
-  const res = await http.post(`${ApiConfig.weddingInvitationsPath(weddingId)}/${invitationId}/send`)
+export async function sendInvitation(eventId: number, invitationId: number): Promise<SendResult> {
+  const res = await http.post(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/send`)
   return decodeMap(res.data) as unknown as SendResult
 }
 
-export async function resendInvitation(weddingId: number, invitationId: number): Promise<SendResult> {
-  const res = await http.post(`${ApiConfig.weddingInvitationsPath(weddingId)}/${invitationId}/resend`)
+export async function resendInvitation(eventId: number, invitationId: number): Promise<SendResult> {
+  const res = await http.post(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/resend`)
   return decodeMap(res.data) as unknown as SendResult
 }
 
-export async function cancelInvitation(weddingId: number, invitationId: number): Promise<Invitation> {
-  const res = await http.post(`${ApiConfig.weddingInvitationsPath(weddingId)}/${invitationId}/cancel`)
+export async function cancelInvitation(eventId: number, invitationId: number): Promise<Invitation> {
+  const res = await http.post(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/cancel`)
   return parseInv(decodeMap(res.data))
 }
 
-export async function getQr(weddingId: number, invitationId: number): Promise<QrCode> {
-  const res = await http.get(`${ApiConfig.weddingInvitationsPath(weddingId)}/${invitationId}/qr`)
+export async function getQr(eventId: number, invitationId: number): Promise<QrCode> {
+  const res = await http.get(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/qr`)
   return { dataUri: String(decodeMap(res.data).qrDataUri ?? '') }
 }
 
-export async function rotateQr(weddingId: number, invitationId: number): Promise<QrCode> {
-  const res = await http.post(`${ApiConfig.weddingInvitationsPath(weddingId)}/${invitationId}/qr/rotate`)
+export async function rotateQr(eventId: number, invitationId: number): Promise<QrCode> {
+  const res = await http.post(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/qr/rotate`)
   return { dataUri: String(decodeMap(res.data).qrDataUri ?? '') }
 }

@@ -48,8 +48,18 @@ export const useAuthStore = defineStore('auth', {
       this.restored = true
     },
     async register(payload: Record<string, unknown>) {
-      await http.post(ApiConfig.authRegister, payload)
-      // register auto-connecte ; on attend la réponse LoginResponse.
+      // POST /auth/register renvoie 201 + LoginResponse (auto-connexion côté backend).
+      const res = await http.post(ApiConfig.authRegister, payload)
+      const json = decodeMap(res.data)
+      if (json.error) throw new Error(String(json.error))
+      const login = parseLoginResponse(json)
+      setTokens({
+        accessToken: login.accessToken,
+        refreshToken: login.refreshToken,
+        expiresIn: login.expiresIn,
+      })
+      this.user = login.user
+      this.restored = true
     },
     async restore() {
       const tokens = loadTokens()

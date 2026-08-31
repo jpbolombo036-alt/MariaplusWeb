@@ -7,6 +7,8 @@ export interface NavEntry {
   icon: string // Material Symbols class
   // Chemin relatif de la section à l'intérieur d'un mariage (si gestion d'événement).
   section?: NavSection
+  // Route d'application fixe (entrée générale hors mariage).
+  path?: string
   // Permissions requises (une seule suffit).
   perm?: string[]
 }
@@ -25,11 +27,13 @@ export const navEntries: NavEntry[] = [
   { label: 'Tables & Placements', icon: 'grid_view', section: 'tables', perm: [Perm.tableView] },
   { label: 'Événements internes', icon: 'business_center', section: 'internal-events', perm: [Perm.eventView] },
   { label: 'Statistiques', icon: 'analytics', section: 'statistics', perm: [Perm.statisticsView] },
+  { label: 'Équipe', icon: 'manage_accounts', path: '/dashboard/members', perm: [Perm.organizationManageMembers] },
 ]
 
 // Route d'application cible pour une entrée donnée, résolue avec l'ID du mariage
 // sélectionné (null = entrée générale sans mariage).
 export function navTo(entry: NavEntry, activeWeddingId?: number | null): string {
+  if (entry.path) return entry.path
   if (entry.section) {
     if (!activeWeddingId) return '/dashboard/events'
     return `/dashboard/events/${activeWeddingId}/${entry.section}`

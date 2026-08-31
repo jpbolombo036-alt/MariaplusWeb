@@ -17,16 +17,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { filterNav, navTo } from '../../navigation'
-import { listWeddings, type Wedding } from '../../api/weddings'
+import { listEvents, type Event } from '../../api/events'
 
 const auth = useAuthStore()
-const weddings = ref<Wedding[]>([])
+const weddings = ref<Event[]>([])
 const activeWeddingId = computed(() => weddings.value[0]?.id ?? null)
 const visible = computed(() => filterNav(auth.permissions).slice(0, 4))
 
 onMounted(async () => {
   try {
-    weddings.value = await listWeddings()
+    weddings.value = await listEvents()
   } catch {
     /* aucune liste */
   }

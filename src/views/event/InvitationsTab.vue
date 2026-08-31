@@ -1,28 +1,42 @@
 <template>
   <div>
-    <!-- En-tête -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-      <div>
-        <h2 class="text-xl font-bold text-on-surface">Invitations</h2>
-        <p class="text-sm text-on-surface-variant mt-0.5">{{ invitations.length }} invitation(s)</p>
+    <!-- En-tête style Prosoc -->
+    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm mb-5">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 class="text-[22px] font-bold text-slate-900 tracking-tight">Invitations</h2>
+          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">{{ invitations.length }} invitation(s)</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <PermGuard :allow="['INVITATION_CREATE']">
+            <button class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all" @click="$router.push(`/dashboard/events/${id}/invitations/new`)">
+              <span class="material-symbols-outlined text-[18px]">add</span> Inviter
+            </button>
+          </PermGuard>
+        </div>
       </div>
+    </div>
+
+    <!-- Recherche style Prosoc -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm mb-5">
       <div class="flex items-center gap-3">
-        <select v-model="statusFilter" class="h-10 px-3 rounded-xl border border-outline-variant bg-surface-container-lowest text-sm outline-none focus:border-primary">
+        <select v-model="statusFilter" class="h-11 px-3 rounded-lg border border-slate-200 bg-white text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-slate-700 transition-all">
           <option value="">Tous</option>
           <option value="DRAFT">Brouillon</option>
           <option value="GENERATED">Générée</option>
           <option value="SENT">Envoyée</option>
           <option value="CANCELLED">Annulée</option>
         </select>
-        <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant"><span class="material-symbols-outlined text-lg">search</span></span>
-          <input v-model="query" placeholder="Code ou invité…" class="h-10 pl-10 pr-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-sm outline-none focus:border-primary w-48" />
+        <div class="flex-1 relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <span class="material-symbols-outlined text-[20px]">search</span>
+          </span>
+          <input v-model="query" placeholder="Code ou invité…" class="h-11 pl-10 pr-4 rounded-lg border border-slate-200 bg-white text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 w-full transition-all" />
         </div>
-        <PermGuard :allow="['INVITATION_CREATE']">
-          <button class="h-10 px-5 rounded-xl bg-primary text-on-primary text-sm font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:opacity-90 transition" @click="formOpen=true">
-            <span class="material-symbols-outlined text-lg">add</span> Inviter
-          </button>
-        </PermGuard>
+        <button class="h-11 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
+          <span class="material-symbols-outlined text-[18px]">search</span>
+          <span class="hidden sm:inline">Rechercher</span>
+        </button>
       </div>
     </div>
 
@@ -60,7 +74,7 @@
             <td class="px-5 py-3.5 text-right">
               <div class="inline-flex items-center gap-1">
                 <PermGuard :allow="['INVITATION_SEND']">
-                  <button v-if="i.status==='GENERATED' || i.status==='DRAFT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1" title="Envoyer"><span class="material-symbols-outlined text-base">send</span></button>
+                  <button v-if="i.status==='GENERATED' || i.status==='DRAFT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1" title="Envoyer" @click="send(i)"><span class="material-symbols-outlined text-base">send</span></button>
                 </PermGuard>
                 <PermGuard :allow="['INVITATION_RESEND']">
                   <button v-if="i.status==='SENT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1" title="Relancer" @click="resend(i)"><span class="material-symbols-outlined text-base">refresh</span></button>
@@ -81,25 +95,6 @@
       </table>
     </div>
 
-    <!-- Modal création -->
-    <div v-if="formOpen" class="fixed inset-0 bg-black/40 z-50 grid place-items-center px-4" @click.self="formOpen=false">
-      <form class="w-full max-w-sm bg-surface-container-lowest rounded-2xl p-6 shadow-2xl" @submit.prevent="doCreate">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-on-surface text-lg">Nouvelle invitation</h3>
-          <button type="button" class="text-on-surface-variant hover:text-on-surface" @click="formOpen=false"><span class="material-symbols-outlined">close</span></button>
-        </div>
-        <label class="block text-xs font-semibold text-on-surface-variant mb-1">Invité *</label>
-        <select v-model="selectedGuestId" required class="input mb-4">
-          <option :value="null" disabled>Sélectionner un invité</option>
-          <option v-for="g in guests" :key="g.id" :value="g.id">{{ g.firstName }} {{ g.lastName }}</option>
-        </select>
-        <div class="flex justify-end gap-2">
-          <button type="button" class="px-4 h-10 text-on-surface-variant" @click="formOpen=false">Annuler</button>
-          <button type="submit" class="px-5 h-10 rounded-lg bg-primary text-on-primary font-semibold">Créer</button>
-        </div>
-      </form>
-    </div>
-
     <!-- Détail QR -->
     <div v-if="qrOpen" class="fixed inset-0 bg-black/40 z-50 grid place-items-center px-4" @click.self="qrOpen=false">
       <div class="bg-surface-container-lowest rounded-2xl p-6 w-full max-w-sm text-center">
@@ -110,6 +105,22 @@
             <button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm" @click="rotate">Faire pivoter</button>
           </PermGuard>
           <button class="px-3 py-1.5 rounded-lg border border-outline-variant text-sm" @click="qrOpen=false">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partage lien public -->
+    <div v-if="shareOpen" class="fixed inset-0 bg-black/40 z-50 grid place-items-center px-4" @click.self="shareOpen=false">
+      <div class="bg-surface-container-lowest rounded-2xl p-6 w-full max-w-lg">
+        <h3 class="text-lg font-bold text-on-surface mb-2">Partager l'invitation</h3>
+        <p class="text-sm text-on-surface-variant mb-4">Copiez ce lien et envoyez-le à l'invité :</p>
+        <div class="flex items-center gap-2">
+          <input :value="shareUrl" readonly class="flex-1 px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-sm text-on-surface" />
+          <button class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold" @click="copyShare">Copier</button>
+        </div>
+        <p class="mt-3 text-xs text-on-surface-variant">Email envoyé : <strong>{{ shareEmailSent ? 'Oui' : 'Non' }}</strong></p>
+        <div class="mt-5 flex justify-end">
+          <button class="px-4 py-2 rounded-lg border border-outline-variant text-sm" @click="shareOpen=false">Fermer</button>
         </div>
       </div>
     </div>
@@ -133,11 +144,12 @@ const guests = ref<Guest[]>([])
 const loading = ref(true)
 const query = ref('')
 const statusFilter = ref('')
-const formOpen = ref(false)
-const selectedGuestId = ref<number | null>(null)
 const qrOpen = ref(false)
 const qrDataUri = ref('')
 const qrInv = ref<Invitation | null>(null)
+const shareOpen = ref(false)
+const shareUrl = ref('')
+const shareEmailSent = ref(false)
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -171,20 +183,23 @@ async function load() {
     loading.value = false
   }
 }
-async function doCreate() {
-  if (!selectedGuestId.value) return
-  const created = await createInvitation(id, selectedGuestId.value)
-  invitations.value.push(created)
-  formOpen.value = false
-  selectedGuestId.value = null
-}
 async function send(i: Invitation) {
-  await sendInvitation(id, i.id)
+  const result = await sendInvitation(id, i.id)
   await load()
+  if (result.publicInviteUrl) {
+    shareUrl.value = result.publicInviteUrl
+    shareEmailSent.value = result.emailSent || false
+    shareOpen.value = true
+  }
 }
 async function resend(i: Invitation) {
-  await resendInvitation(id, i.id)
+  const result = await resendInvitation(id, i.id)
   await load()
+  if (result.publicInviteUrl) {
+    shareUrl.value = result.publicInviteUrl
+    shareEmailSent.value = result.emailSent || false
+    shareOpen.value = true
+  }
 }
 async function cancel(i: Invitation) {
   if (!confirm(`Annuler l'invitation ?`)) return
@@ -207,6 +222,14 @@ async function rotate() {
   const q = await rotateQr(id, qrInv.value.id)
   qrDataUri.value = q.dataUri
   await load()
+}
+async function copyShare() {
+  try {
+    await navigator.clipboard.writeText(shareUrl.value)
+    alert('Lien copié !')
+  } catch {
+    alert('Impossible de copier le lien.')
+  }
 }
 </script>
 
