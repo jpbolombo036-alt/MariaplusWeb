@@ -31,6 +31,25 @@
             </label>
           </div>
 
+          <!-- Photo de couverture : disponible pour TOUS les types -->
+          <div>
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Photo de l'événement</span>
+            <div class="flex items-center gap-4">
+              <div class="w-28 h-20 rounded-lg overflow-hidden bg-slate-50 border border-slate-200 grid place-items-center shrink-0">
+                <img v-if="coverPreview" :src="coverPreview" alt="Aperçu" class="w-full h-full object-cover" />
+                <span v-else class="material-symbols-outlined text-3xl text-slate-300">image</span>
+              </div>
+              <div class="min-w-0">
+                <button type="button" class="px-4 h-9 rounded-lg bg-primary/10 text-primary text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-primary/20 transition-colors" @click="coverInput?.click()">
+                  <span class="material-symbols-outlined text-[17px]">photo_camera</span> Choisir une photo
+                </button>
+                <button v-if="coverFile" type="button" class="ml-2 text-[12px] text-error hover:bg-error/10 rounded-lg px-2 py-1 transition-colors" @click="clearCover">Retirer</button>
+                <p class="text-[11px] text-slate-400 mt-1.5">JPEG, PNG, GIF ou WebP — max 2 Mo</p>
+              </div>
+            </div>
+            <input ref="coverInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onCoverPick" />
+          </div>
+
           <div v-if="form.type === 'WEDDING'" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <label class="block">
               <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Prénom du marié *</span>
@@ -120,7 +139,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { createEvent, uploadEventPhoto } from '../../api/events'
+import { createEvent, uploadEventPhoto, uploadEventImage } from '../../api/events'
 
 const router = useRouter()
 const form = reactive({
@@ -158,6 +177,35 @@ const photoState = reactive<Record<string, { file: File | null; preview: string 
   couple: { file: null, preview: null },
 })
 const photoError = ref('')
+
+/* --- Photo de couverture (tous types) --- */
+const coverInput = ref<HTMLInputElement | null>(null)
+const coverFile = ref<File | null>(null)
+const coverPreview = ref<string | null>(null)
+
+function onCoverPick(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  if (!/^image\/(jpeg|png|gif|webp)$/.test(file.type)) {
+    photoError.value = 'Format non supporté (JPEG, PNG, GIF ou WebP attendu).'
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    photoError.value = 'Image trop volumineuse (max 2 Mo).'
+    return
+  }
+  photoError.value = ''
+  coverFile.value = file
+  if (coverPreview.value) URL.revokeObjectURL(coverPreview.value)
+  coverPreview.value = URL.createObjectURL(file)
+}
+function clearCover() {
+  coverFile.value = null
+  if (coverPreview.value) URL.revokeObjectURL(coverPreview.value)
+  coverPreview.value = null
+}
 
 function pickPhoto(kind: string) {
   document.getElementById(`photo-input-${kind}`)?.click()
@@ -213,6 +261,11 @@ async function submitCreate() {
   }
   const created = await createEvent(payload)
   // Upload des photos choisies (la création reste valide même si un upload échoue)
+  if (coverFile.value) {
+    try {
+      await uploadEventImage(created.id, coverFile.value)
+    } catch { /* ignore : photo non bloquante */ }
+  }
   if (form.type === 'WEDDING') {
     for (const p of photoFields) {
       const file = photoState[p.kind].file
