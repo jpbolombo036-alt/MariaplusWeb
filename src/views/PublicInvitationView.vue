@@ -22,13 +22,12 @@
         <div class="mp-inv-cover">
           <template v-if="photos.length">
             <div ref="carouselEl" class="mp-inv-photos" @scroll.passive="onCarouselScroll">
-              <img
-                v-for="(p, idx) in photos"
-                :key="idx"
-                :src="absoluteUrl(p)"
-                :alt="'Photo de l’événement'"
-                class="mp-inv-photo"
-              />
+              <div v-for="(p, idx) in photos" :key="idx" class="mp-inv-slide">
+                <!-- Fond flouté (reprend la photo en couverture pleine) -->
+                <img :src="absoluteUrl(p)" alt="" class="mp-inv-slide-bg" aria-hidden="true" />
+                <!-- Photo entière visible, jamais recadrée -->
+                <img :src="absoluteUrl(p)" :alt="'Photo de l’événement'" class="mp-inv-slide-img" />
+              </div>
             </div>
             <div v-if="photos.length > 1" class="mp-inv-dots">
               <button
@@ -600,9 +599,10 @@ onBeforeUnmount(stopAutoplay)
 /* ---------- Couverture ---------- */
 .mp-inv-cover {
   position: relative;
-  height: 320px;
+  height: 440px;
   overflow: hidden;
   border-radius: 24px 24px 0 0;
+  background: #14082f;
 }
 .mp-inv-photos {
   position: absolute;
@@ -614,12 +614,29 @@ onBeforeUnmount(stopAutoplay)
   -ms-overflow-style: none;
 }
 .mp-inv-photos::-webkit-scrollbar { display: none; }
-.mp-inv-photo {
+.mp-inv-slide {
+  position: relative;
   flex: 0 0 100%;
+  height: 100%;
+  scroll-snap-align: center;
+  overflow: hidden;
+}
+/* Fond flouté : occupe toute la zone, cadre élégant autour de la photo */
+.mp-inv-slide-bg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  scroll-snap-align: center;
+  filter: blur(18px) saturate(1.15) brightness(0.8);
+  transform: scale(1.18);
+}
+/* Photo entière : jamais recadrée, jamais déformée */
+.mp-inv-slide-img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .mp-inv-cover-fallback {
   position: absolute;
@@ -629,16 +646,18 @@ onBeforeUnmount(stopAutoplay)
 .mp-inv-cover-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(20, 8, 48, 0.28) 0%, rgba(20, 8, 48, 0.05) 38%, rgba(20, 8, 48, 0.62) 100%);
+  background: linear-gradient(180deg, rgba(20, 8, 48, 0.35) 0%, rgba(20, 8, 48, 0.08) 40%, rgba(20, 8, 48, 0.72) 100%);
+  z-index: 1;
 }
 .mp-inv-dots {
   position: absolute;
-  bottom: 168px;
+  bottom: 14px;
   left: 0;
   right: 0;
   display: flex;
   justify-content: center;
   gap: 6px;
+  z-index: 3;
 }
 .mp-inv-dot {
   width: 6px;
@@ -660,6 +679,7 @@ onBeforeUnmount(stopAutoplay)
   align-items: center;
   justify-content: center;
   gap: 8px;
+  z-index: 2;
 }
 .mp-inv-logo-img { width: 22px; height: 22px; object-fit: contain; }
 .mp-inv-logo-text {
@@ -676,9 +696,10 @@ onBeforeUnmount(stopAutoplay)
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   text-align: center;
-  padding: 0 28px 12px;
+  padding: 0 28px 42px;
+  z-index: 2;
 }
 .mp-inv-type {
   background: #5427c7;
@@ -1255,10 +1276,11 @@ html.dark .mp-inv-qr img { background: #ffffff; }
     box-shadow: none;
   }
   .mp-inv-cover {
-    height: 230px;
+    height: 340px;
     border-radius: 0;
   }
-  .mp-inv-dots { bottom: 116px; }
+  .mp-inv-dots { bottom: 12px; }
+  .mp-inv-cover-content { padding: 0 20px 38px; }
   .mp-inv-logo-text { font-size: 20px; }
   .mp-inv-type { margin-bottom: 10px; }
   .mp-inv-title { font-size: 30px; }
