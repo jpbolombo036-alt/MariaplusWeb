@@ -1,9 +1,9 @@
 <template>
   <div>
-    <div v-if="isWedding" class="relative w-full h-[320px] rounded-xl overflow-hidden mb-6 shadow-sm border border-outline-variant/30 flex items-end">
+    <div class="relative w-full h-[320px] rounded-xl overflow-hidden mb-6 shadow-sm border border-outline-variant/30 flex items-end">
       <div
         class="absolute inset-0 bg-cover bg-center"
-        :style="event?.weddingDetails?.couplePhotoUrl ? { backgroundImage: `url(${absolutePhotoUrl(event.weddingDetails.couplePhotoUrl)})` } : undefined"
+        :style="heroBg ? { backgroundImage: `url(${heroBg})` } : undefined"
       ></div>
       <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
 
@@ -116,7 +116,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getEvent, updateEventStatus, absolutePhotoUrl, type Event } from '../../api/events'
+import { getEvent, updateEventStatus, loadEventImage, absolutePhotoUrl, type Event } from '../../api/events'
 import { getDashboard, type Dashboard } from '../../api/dashboard'
 import PermGuard from '../../components/common/PermGuard.vue'
 
@@ -130,9 +130,15 @@ const loading = ref(true)
 const eventDisplayName = computed(() => event.value?.weddingDetails?.displayName || event.value?.name || '')
 const eventType = computed(() => event.value?.type || 'ÉVÉNEMENT')
 const statusLabel = computed(() => (event.value?.status || 'DRAFT').toUpperCase())
-/** La carte héros (photo couple + stats) n'apparaît que pour un mariage :
- * les autres types ont déjà LA carte photo (couverture) dans EventDetailView. */
-const isWedding = computed(() => event.value?.type === 'WEDDING')
+
+/** Fond de la carte héros : photo du couple (mariage) sinon photo de couverture
+ * (chargée via l'API authentifiée). Un seul carte photo pour tous les types. */
+const coverUrl = ref<string | null>(null)
+const heroBg = computed(() => {
+  const couple = event.value?.weddingDetails?.couplePhotoUrl
+  if (couple) return absolutePhotoUrl(couple)
+  return coverUrl.value
+})
 
 const pctParticipation = computed(() => {
   const e = stats.value?.attendance.expected ?? 0
@@ -150,6 +156,14 @@ onMounted(async () => {
     const [w, d] = await Promise.all([getEvent(id), getDashboard(id)])
     event.value = w
     stats.value = d
+    // Couverture (fallback du héros quand il n'y a pas de photo du couple)
+    if (w?.hasImage && !w?.weddingDetails?.couplePhotoUrl) {
+      try {
+        coverUrl.value = await loadEventImage(id)
+      } catch {
+        /* ignore */
+      }
+    }
   } catch {
     /* valeurs par défaut */
   } finally {

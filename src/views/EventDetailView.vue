@@ -4,7 +4,7 @@
 
   <div v-else>
     <!-- Carrousel photos : couverture / couple / marié / mariée -->
-    <div v-if="photos.length" class="relative rounded-2xl overflow-hidden mb-1">
+    <div v-if="isWedding && photos.length" class="relative rounded-2xl overflow-hidden mb-1">
       <div
         ref="carouselEl"
         class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
@@ -39,8 +39,8 @@
       </div>
     </div>
 
-    <!-- Actions (Modifier / Publier) -->
-    <div class="mt-3 flex gap-2">
+    <!-- Actions (Modifier / Publier) — le héros de l'Overview les fournit pour les autres types -->
+    <div v-if="isWedding" class="mt-3 flex gap-2">
       <PermGuard :allow="['EVENT_UPDATE']">
         <button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold">Modifier</button>
       </PermGuard>
@@ -83,6 +83,10 @@ const event = ref<Event | null>(null)
 const loading = ref(true)
 
 const eventId = Number(route.params.id)
+
+/** Carrousel multi-photos + boutons dédiés : uniquement pour les mariages
+ * (fiche couple). Les autres types ont leur carte héros dans OverviewTab. */
+const isWedding = computed(() => event.value?.type === 'WEDDING')
 
 /* --- Carrousel photos : couverture / couple / marié / mariée --- */
 const carouselEl = ref<HTMLElement | null>(null)
