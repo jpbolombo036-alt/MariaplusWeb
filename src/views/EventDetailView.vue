@@ -3,35 +3,8 @@
   <div v-else-if="!event" class="text-error">Événement introuvable</div>
 
   <div v-else>
-    <!-- Header canvas -->
-    <div class="relative h-64 md:h-80 rounded-2xl overflow-hidden">
-      <img v-if="event.weddingDetails?.couplePhotoUrl" :src="event.weddingDetails.couplePhotoUrl" class="w-full h-full object-cover" />
-      <div v-else class="w-full h-full bg-surface-container"></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-      <div class="absolute bottom-4 left-4 right-4 text-white">
-        <div class="flex items-center gap-2 text-xs font-semibold">
-          <span class="px-2 py-0.5 rounded-full bg-white/20">{{ event.type }}</span>
-          <StatusBadge :status="event.status" />
-        </div>
-        <h1 class="mt-2 text-2xl md:text-3xl font-bold">{{ event.weddingDetails?.displayName || event.name || 'Événement' }}</h1>
-        <div class="flex flex-wrap gap-3 text-sm">
-          <span v-if="event.weddingDetails?.couplePhotoUrl || event.name" class="flex items-center gap-1">
-            <span class="material-symbols-outlined text-base">event</span>
-          </span>
-        </div>
-        <div class="mt-3 flex gap-2">
-          <PermGuard :allow="['EVENT_UPDATE']">
-            <button class="px-3 py-1.5 rounded-lg bg-white/90 text-on-surface text-sm font-semibold">Modifier</button>
-          </PermGuard>
-          <PermGuard :allow="['EVENT_PUBLISH']">
-            <button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold" @click="publish">Publier</button>
-          </PermGuard>
-        </div>
-      </div>
-    </div>
-
     <!-- Tabs (selon permission) -->
-    <div class="mt-5 flex gap-1 overflow-x-auto border-b border-outline-variant">
+    <div class="flex gap-1 overflow-x-auto border-b border-outline-variant">
       <router-link
         v-for="tab in tabs"
         :key="tab.to"
