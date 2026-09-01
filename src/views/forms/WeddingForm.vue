@@ -140,7 +140,9 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createEvent, uploadEventPhoto, uploadEventImage } from '../../api/events'
+import { useAuthStore } from '../../stores/auth'
 
+const auth = useAuthStore()
 const router = useRouter()
 const form = reactive({
   name: '',
@@ -258,6 +260,10 @@ async function submitCreate() {
     payload.brideFirstName = form.brideFirstName
     payload.brideLastName = form.brideLastName
     payload.welcomeMessage = form.welcomeMessage || null
+  }
+  // SUPER_ADMIN : le backend exige l'organisation ciblée
+  if (auth.isSuperAdmin && auth.user?.organizationId) {
+    payload.organizationId = auth.user.organizationId
   }
   const created = await createEvent(payload)
   // Upload des photos choisies (la création reste valide même si un upload échoue)

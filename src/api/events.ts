@@ -181,6 +181,10 @@ export async function createEvent(payload: Record<string, unknown>): Promise<Eve
       : buildEventName(payload),
     type,
   }
+  // SUPER_ADMIN : le backend exige l'organisation ciblée
+  if (payload.organizationId != null) {
+    eventPayload.organizationId = Number(payload.organizationId)
+  }
   if (Object.keys(weddingDetails).length > 0) eventPayload.weddingDetails = weddingDetails
   if (payload.description !== undefined) eventPayload.description = payload.description
   if (payload.message !== undefined) eventPayload.message = payload.message

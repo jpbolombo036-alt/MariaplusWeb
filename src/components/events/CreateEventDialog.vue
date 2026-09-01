@@ -5,19 +5,16 @@
         <h2 class="text-lg font-bold text-on-surface">Nouvel événement</h2>
         <button type="button" class="text-on-surface-variant hover:text-on-surface" @click="$emit('close')"><span class="material-symbols-outlined">close</span></button>
       </div>
-
       <p class="text-xs font-semibold text-on-surface-variant mb-2 uppercase tracking-wide">Marié 🎩</p>
       <div class="grid sm:grid-cols-2 gap-3 mb-4">
         <input v-model="form.groomFirstName" required placeholder="Prénom du marié" class="input" />
         <input v-model="form.groomLastName" required placeholder="Nom du marié" class="input" />
       </div>
-
       <p class="text-xs font-semibold text-on-surface-variant mb-2 uppercase tracking-wide">Mariée 👰</p>
       <div class="grid sm:grid-cols-2 gap-3 mb-4">
         <input v-model="form.brideFirstName" required placeholder="Prénom de la mariée" class="input" />
         <input v-model="form.brideLastName" required placeholder="Nom de la mariée" class="input" />
       </div>
-
       <p class="text-xs font-semibold text-on-surface-variant mb-2 uppercase tracking-wide">Photo du couple</p>
       <div class="flex items-center gap-4 mb-4">
         <div class="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-surface-container grid place-items-center border border-outline-variant">
@@ -25,28 +22,14 @@
           <span v-else class="material-symbols-outlined text-3xl text-on-surface-variant/50">image</span>
         </div>
         <div class="min-w-0">
-          <button type="button" class="px-4 h-9 rounded-lg bg-primary/10 text-primary text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-primary/20 transition-colors" @click="fileInput?.click()">
-            <span class="material-symbols-outlined text-[17px]">photo_camera</span> Choisir une photo
-          </button>
-          <button
-            v-if="photoFile"
-            type="button"
-            class="ml-2 text-[12px] text-error hover:bg-error/10 rounded-lg px-2 py-1 transition-colors"
-            @click="clearPhoto"
-          >Retirer</button>
+          <button type="button" class="px-4 h-9 rounded-lg bg-primary/10 text-primary text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-primary/20 transition-colors" @click="fileInput?.click()"><span class="material-symbols-outlined text-[17px]">photo_camera</span> Choisir une photo</button>
+          <button v-if="photoFile" type="button" class="ml-2 text-[12px] text-error hover:bg-error/10 rounded-lg px-2 py-1 transition-colors" @click="clearPhoto">Retirer</button>
           <p class="text-[11px] text-on-surface-variant mt-1.5">JPEG, PNG, GIF ou WebP — max 2 Mo</p>
         </div>
       </div>
-      <input
-        ref="fileInput"
-        type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp"
-        class="hidden"
-        @change="onPhotoPick"
-      />
+      <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onPhotoPick" />
       <textarea v-model="form.description" rows="2" placeholder="Description (optionnel)" class="input mb-3 resize-none"></textarea>
       <textarea v-model="form.message" rows="2" placeholder="Message d'invitation (optionnel)" class="input resize-none"></textarea>
-
       <p v-if="error" class="text-error text-sm mt-3">{{ error }}</p>
       <div class="flex justify-end gap-2 mt-6">
         <button type="button" class="px-4 h-10 rounded-lg text-on-surface-variant" @click="$emit('close')">Annuler</button>
@@ -61,21 +44,13 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { createEvent, uploadEventImage, uploadEventPhoto, type Event as EventModel } from '../../api/events'
+import { useAuthStore } from '../../stores/auth'
 
 const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: EventModel): void }>()
-
-const form = reactive({
-  groomFirstName: '',
-  groomLastName: '',
-  brideFirstName: '',
-  brideLastName: '',
-  description: '',
-  message: '',
-})
+const auth = useAuthStore()
+const form = reactive({ groomFirstName: '', groomLastName: '', brideFirstName: '', brideLastName: '', description: '', message: '' })
 const loading = ref(false)
 const error = ref('')
-
-/* --- Photo de couverture --- */
 const fileInput = ref<HTMLInputElement | null>(null)
 const photoFile = ref<File | null>(null)
 const photoPreview = ref<string | null>(null)
@@ -85,14 +60,8 @@ function onPhotoPick(e: Event) {
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
-  if (!/^image\/(jpeg|png|gif|webp)$/.test(file.type)) {
-    error.value = 'Format non supporté (JPEG, PNG, GIF ou WebP attendu).'
-    return
-  }
-  if (file.size > 2 * 1024 * 1024) {
-    error.value = 'Image trop volumineuse (max 2 Mo).'
-    return
-  }
+  if (!/^image\/(jpeg|png|gif|webp)$/.test(file.type)) { error.value = 'Format non supporté (JPEG, PNG, GIF ou WebP attendu).'; return }
+  if (file.size > 2 * 1024 * 1024) { error.value = 'Image trop volumineuse (max 2 Mo).'; return }
   error.value = ''
   photoFile.value = file
   if (photoPreview.value) URL.revokeObjectURL(photoPreview.value)
@@ -114,15 +83,13 @@ async function submit() {
       groomLastName: form.groomLastName,
       brideFirstName: form.brideFirstName,
       brideLastName: form.brideLastName,
-      couplePhotoUrl: null,
       description: form.description || null,
       message: form.message || null,
+      organizationId: auth.isSuperAdmin && auth.user?.organizationId ? auth.user.organizationId : undefined,
     })
     if (photoFile.value) {
-      try {
-        await uploadEventImage(w.id, photoFile.value)
-        await uploadEventPhoto(w.id, 'couple', photoFile.value)
-      } catch { /* la création reste valide même si l'upload échoue */ }
+      try { await uploadEventImage(w.id, photoFile.value); await uploadEventPhoto(w.id, 'couple', photoFile.value) }
+      catch { /* la création reste valide même si l'upload échoue */ }
     }
     emit('created', w)
   } catch (e: any) {
