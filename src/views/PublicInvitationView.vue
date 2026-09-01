@@ -524,6 +524,7 @@ watch(maxAccepted, (max) => {
 })
 onMounted(() => {
   load()
+  loadDrinks() // boissons disponibles pour l'événement (sélecteur dans le formulaire ACCEPTED)
 })
 onBeforeUnmount(stopAutoplay)
 </script>
