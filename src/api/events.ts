@@ -145,6 +145,7 @@ export function parseEvent(json: Record<string, unknown>): Event {
     active: json.active != null ? Boolean(json.active) : null,
     createdAt: json.createdAt ? String(json.createdAt) : null,
     updatedAt: json.updatedAt ? String(json.updatedAt) : null,
+    hasImage: json.hasImage != null ? Boolean(json.hasImage) : null,
     weddingDetails: details,
     sessions: Array.isArray(json.sessions) ? (json.sessions as EventSession[]) : null,
   }
