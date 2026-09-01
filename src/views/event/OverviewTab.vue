@@ -1,5 +1,44 @@
 <template>
   <div>
+    <div class="relative w-full h-[320px] rounded-xl overflow-hidden mb-6 shadow-sm border border-outline-variant/30 flex items-end">
+      <div
+        class="absolute inset-0 bg-cover bg-center"
+        :style="event?.weddingDetails?.couplePhotoUrl ? { backgroundImage: `url(${absolutePhotoUrl(event.weddingDetails.couplePhotoUrl)})` } : undefined"
+      ></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+
+      <div class="relative z-10 w-full p-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 rounded-full bg-primary-container text-white text-[10px] uppercase tracking-wider font-bold">{{ eventType }}</span>
+            <span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[10px] uppercase tracking-wider font-bold flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">check_circle</span> {{ statusLabel }}
+            </span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">{{ eventDisplayName || 'Événement' }}</h2>
+          <div v-if="stats" class="flex flex-wrap items-center gap-5 text-sm text-white/90">
+            <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">group</span> {{ stats.guests.total }} invités</span>
+            <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">how_to_reg</span> {{ stats.invitations.total }} invitations</span>
+            <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">person_check</span> {{ stats.attendance.checkedIn }} présents</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <PermGuard :allow="['WEDDING_UPDATE']">
+            <button class="h-11 px-6 rounded-lg bg-white text-on-surface text-sm font-semibold flex items-center gap-2 hover:bg-white/90 shadow-sm">
+              <span class="material-symbols-outlined text-base">edit</span> Modifier
+            </button>
+          </PermGuard>
+          <PermGuard :allow="['WEDDING_PUBLISH']">
+            <button class="h-11 px-6 rounded-lg bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 shadow-sm" @click="publish">
+              <span class="material-symbols-outlined text-base">publish</span> Publier
+            </button>
+          </PermGuard>
+        </div>
+      </div>
+    </div>
+
+
     <div v-if="stats" class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
       <div class="flex items-center justify-between mb-5">
         <div>
@@ -77,13 +116,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { getEvent, updateEventStatus, absolutePhotoUrl, type Event } from '../../api/events'
 import { getDashboard, type Dashboard } from '../../api/dashboard'
+import PermGuard from '../../components/common/PermGuard.vue'
 
 const route = useRoute()
 const id = Number(route.params.id)
 
 const stats = ref<Dashboard | null>(null)
+const event = ref<Event | null>(null)
 const loading = ref(true)
+
+const eventDisplayName = computed(() => event.value?.weddingDetails?.displayName || event.value?.name || '')
+const eventType = computed(() => event.value?.type || 'ÉVÉNEMENT')
+const statusLabel = computed(() => (event.value?.status || 'DRAFT').toUpperCase())
 
 const pctParticipation = computed(() => {
   const e = stats.value?.attendance.expected ?? 0
@@ -98,12 +144,22 @@ const tableFillRate = computed(() => {
 
 onMounted(async () => {
   try {
-    stats.value = await getDashboard(id)
+    const [w, d] = await Promise.all([getEvent(id), getDashboard(id)])
+    event.value = w
+    stats.value = d
   } catch {
     /* valeurs par défaut */
   } finally {
     loading.value = false
   }
 })
+
+async function publish() {
+  try {
+    event.value = await updateEventStatus(id, 'PUBLISHED')
+  } catch {
+    /* ignoré */
+  }
+}
 </script>
 
