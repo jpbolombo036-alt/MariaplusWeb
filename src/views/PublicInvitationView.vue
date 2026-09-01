@@ -1422,12 +1422,13 @@ html.dark .mp-inv-cardimg--loading { color: #b8b2c7; }
 }
 .mpc-cover { position: relative; height: 360px; flex-shrink: 0; background: #14082f; }
 /* Fond en background-image CSS : html2canvas ne supporte pas object-fit sur <img>
-   (il étirait la photo) — background-size: cover est lui parfaitement rendu. */
+   (il étirait la photo) — background-size: cover est lui parfaitement rendu.
+   Ancrage en HAUT : le haut de la photo (visages) reste visible dans le cadrage. */
 .mpc-cover-bg {
   position: absolute;
   inset: 0;
   background-size: cover;
-  background-position: center;
+  background-position: top;
   background-repeat: no-repeat;
 }
 .mpc-cover-shade {
