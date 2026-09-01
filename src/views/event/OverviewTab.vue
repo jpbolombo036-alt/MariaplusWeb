@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="relative w-full h-[320px] rounded-xl overflow-hidden mb-6 shadow-sm border border-outline-variant/30 flex items-end">
+    <div v-if="isWedding" class="relative w-full h-[320px] rounded-xl overflow-hidden mb-6 shadow-sm border border-outline-variant/30 flex items-end">
       <div
         class="absolute inset-0 bg-cover bg-center"
         :style="event?.weddingDetails?.couplePhotoUrl ? { backgroundImage: `url(${absolutePhotoUrl(event.weddingDetails.couplePhotoUrl)})` } : undefined"
@@ -130,6 +130,9 @@ const loading = ref(true)
 const eventDisplayName = computed(() => event.value?.weddingDetails?.displayName || event.value?.name || '')
 const eventType = computed(() => event.value?.type || 'ÉVÉNEMENT')
 const statusLabel = computed(() => (event.value?.status || 'DRAFT').toUpperCase())
+/** La carte héros (photo couple + stats) n'apparaît que pour un mariage :
+ * les autres types ont déjà LA carte photo (couverture) dans EventDetailView. */
+const isWedding = computed(() => event.value?.type === 'WEDDING')
 
 const pctParticipation = computed(() => {
   const e = stats.value?.attendance.expected ?? 0
