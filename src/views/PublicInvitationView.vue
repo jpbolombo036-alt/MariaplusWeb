@@ -1,7 +1,33 @@
 <template>
   <div class="min-h-full grid place-items-center bg-background px-4 py-10">
     <div class="w-full max-w-lg bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant shadow-sm">
-      <img v-if="inv?.couplePhotoUrl" :src="absolutePhotoUrl(inv.couplePhotoUrl)" class="w-full h-56 object-cover" />
+            <!-- Carrousel photos : couple / marié / mariée -->
+      <div v-if="photos.length" class="relative">
+        <div
+          ref="carouselEl"
+          class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+          @scroll.passive="onScroll"
+        >
+          <img
+            v-for="(p, idx) in photos"
+            :key="idx"
+            :src="absolutePhotoUrl(p)"
+            class="w-full h-56 object-cover snap-center shrink-0"
+            alt=""
+          />
+        </div>
+        <!-- Points de pagination -->
+        <div v-if="photos.length > 1" class="absolute bottom-3 inset-x-0 flex justify-center gap-1.5">
+          <button
+            v-for="(p, idx) in photos"
+            :key="idx"
+            type="button"
+            class="w-2 h-2 rounded-full transition-all"
+            :class="idx === activeSlide ? 'bg-white w-4' : 'bg-white/50'"
+            @click="scrollTo(idx)"
+          />
+        </div>
+      </div>
       <div class="p-6">
         <div class="text-sm text-on-surface-variant">Bonjour {{ inv?.guestFirstName }},</div>
         <h1 class="mt-1 text-2xl font-bold text-on-surface">{{ inv?.weddingDisplayName }}</h1>
@@ -53,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getPublicInvitation, listPublicDrinks, submitPublicRsvp, type PublicInvitation } from '../api/publicInvitation'
 import { absolutePhotoUrl } from '../api/events'
@@ -69,6 +95,24 @@ const attendees = ref(1)
 const drinkChoice = ref('')
 const drinks = ref<{ id: number; name: string }[]>([])
 const drinksLoading = ref(false)
+
+/* --- Carrousel photos : couple / marié / mariée --- */
+const carouselEl = ref<HTMLElement | null>(null)
+const activeSlide = ref(0)
+const photos = computed<string[]>(() => {
+  const list = [inv.value?.couplePhotoUrl, inv.value?.groomPhotoUrl, inv.value?.bridePhotoUrl]
+  return list.filter((u): u is string => !!u && u.trim() !== '')
+})
+function onScroll() {
+  const el = carouselEl.value
+  if (!el) return
+  activeSlide.value = Math.round(el.scrollLeft / el.clientWidth)
+}
+function scrollTo(idx: number) {
+  const el = carouselEl.value
+  if (!el) return
+  el.scrollTo({ left: idx * el.clientWidth, behavior: 'smooth' })
+}
 
 onMounted(async () => {
   try {
@@ -131,3 +175,13 @@ function downloadQr() {
   document.body.removeChild(link)
 }
 </script>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>

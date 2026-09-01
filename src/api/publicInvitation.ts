@@ -6,6 +6,8 @@ export interface PublicInvitation {
   guestLastName?: string | null
   weddingDisplayName?: string | null
   couplePhotoUrl?: string | null
+  groomPhotoUrl?: string | null
+  bridePhotoUrl?: string | null
   message?: string | null
   eventName?: string | null
   eventDate?: string | null
@@ -41,6 +43,8 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
     guestLastName: j.guestLastName ? String(j.guestLastName) : null,
     weddingDisplayName: j.weddingDisplayName ? String(j.weddingDisplayName) : null,
     couplePhotoUrl: j.couplePhotoUrl ? String(j.couplePhotoUrl) : null,
+    groomPhotoUrl: j.groomPhotoUrl ? String(j.groomPhotoUrl) : null,
+    bridePhotoUrl: j.bridePhotoUrl ? String(j.bridePhotoUrl) : null,
     message: j.message ? String(j.message) : null,
     eventName: j.eventName ? String(j.eventName) : null,
     eventDate: j.eventDate ? String(j.eventDate) : null,
