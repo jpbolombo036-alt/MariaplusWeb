@@ -7,11 +7,16 @@
           <h2 class="text-[22px] font-bold text-slate-900 tracking-tight">Check-in</h2>
           <p class="text-[13px] text-slate-500 mt-0.5 font-medium">Scanner et valider les entrées</p>
         </div>
-        <PermGuard :allow="['CHECKIN_SCAN']">
-          <button class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all" @click="openScanner">
-            <span class="material-symbols-outlined text-[18px]">photo_camera</span> Scanner avec la caméra
-          </button>
-        </PermGuard>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <router-link :to="`/agent/checkin/${id}`" class="h-10 px-5 rounded-lg border border-primary/30 text-primary text-[13px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-primary/10 transition-all">
+            <span class="material-symbols-outlined text-[18px]">point_of_sale</span> Poste d'accueil
+          </router-link>
+          <PermGuard :allow="['CHECKIN_SCAN']">
+            <button class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all" @click="openScanner">
+              <span class="material-symbols-outlined text-[18px]">photo_camera</span> Scanner avec la caméra
+            </button>
+          </PermGuard>
+        </div>
       </div>
     </div>
 

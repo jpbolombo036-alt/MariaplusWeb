@@ -58,6 +58,11 @@ const router = createRouter({
       ],
     },
     { path: '/invitations/:token', name: 'public-invitation', component: () => import('../views/PublicInvitationView.vue'), meta: { public: true } },
+    {
+      path: '/agent/checkin/:id',
+      name: 'agent-checkin',
+      component: () => import('../views/agent/AgentCheckinView.vue'),
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })

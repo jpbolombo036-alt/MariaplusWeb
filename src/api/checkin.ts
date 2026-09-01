@@ -16,6 +16,9 @@ export interface CheckInScan {
   invitationCode?: string | null
   hasCard?: boolean
   checkedInAt?: string | null
+  eventDate?: string | null
+  eventTime?: string | null
+  eventVenue?: string | null
 }
 
 export interface CheckInResult {
@@ -28,6 +31,9 @@ export interface CheckInResult {
   invitationCode?: string | null
   hasCard?: boolean
   checkedInAt?: string | null
+  eventDate?: string | null
+  eventTime?: string | null
+  eventVenue?: string | null
 }
 
 export interface CheckInSearchItem {
@@ -71,6 +77,9 @@ export async function scan(qrToken: string, eventId: number): Promise<CheckInSca
     invitationCode: typeof j.invitationCode === 'string' ? j.invitationCode : null,
     hasCard: Boolean(j.hasCard),
     checkedInAt: typeof j.checkedInAt === 'string' ? j.checkedInAt : null,
+    eventDate: typeof j.eventDate === 'string' ? j.eventDate : null,
+    eventTime: typeof j.eventTime === 'string' ? j.eventTime : null,
+    eventVenue: typeof j.eventVenue === 'string' ? j.eventVenue : null,
   }
 }
 
@@ -88,6 +97,9 @@ export async function checkIn(qrToken: string, eventId: number, numberOfAttendee
     invitationCode: typeof j.invitationCode === 'string' ? j.invitationCode : null,
     hasCard: Boolean(j.hasCard),
     checkedInAt: typeof j.checkedInAt === 'string' ? j.checkedInAt : null,
+    eventDate: typeof j.eventDate === 'string' ? j.eventDate : null,
+    eventTime: typeof j.eventTime === 'string' ? j.eventTime : null,
+    eventVenue: typeof j.eventVenue === 'string' ? j.eventVenue : null,
   }
 }
 
