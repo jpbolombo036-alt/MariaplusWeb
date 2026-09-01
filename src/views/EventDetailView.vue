@@ -3,9 +3,9 @@
   <div v-else-if="!event" class="text-error">Événement introuvable</div>
 
   <div v-else>
-    <!-- Header canvas -->
+    <!-- Header canvas : photo de couverture (uploadée) sinon photo couple, sinon fond neutre -->
     <div class="relative h-64 md:h-80 rounded-2xl overflow-hidden">
-      <img v-if="event.weddingDetails?.couplePhotoUrl" :src="event.weddingDetails.couplePhotoUrl" class="w-full h-full object-cover" />
+      <img v-if="coverImageSrc" :src="coverImageSrc" class="w-full h-full object-cover" />
       <div v-else class="w-full h-full bg-surface-container"></div>
       <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
       <div class="absolute bottom-4 left-4 right-4 text-white">
@@ -14,11 +14,6 @@
           <StatusBadge :status="event.status" />
         </div>
         <h1 class="mt-2 text-2xl md:text-3xl font-bold">{{ event.weddingDetails?.displayName || event.name || 'Événement' }}</h1>
-        <div class="flex flex-wrap gap-3 text-sm">
-          <span v-if="event.weddingDetails?.couplePhotoUrl || event.name" class="flex items-center gap-1">
-            <span class="material-symbols-outlined text-base">event</span>
-          </span>
-        </div>
         <div class="mt-3 flex gap-2">
           <PermGuard :allow="['EVENT_UPDATE']">
             <button class="px-3 py-1.5 rounded-lg bg-white/90 text-on-surface text-sm font-semibold">Modifier</button>
@@ -52,11 +47,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { getEvent, updateEventStatus, type Event } from '../api/events'
+import { getEvent, updateEventStatus, absolutePhotoUrl, type Event } from '../api/events'
 import StatusBadge from '../components/common/StatusBadge.vue'
 import PermGuard from '../components/common/PermGuard.vue'
 import { useAuthStore } from '../stores/auth'
 import { Perm } from '../permissions'
+import { ApiConfig } from '../api/config'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -64,6 +60,15 @@ const event = ref<Event | null>(null)
 const loading = ref(true)
 
 const eventId = Number(route.params.id)
+
+const coverImageSrc = computed<string | null>(() => {
+  if (!event.value) return null
+  // Photo de couverture uploadée (tout type)
+  if (event.value.hasImage) return `${ApiConfig.baseUrl}/api/events/${eventId}/image`
+  // Repli : photo couple de la fiche mariage
+  const couple = event.value.weddingDetails?.couplePhotoUrl
+  return couple ? absolutePhotoUrl(couple) : null
+})
 
 onMounted(load)
 async function load() {
