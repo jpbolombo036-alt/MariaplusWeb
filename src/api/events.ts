@@ -98,7 +98,9 @@ export async function uploadEventPhoto(eventId: number, kind: EventPhotoKind, fi
 
 /** URL absolue affichable d'une photo (le backend peut renvoyer un chemin relatif). */
 export function absolutePhotoUrl(url: string): string {
-  return url.startsWith('http') ? url : ApiConfig.baseUrl + url
+  // La couverture est chargée en blob par le navigateur : laisser "blob:" et "http(s)://"
+  // intacts, ne préfixer que les URLs relatives (/api/...).
+  return url.startsWith('http') || url.startsWith('blob:') ? url : ApiConfig.baseUrl + url
 }
 
 export interface PageData<T> {
