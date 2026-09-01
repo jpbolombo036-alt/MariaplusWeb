@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="relative w-full h-[320px] rounded-xl overflow-hidden mb-6 shadow-sm border border-outline-variant/30 flex items-end">
+    <div class="relative w-full h-[320px] rounded-b-2xl overflow-hidden mb-6 flex items-end">
       <div
         class="absolute inset-0 bg-cover bg-center"
         :style="heroBg ? { backgroundImage: `url(${heroBg})` } : undefined"

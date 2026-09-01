@@ -4,7 +4,7 @@
 
   <div v-else>
     <!-- Carrousel photos : couverture / couple / marié / mariée -->
-    <div v-if="isWedding && photos.length" class="relative rounded-2xl overflow-hidden mb-1">
+    <div v-if="isWedding && photos.length" class="relative rounded-b-2xl overflow-hidden">
       <div
         ref="carouselEl"
         class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
