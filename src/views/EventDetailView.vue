@@ -13,7 +13,7 @@
         <img
           v-for="(p, idx) in photos"
           :key="idx"
-          :src="p"
+          :src="absolutePhotoUrl(p)"
           class="w-full h-64 md:h-80 object-cover snap-center shrink-0"
           alt=""
         />
