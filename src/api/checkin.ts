@@ -12,6 +12,10 @@ export interface CheckInScan {
   canCheckIn: boolean
   tableName?: string | null
   drinkChoice?: string | null
+  publicToken?: string | null
+  invitationCode?: string | null
+  hasCard?: boolean
+  checkedInAt?: string | null
 }
 
 export interface CheckInResult {
@@ -19,6 +23,32 @@ export interface CheckInResult {
   guestName: string
   numberOfAttendees: number
   remainingAttendees: number
+  weddingDisplayName?: string | null
+  publicToken?: string | null
+  invitationCode?: string | null
+  hasCard?: boolean
+  checkedInAt?: string | null
+}
+
+export interface CheckInSearchItem {
+  guestName: string
+  phone?: string | null
+  invitationCode?: string | null
+  invitationStatus?: string | null
+  rsvpStatus?: string | null
+  expectedAttendees: number
+  checkedInAttendees: number
+  remainingAttendees: number
+  canCheckIn: boolean
+  checkedInAt?: string | null
+  tableName?: string | null
+  drinkChoice?: string | null
+  publicToken?: string | null
+  hasCard: boolean
+  eventName?: string | null
+  eventDate?: string | null
+  eventTime?: string | null
+  eventVenue?: string | null
 }
 
 export async function scan(qrToken: string, eventId: number): Promise<CheckInScan> {
@@ -37,6 +67,10 @@ export async function scan(qrToken: string, eventId: number): Promise<CheckInSca
     canCheckIn: Boolean(j.canCheckIn),
     tableName: typeof j.tableName === 'string' ? j.tableName : null,
     drinkChoice: typeof j.drinkChoice === 'string' ? j.drinkChoice : null,
+    publicToken: typeof j.publicToken === 'string' ? j.publicToken : null,
+    invitationCode: typeof j.invitationCode === 'string' ? j.invitationCode : null,
+    hasCard: Boolean(j.hasCard),
+    checkedInAt: typeof j.checkedInAt === 'string' ? j.checkedInAt : null,
   }
 }
 
@@ -49,6 +83,11 @@ export async function checkIn(qrToken: string, eventId: number, numberOfAttendee
     guestName: String(j.guestName ?? ''),
     numberOfAttendees: Number(j.numberOfAttendees ?? 0),
     remainingAttendees: Number(j.remainingAttendees ?? 0),
+    weddingDisplayName: typeof j.weddingDisplayName === 'string' ? j.weddingDisplayName : null,
+    publicToken: typeof j.publicToken === 'string' ? j.publicToken : null,
+    invitationCode: typeof j.invitationCode === 'string' ? j.invitationCode : null,
+    hasCard: Boolean(j.hasCard),
+    checkedInAt: typeof j.checkedInAt === 'string' ? j.checkedInAt : null,
   }
 }
 
@@ -77,5 +116,31 @@ export async function listPresent(eventId: number): Promise<PresentGuest[]> {
     lastCheckedInAt: typeof j.lastCheckedInAt === 'string' ? j.lastCheckedInAt : null,
     tableName: typeof j.tableName === 'string' ? j.tableName : null,
     drinkChoice: typeof j.drinkChoice === 'string' ? j.drinkChoice : null,
+  }))
+}
+
+/** Recherche invité pour l'agent d'accueil (nom, téléphone, email, code d'invitation). */
+export async function searchGuests(eventId: number, q: string): Promise<CheckInSearchItem[]> {
+  const res = await http.get(`${ApiConfig.checkinsPath}/event/${eventId}/search`, { params: { q } })
+  if (!Array.isArray(res.data)) return []
+  return res.data.map((j: any) => ({
+    guestName: String(j.guestName ?? ''),
+    phone: typeof j.phone === 'string' ? j.phone : null,
+    invitationCode: typeof j.invitationCode === 'string' ? j.invitationCode : null,
+    invitationStatus: typeof j.invitationStatus === 'string' ? j.invitationStatus : null,
+    rsvpStatus: typeof j.rsvpStatus === 'string' ? j.rsvpStatus : null,
+    expectedAttendees: Number(j.expectedAttendees ?? 0),
+    checkedInAttendees: Number(j.checkedInAttendees ?? 0),
+    remainingAttendees: Number(j.remainingAttendees ?? 0),
+    canCheckIn: Boolean(j.canCheckIn),
+    checkedInAt: typeof j.checkedInAt === 'string' ? j.checkedInAt : null,
+    tableName: typeof j.tableName === 'string' ? j.tableName : null,
+    drinkChoice: typeof j.drinkChoice === 'string' ? j.drinkChoice : null,
+    publicToken: typeof j.publicToken === 'string' ? j.publicToken : null,
+    hasCard: Boolean(j.hasCard),
+    eventName: typeof j.eventName === 'string' ? j.eventName : null,
+    eventDate: typeof j.eventDate === 'string' ? j.eventDate : null,
+    eventTime: typeof j.eventTime === 'string' ? j.eventTime : null,
+    eventVenue: typeof j.eventVenue === 'string' ? j.eventVenue : null,
   }))
 }

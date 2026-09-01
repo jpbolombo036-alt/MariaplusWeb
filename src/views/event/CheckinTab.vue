@@ -31,6 +31,74 @@
       </form>
     </div>
 
+    <!-- Recherche invité (agent d'accueil) -->
+    <PermGuard :allow="['CHECKIN_SCAN']">
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm mb-5">
+        <div class="flex items-center gap-2 mb-3 flex-wrap">
+          <span class="material-symbols-outlined text-primary text-[20px]">person_search</span>
+          <h3 class="text-[15px] font-bold text-slate-900">Recherche invité</h3>
+          <span class="text-[12px] text-slate-400">nom, téléphone, email ou code d'invitation</span>
+        </div>
+        <form class="flex gap-3" @submit.prevent="doSearch">
+          <input v-model="searchQuery" placeholder="Ex. Jean, +243847…, INV-2026…" class="h-11 flex-1 px-4 rounded-lg border border-slate-200 bg-white text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all" />
+          <button type="submit" :disabled="searching" class="h-11 px-5 rounded-lg bg-slate-900 text-white text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-slate-800 disabled:opacity-60 transition-all">
+            <span v-if="searching" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+            <span v-else class="material-symbols-outlined text-[18px]">search</span>
+            <span class="hidden sm:inline">Rechercher</span>
+          </button>
+        </form>
+        <p v-if="searchError" class="mt-3 text-[13px] text-error">{{ searchError }}</p>
+        <p v-else-if="searched && !searching && searchResults.length === 0" class="mt-4 text-[13px] text-slate-500">
+          Aucun invité trouvé pour « {{ lastSearch }} ».
+        </p>
+
+        <div v-if="searchResults.length" class="mt-4 space-y-4">
+          <div v-for="(r, i) in searchResults" :key="i" class="border border-slate-200 rounded-xl p-4">
+            <div class="flex items-start justify-between gap-3 flex-wrap">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="w-11 h-11 rounded-lg bg-primary-light text-primary grid place-items-center font-bold text-[14px] shrink-0">{{ initialsOf(r.guestName) }}</span>
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 text-[15px] truncate">{{ r.guestName }}</div>
+                  <div class="text-[12px] text-slate-500 truncate">{{ r.eventName }}<template v-if="r.invitationCode"> · {{ r.invitationCode }}</template></div>
+                </div>
+              </div>
+              <span class="px-3 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1" :class="statusClass(r)">
+                <span class="material-symbols-outlined text-[14px]">{{ statusIcon(r) }}</span>{{ statusLabel(r) }}
+              </span>
+            </div>
+
+            <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-slate-600">
+              <span v-if="r.eventDate" class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[15px] text-slate-400">calendar_month</span>{{ r.eventDate }}</span>
+              <span v-if="r.eventTime" class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[15px] text-slate-400">schedule</span>{{ r.eventTime }}</span>
+              <span v-if="r.eventVenue" class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[15px] text-slate-400">location_on</span>{{ r.eventVenue }}</span>
+              <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[15px] text-slate-400">group</span>{{ r.expectedAttendees }} personne(s)</span>
+            </div>
+
+            <div class="mt-2 flex flex-wrap gap-2">
+              <span v-if="r.checkedInAttendees > 0 && r.checkedInAt" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-success-light text-success text-[12px] font-semibold">
+                <span class="material-symbols-outlined text-[14px]">how_to_reg</span>Présent · {{ formatTime(r.checkedInAt) }}
+              </span>
+              <span v-if="r.tableName" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-light text-primary text-[12px] font-semibold">
+                <span class="material-symbols-outlined text-[14px]">table_restaurant</span>Table {{ r.tableName }}
+              </span>
+              <span v-if="r.drinkChoice" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-attention-light text-attention-dark text-[12px] font-semibold">
+                <span class="material-symbols-outlined text-[14px]">local_bar</span>{{ r.drinkChoice }}
+              </span>
+            </div>
+
+            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+              <button v-if="r.hasCard && r.publicToken" type="button" class="h-10 px-4 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center justify-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all" @click="openCard(r)">
+                <span class="material-symbols-outlined text-[18px]">image</span>Voir l'invitation
+              </button>
+              <button v-if="r.canCheckIn && r.publicToken" type="button" :disabled="checkingIn" class="h-10 px-4 rounded-lg bg-secondary text-white text-[13px] font-semibold inline-flex items-center justify-center gap-2 shadow-sm hover:bg-secondary/90 disabled:opacity-60 transition-all" @click="checkInFromSearch(r)">
+                <span class="material-symbols-outlined text-[18px]">how_to_reg</span>Enregistrer l'entrée
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </PermGuard>
+
     <div v-if="scanError" class="bg-error-light border border-error/20 text-error rounded-xl p-4 mb-5 text-sm inline-flex items-center gap-2 w-full">
       <span class="material-symbols-outlined text-[19px]">error</span>{{ scanError }}
     </div>
@@ -43,6 +111,14 @@
         <div class="min-w-0">
           <div class="font-bold text-slate-900 text-[15px]">{{ result.guestName }}</div>
           <div class="text-[13px] text-slate-500">Statut : {{ result.invitationStatus }}</div>
+          <span v-if="result.checkedInAttendees > 0 && !result.canCheckIn" class="mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-success-light text-success text-[11px] font-bold">
+            <span class="material-symbols-outlined text-[14px]">how_to_reg</span>
+            DÉJÀ ENREGISTRÉ<template v-if="result.checkedInAt"> — {{ formatTime(result.checkedInAt) }}</template>
+          </span>
+          <span v-if="result.checkedInAttendees > 0 && !result.canCheckIn" class="mt-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-success-light text-success text-[11px] font-bold">
+            <span class="material-symbols-outlined text-[14px]">how_to_reg</span>
+            DÉJÀ ENREGISTRÉ<template v-if="result.checkedInAt"> — {{ formatTime(result.checkedInAt) }}</template>
+          </span>
           <div class="text-[13px] text-slate-500">
             Attendus : {{ result.expectedAttendees }} · Check-in : {{ result.checkedInAttendees }} · Restants : {{ result.remainingAttendees }}
           </div>
@@ -154,13 +230,34 @@
     </div>
   </div>
 </div>
+
+<!-- ===== Visionneuse carte d'invitation confirmée ===== -->
+<Teleport to="body">
+  <div v-if="cardViewer.open" class="fixed inset-0 z-[100] bg-black/75 flex items-center justify-center p-3 sm:p-8" @click.self="cardViewer.open = false">
+    <div class="bg-surface-container-lowest rounded-2xl w-full max-w-2xl max-h-full flex flex-col overflow-hidden shadow-2xl">
+      <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
+        <span class="font-semibold text-slate-900 text-[14px] truncate">Invitation confirmée — {{ cardViewer.name }}</span>
+        <button class="p-1.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors" @click="cardViewer.open = false">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <div class="overflow-auto bg-slate-100 p-3 sm:p-5 grid place-items-center">
+        <img :src="cardViewer.url" class="max-w-full h-auto rounded-xl shadow-lg" alt="Carte d'invitation confirmée" />
+      </div>
+      <div class="px-5 py-3 border-t border-slate-200 flex justify-end">
+        <button class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold hover:bg-primary-dark transition-all" @click="cardViewer.open = false">Fermer</button>
+      </div>
+    </div>
+  </div>
+</Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
-import { scan, checkIn, listPresent, type CheckInScan, type PresentGuest } from '../../api/checkin'
+import { scan, checkIn, listPresent, searchGuests, type CheckInScan, type CheckInSearchItem, type PresentGuest } from '../../api/checkin'
+import { publicCardUrl } from '../../api/publicInvitation'
 import PermGuard from '../../components/common/PermGuard.vue'
 
 const route = useRoute()
@@ -191,6 +288,86 @@ function formatTime(d: string): string {
   return new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 onMounted(loadPresent)
+
+/* --- Recherche invité (agent d'accueil) --- */
+const searchQuery = ref('')
+const lastSearch = ref('')
+const searching = ref(false)
+const searched = ref(false)
+const searchError = ref('')
+const searchResults = ref<CheckInSearchItem[]>([])
+
+async function doSearch() {
+  const q = searchQuery.value.trim()
+  searchError.value = ''
+  if (q.length < 2) {
+    searchError.value = 'Saisissez au moins 2 caractères.'
+    return
+  }
+  searching.value = true
+  searched.value = true
+  lastSearch.value = q
+  try {
+    searchResults.value = await searchGuests(id, q)
+  } catch (e: any) {
+    searchResults.value = []
+    searchError.value = e?.response?.data?.error || e?.message || 'Erreur lors de la recherche.'
+  } finally {
+    searching.value = false
+  }
+}
+
+function initialsOf(name: string): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '?'
+}
+
+function statusLabel(r: CheckInSearchItem): string {
+  if (r.checkedInAttendees > 0) return 'PRÉSENT'
+  if (r.rsvpStatus === 'ACCEPTED') return 'PRÉSENCE CONFIRMÉE'
+  if (r.rsvpStatus === 'DECLINED') return 'A DÉCLINÉ'
+  return 'EN ATTENTE'
+}
+function statusClass(r: CheckInSearchItem): string {
+  if (r.checkedInAttendees > 0) return 'bg-success-light text-success'
+  if (r.rsvpStatus === 'ACCEPTED') return 'bg-success-light text-success'
+  if (r.rsvpStatus === 'DECLINED') return 'bg-error-light text-error'
+  return 'bg-attention-light text-attention-dark'
+}
+function statusIcon(r: CheckInSearchItem): string {
+  if (r.checkedInAttendees > 0) return 'how_to_reg'
+  if (r.rsvpStatus === 'ACCEPTED') return 'check_circle'
+  if (r.rsvpStatus === 'DECLINED') return 'cancel'
+  return 'hourglass_top'
+}
+
+/* --- Visionneuse carte d'invitation confirmée --- */
+const cardViewer = reactive({ open: false, url: '', name: '' })
+
+function openCard(r: CheckInSearchItem) {
+  if (!r.publicToken) return
+  cardViewer.url = publicCardUrl(r.publicToken)
+  cardViewer.name = r.guestName
+  cardViewer.open = true
+}
+
+async function checkInFromSearch(r: CheckInSearchItem) {
+  if (!r.publicToken) return
+  checkingIn.value = true
+  checkinMsg.value = ''
+  scanError.value = ''
+  try {
+    const res = await checkIn(r.publicToken, id, 1)
+    checkinMsg.value = `Entrée validée pour ${res.guestName} (${res.numberOfAttendees} personne(s)).`
+    qr.value = r.publicToken
+    result.value = await scan(r.publicToken, id)
+    await doSearch()
+    await loadPresent()
+  } catch (e: any) {
+    scanError.value = e?.response?.data?.error || e?.message || 'Erreur lors du check-in.'
+  } finally {
+    checkingIn.value = false
+  }
+}
 
 /* --- Scanner caméra (@zxing/browser) --- */
 const cameraOpen = ref(false)

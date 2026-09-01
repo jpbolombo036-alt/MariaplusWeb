@@ -118,20 +118,55 @@
 
             <!-- État succès -->
             <div v-if="success" class="mp-inv-success" :class="success">
-              <span class="mp-inv-success-icon">✓</span>
-              <h3 class="mp-inv-success-title">Merci pour votre réponse !</h3>
-              <p class="mp-inv-success-text">{{ successText }}</p>
-              <p v-if="success === 'ACCEPTED'" class="mp-inv-success-count">
-                <span class="material-symbols-outlined">group</span>
-                {{ confirmedCount }} personne(s) confirmée(s)
-              </p>
-              <div v-if="success === 'ACCEPTED' && qrDataUri" class="mp-inv-qr">
-                <img :src="qrDataUri" alt="Code QR d’entrée à l’événement" />
-                <button type="button" class="mp-inv-link" @click="downloadQr">
-                  Télécharger le code QR d’entrée
-                </button>
-              </div>
-              <button type="button" class="mp-inv-link" @click="editAnswer">Modifier ma réponse</button>
+              <template v-if="success === 'ACCEPTED'">
+                <span class="mp-inv-success-icon">✓</span>
+                <h3 class="mp-inv-success-hero">Présence<br />confirmée</h3>
+                <p class="mp-inv-success-thanks">Merci {{ firstNameText }} !</p>
+                <p class="mp-inv-success-text">Nous sommes heureux de vous compter parmi nos invités.</p>
+
+                <!-- Carte visuelle (PNG) + actions -->
+                <div v-if="!finished" class="mp-inv-cardzone">
+                  <div class="mp-inv-cardframe">
+                    <img v-if="cardDataUrl" :src="cardDataUrl" alt="Votre invitation confirmée" class="mp-inv-cardimg" />
+                    <div v-else class="mp-inv-cardimg mp-inv-cardimg--loading">
+                      <span class="mp-spinner"></span>
+                      <p>{{ cardError || 'Génération de votre invitation…' }}</p>
+                    </div>
+                  </div>
+                  <p v-if="cardSaved" class="mp-inv-savednote">
+                    <span class="material-symbols-outlined">cloud_done</span>
+                    Enregistrée — présentée à l'accueil
+                  </p>
+                  <div class="mp-inv-cardactions">
+                    <button type="button" class="mp-inv-btn mp-inv-btn--primary" :disabled="!cardDataUrl" @click="downloadCardImage">
+                      <span class="material-symbols-outlined">download</span>
+                      Télécharger l'invitation
+                    </button>
+                    <button type="button" class="mp-inv-btn mp-inv-btn--ghost" :disabled="!cardDataUrl" @click="shareCardImage">
+                      <span class="material-symbols-outlined">share</span>
+                      Partager
+                    </button>
+                    <button type="button" class="mp-inv-btn mp-inv-btn--ghost" @click="finished = true">
+                      Terminer
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="qrDataUri" class="mp-inv-qr">
+                  <img :src="qrDataUri" alt="Code QR d’entrée à l’événement" />
+                  <button type="button" class="mp-inv-link" @click="downloadQr">
+                    Télécharger le code QR d’entrée
+                  </button>
+                </div>
+                <button type="button" class="mp-inv-link" @click="editAnswer">Modifier ma réponse</button>
+              </template>
+
+              <template v-else>
+                <span class="mp-inv-success-icon">✓</span>
+                <h3 class="mp-inv-success-title">Merci pour votre réponse !</h3>
+                <p class="mp-inv-success-text">{{ successText }}</p>
+                <button type="button" class="mp-inv-link" @click="editAnswer">Modifier ma réponse</button>
+              </template>
             </div>
 
             <!-- Choix ACCEPTED / DECLINED -->
@@ -238,18 +273,69 @@
         </footer>
       </template>
     </div>
+
+    <!-- Carte 1080x1350 générée hors écran → export PNG + sauvegarde serveur -->
+    <div v-if="success === 'ACCEPTED' && inv" ref="cardRenderEl" class="mp-inv-render" aria-hidden="true">
+      <div class="mpc">
+        <div class="mpc-cover">
+          <img v-if="photos.length" :src="absoluteUrl(photos[0])" crossorigin="anonymous" class="mpc-cover-img" alt="" />
+          <div class="mpc-cover-shade"></div>
+          <div class="mpc-logo"><img src="/logo.png" class="mpc-logo-img" alt="" /><span>MariagePlus</span></div>
+          <div class="mpc-confirm">INVITATION CONFIRMÉE</div>
+        </div>
+        <div class="mpc-body">
+          <h2 class="mpc-event">{{ title }}</h2>
+          <div class="mpc-divider"><span></span>♥<span></span></div>
+          <div class="mpc-label">INVITATION DE</div>
+          <div class="mpc-guest">{{ guestFullName }}</div>
+          <div class="mpc-badge"><span class="mpc-badge-check">✓</span>PRÉSENCE CONFIRMÉE</div>
+          <div class="mpc-infos">
+            <div v-if="dateValue" class="mpc-info">
+              <div class="mpc-info-label">DATE</div>
+              <div class="mpc-info-value">{{ dateValue }}</div>
+              <div v-if="dayOfWeekText" class="mpc-info-sub">{{ dayOfWeekText }}</div>
+            </div>
+            <div v-if="timeValue" class="mpc-info">
+              <div class="mpc-info-label">HEURE</div>
+              <div class="mpc-info-value">{{ timeValue }}</div>
+              <div class="mpc-info-sub">Heure locale</div>
+            </div>
+            <div v-if="venueValue" class="mpc-info">
+              <div class="mpc-info-label">LIEU</div>
+              <div class="mpc-info-value">{{ venueValue }}</div>
+              <div v-if="venueSub" class="mpc-info-sub">{{ venueSub }}</div>
+            </div>
+          </div>
+          <div class="mpc-people">
+            <div class="mpc-label">INVITATION POUR</div>
+            <div class="mpc-people-count">{{ confirmedCount }} personne(s)</div>
+          </div>
+          <div v-if="qrDataUri" class="mpc-qr">
+            <img :src="qrDataUri" class="mpc-qr-img" alt="QR" />
+            <div class="mpc-qr-note">Présentez ce QR Code à l'accueil</div>
+          </div>
+        </div>
+        <div class="mpc-footer">
+          <div class="mpc-footer-line">Invitation confirmée avec</div>
+          <div class="mpc-footer-brand"><img src="/logo.png" class="mpc-logo-img" alt="" />MariagePlus</div>
+          <div class="mpc-footer-heart">♥</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import QRCode from 'qrcode'
+import html2canvas from 'html2canvas'
 import { ApiConfig } from '../api/config'
 import {
   getPublicInvitation,
   listPublicDrinks,
   submitPublicRsvp,
+  uploadCardImage,
   type PublicInvitation,
 } from '../api/publicInvitation'
 
@@ -518,9 +604,84 @@ function downloadQr() {
   document.body.removeChild(link)
 }
 
+/* ---------- Carte d'invitation confirmée (PNG 1080x1350) ---------- */
+const cardRenderEl = ref<HTMLElement | null>(null)
+const cardDataUrl = ref('')
+const cardSaved = ref(false)
+const cardError = ref('')
+const finished = ref(false)
+
+const guestFullName = computed(() => {
+  const fn = inv.value?.guestFirstName?.trim() ?? ''
+  const ln = inv.value?.guestLastName?.trim() ?? ''
+  return `${fn} ${ln}`.trim() || 'Cher invité'
+})
+
+async function generateCard(): Promise<void> {
+  cardError.value = ''
+  if (!cardRenderEl.value) return
+  try {
+    const canvas = await html2canvas(cardRenderEl.value, {
+      width: 1080,
+      height: 1350,
+      scale: 1,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+    })
+    cardDataUrl.value = canvas.toDataURL('image/png')
+    // Sauvegarde serveur (best effort) : l'agent d'accueil retrouvera la carte
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
+    if (blob && inv.value?.publicToken) {
+      try {
+        await uploadCardImage(inv.value.publicToken, blob)
+        cardSaved.value = true
+      } catch {
+        // non bloquant : l'invité garde sa carte en téléchargement
+      }
+    }
+  } catch {
+    cardError.value = "Impossible de générer l'image. Votre QR code reste téléchargeable ci-dessous."
+  }
+}
+
+function downloadCardImage() {
+  if (!cardDataUrl.value) return
+  const link = document.createElement('a')
+  link.href = cardDataUrl.value
+  const slug = (inv.value?.guestFirstName ?? 'invite').toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  link.download = `invitation-confirmee-${slug}.png`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+async function shareCardImage() {
+  if (!cardDataUrl.value) return
+  try {
+    const blob = await (await fetch(cardDataUrl.value)).blob()
+    const file = new File([blob], 'invitation-confirmee.png', { type: 'image/png' })
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Mon invitation', text: 'Mon invitation confirmée' })
+      return
+    }
+  } catch {
+    // repli : téléchargement simple
+  }
+  downloadCardImage()
+}
+
 /* ---------- Cycle de vie ---------- */
 watch(maxAccepted, (max) => {
   if (attendees.value > max) attendees.value = max
+})
+// Génération + sauvegarde de la carte dès que la présence est confirmée
+// (soumission fraîche ou chargement d'un RSVP déjà ACCEPTED)
+watch(success, (s) => {
+  if (s === 'ACCEPTED') {
+    void nextTick().then(() => {
+      window.setTimeout(() => { void generateCard() }, 350)
+    })
+  }
 })
 onMounted(() => {
   load()
@@ -1175,6 +1336,170 @@ textarea.mp-inv-input {
   color: #9aa3b2;
   margin: 6px 0 0;
 }
+
+/* ---------- Confirmation ACCEPTED : héros + carte ---------- */
+.mp-inv-success-hero {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #23864d;
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+.mp-inv-success-thanks {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d1733;
+  margin: 0 0 4px;
+}
+.mp-inv-cardzone { margin-top: 26px; }
+.mp-inv-cardframe {
+  max-width: 540px;
+  margin: 0 auto;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #e7e3f0;
+  box-shadow: 0 14px 44px rgba(40, 25, 80, 0.16);
+  background: #ffffff;
+}
+.mp-inv-cardimg { display: block; width: 100%; height: auto; }
+.mp-inv-cardimg--loading {
+  padding: 70px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: #667085;
+  font-size: 14px;
+}
+.mp-inv-savednote {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #23864d;
+  background: #ecf8f0;
+  padding: 8px 16px;
+  border-radius: 999px;
+}
+.mp-inv-savednote .material-symbols-outlined { font-size: 17px; }
+.mp-inv-cardactions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 540px;
+  margin: 16px auto 0;
+}
+.mp-inv-btn--ghost { background: #ffffff; color: #5427c7; border: 1px solid #e6dfff; }
+.mp-inv-btn--ghost:hover:not(:disabled) { background: #f0ebff; }
+html.dark .mp-inv-success-thanks { color: #f7f5ff; }
+html.dark .mp-inv-btn--ghost { background: #191522; color: #b39dff; border-color: #342d45; }
+html.dark .mp-inv-btn--ghost:hover:not(:disabled) { background: #211b2d; }
+html.dark .mp-inv-cardframe { border-color: #342d45; }
+html.dark .mp-inv-cardimg--loading { color: #b8b2c7; }
+
+/* ---------- Carte 1080x1350 (rendu hors écran → PNG) ---------- */
+.mp-inv-render {
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  width: 1080px;
+}
+.mpc {
+  width: 1080px;
+  height: 1350px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  color: #1d1733;
+  overflow: hidden;
+}
+.mpc-cover { position: relative; height: 420px; flex-shrink: 0; background: #14082f; }
+.mpc-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mpc-cover-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 8, 48, 0.45) 0%, rgba(20, 8, 48, 0.15) 45%, rgba(63, 29, 154, 0.82) 100%);
+}
+.mpc-logo {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 700;
+}
+.mpc-logo-img { width: 34px; height: 34px; object-fit: contain; }
+.mpc-confirm {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #ffffff;
+  letter-spacing: 6px;
+  font-size: 21px;
+  font-weight: 600;
+}
+.mpc-body {
+  flex: 1;
+  padding: 42px 70px 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+.mpc-event { font-family: 'Playfair Display', serif; font-size: 50px; font-weight: 700; color: #1d1733; line-height: 1.12; margin: 0; }
+.mpc-divider { color: #5427c7; font-size: 20px; margin: 16px 0 22px; display: flex; align-items: center; gap: 14px; }
+.mpc-divider span { width: 64px; height: 2px; background: #e6dfff; display: inline-block; border-radius: 2px; }
+.mpc-label { font-size: 17px; letter-spacing: 4px; font-weight: 700; color: #8f6fe0; }
+.mpc-guest { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #5427c7; margin: 8px 0 20px; }
+.mpc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: #ecf8f0;
+  color: #23864d;
+  font-size: 22px;
+  font-weight: 700;
+  padding: 14px 32px;
+  border-radius: 999px;
+  letter-spacing: 1px;
+}
+.mpc-badge-check { width: 38px; height: 38px; border-radius: 50%; background: #23864d; color: #ffffff; display: grid; place-items: center; font-size: 20px; }
+.mpc-infos { display: flex; gap: 36px; justify-content: center; margin: 34px 0 4px; width: 100%; }
+.mpc-info { flex: 1; max-width: 280px; }
+.mpc-info-label { font-size: 16px; letter-spacing: 3px; font-weight: 700; color: #8f6fe0; margin-bottom: 8px; }
+.mpc-info-value { font-size: 25px; font-weight: 600; color: #1d1733; line-height: 1.3; }
+.mpc-info-sub { font-size: 19px; color: #667085; margin-top: 4px; }
+.mpc-people { margin-top: 22px; background: #f0ebff; border-radius: 18px; padding: 18px 44px; }
+.mpc-people .mpc-label { color: #5427c7; }
+.mpc-people-count { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; color: #5427c7; margin-top: 4px; }
+.mpc-qr { margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.mpc-qr-img { width: 160px; height: 160px; }
+.mpc-qr-note { font-size: 18px; color: #667085; }
+.mpc-footer {
+  flex-shrink: 0;
+  padding: 26px 0 40px;
+  text-align: center;
+  background: #f8f7fc;
+  border-top: 1px solid #e7e3f0;
+}
+.mpc-footer-line { font-size: 17px; color: #667085; }
+.mpc-footer-brand { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 25px; font-weight: 700; color: #5427c7; margin-top: 8px; }
+.mpc-footer-heart { color: #e53935; font-size: 17px; margin-top: 6px; }
 
 /* ---------- Animations ---------- */
 @keyframes mp-fade-in {

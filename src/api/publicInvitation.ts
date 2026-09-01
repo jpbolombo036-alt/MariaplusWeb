@@ -84,3 +84,17 @@ export async function submitPublicRsvp(token: string, status: string, attendees:
     numberOfAttendees: Number(j.numberOfAttendees ?? 0),
   }
 }
+
+/** URL publique de la carte d'invitation confirmée (PNG enregistré côté serveur). */
+export function publicCardUrl(token: string): string {
+  return `${ApiConfig.baseUrl}${ApiConfig.publicInvitationsPath}/${token}/card`
+}
+
+/** Enregistre la carte PNG générée côté navigateur (multipart) — consultable par l'agent d'accueil. */
+export async function uploadCardImage(token: string, blob: Blob): Promise<void> {
+  const form = new FormData()
+  form.append('file', blob, 'invitation-confirmee.png')
+  await http.post(`${ApiConfig.publicInvitationsPath}/${token}/card`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
