@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { getEvent, updateEventStatus, loadEventImage, absolutePhotoUrl, type Event } from '../api/events'
 import StatusBadge from '../components/common/StatusBadge.vue'
@@ -109,6 +109,27 @@ function scrollTo(idx: number) {
   el.scrollTo({ left: idx * el.clientWidth, behavior: 'smooth' })
 }
 
+/* --- Défilement automatique (4 s, en boucle) --- */
+const AUTOPLAY_MS = 4000
+let autoTimer: number | null = null
+
+function startAutoplay() {
+  stopAutoplay()
+  if (photos.value.length < 2) return
+  autoTimer = window.setInterval(() => {
+    const el = carouselEl.value
+    if (!el) return
+    const next = (activeSlide.value + 1) % photos.value.length
+    el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' })
+  }, AUTOPLAY_MS)
+}
+function stopAutoplay() {
+  if (autoTimer !== null) {
+    clearInterval(autoTimer)
+    autoTimer = null
+  }
+}
+
 onMounted(load)
 async function load() {
   try {
@@ -116,12 +137,14 @@ async function load() {
     if (event.value?.hasImage) {
       coverUrl.value = await loadEventImage(eventId)
     }
+    startAutoplay()
   } catch {
     event.value = null
   } finally {
     loading.value = false
   }
 }
+onBeforeUnmount(stopAutoplay)
 
 async function publish() {
   try {

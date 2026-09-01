@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { getPublicInvitation, listPublicDrinks, submitPublicRsvp, type PublicInvitation } from '../api/publicInvitation'
 import { absolutePhotoUrl } from '../api/events'
@@ -114,6 +114,27 @@ function scrollTo(idx: number) {
   el.scrollTo({ left: idx * el.clientWidth, behavior: 'smooth' })
 }
 
+/* --- Défilement automatique (4 s, en boucle) --- */
+const AUTOPLAY_MS = 4000
+let autoTimer: number | null = null
+
+function startAutoplay() {
+  stopAutoplay()
+  if (photos.value.length < 2) return
+  autoTimer = window.setInterval(() => {
+    const el = carouselEl.value
+    if (!el) return
+    const next = (activeSlide.value + 1) % photos.value.length
+    el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' })
+  }, AUTOPLAY_MS)
+}
+function stopAutoplay() {
+  if (autoTimer !== null) {
+    clearInterval(autoTimer)
+    autoTimer = null
+  }
+}
+
 onMounted(async () => {
   try {
     inv.value = await getPublicInvitation(token)
@@ -121,12 +142,14 @@ onMounted(async () => {
       qrDataUri.value = await QRCode.toDataURL(inv.value.publicToken, { width: 320, margin: 1 })
       drinkChoice.value = inv.value.rsvpDrinkChoice || ''
     }
+    startAutoplay()
   } catch {
     isError.value = true
     message.value = 'Invitation introuvable'
   }
   await loadDrinks()
 })
+onBeforeUnmount(stopAutoplay)
 
 async function loadDrinks() {
   drinksLoading.value = true
