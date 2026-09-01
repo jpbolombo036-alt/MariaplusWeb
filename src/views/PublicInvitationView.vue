@@ -171,15 +171,16 @@
               </div>
               <p class="mp-inv-hint">Vous pouvez inviter jusqu'à {{ maxAccepted }} personne(s) au total.</p>
 
-              <template v-if="drinks.length">
-                <label class="mp-inv-label" for="mp-drink">
-                  Votre boisson préférée <span class="mp-inv-label-muted">(optionnel)</span>
-                </label>
-                <select id="mp-drink" v-model="drinkChoice" class="mp-inv-input" :disabled="drinksLoading">
-                  <option value="">Choisir une boisson…</option>
-                  <option v-for="d in drinks" :key="d.id" :value="d.name">{{ d.name }}</option>
-                </select>
-              </template>
+              <label class="mp-inv-label" for="mp-drink">
+                Votre boisson préférée <span class="mp-inv-label-muted">(optionnel)</span>
+              </label>
+              <select id="mp-drink" v-model="drinkChoice" class="mp-inv-input" :disabled="drinksLoading || !drinks.length">
+                <option value="">Choisir une boisson…</option>
+                <option v-if="!drinks.length" value="" disabled>
+                  {{ drinksLoading ? 'Chargement…' : 'Aucune boisson disponible' }}
+                </option>
+                <option v-for="d in drinks" :key="d.id" :value="d.name">{{ d.name }}</option>
+              </select>
 
               <label class="mp-inv-label" for="mp-note">
                 Message pour les mariés <span class="mp-inv-label-muted">(optionnel)</span>
