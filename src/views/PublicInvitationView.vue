@@ -278,7 +278,7 @@
     <div v-if="success === 'ACCEPTED' && inv" ref="cardRenderEl" class="mp-inv-render" aria-hidden="true">
       <div class="mpc">
         <div class="mpc-cover">
-          <img v-if="photos.length" :src="absoluteUrl(photos[0])" crossorigin="anonymous" class="mpc-cover-img" alt="" />
+          <div v-if="photos.length" class="mpc-cover-bg" :style="{ backgroundImage: 'url(' + absoluteUrl(photos[0]) + ')' }"></div>
           <div class="mpc-cover-shade"></div>
           <div class="mpc-logo"><img src="/logo.png" class="mpc-logo-img" alt="" /><span>MariagePlus</span></div>
           <div class="mpc-confirm">INVITATION CONFIRMÉE</div>
@@ -1420,8 +1420,16 @@ html.dark .mp-inv-cardimg--loading { color: #b8b2c7; }
   color: #1d1733;
   overflow: hidden;
 }
-.mpc-cover { position: relative; height: 420px; flex-shrink: 0; background: #14082f; }
-.mpc-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mpc-cover { position: relative; height: 360px; flex-shrink: 0; background: #14082f; }
+/* Fond en background-image CSS : html2canvas ne supporte pas object-fit sur <img>
+   (il étirait la photo) — background-size: cover est lui parfaitement rendu. */
+.mpc-cover-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 .mpc-cover-shade {
   position: absolute;
   inset: 0;
@@ -1454,45 +1462,45 @@ html.dark .mp-inv-cardimg--loading { color: #b8b2c7; }
 }
 .mpc-body {
   flex: 1;
-  padding: 42px 70px 0;
+  padding: 34px 60px 0;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow: hidden;
 }
-.mpc-event { font-family: 'Playfair Display', serif; font-size: 50px; font-weight: 700; color: #1d1733; line-height: 1.12; margin: 0; }
-.mpc-divider { color: #5427c7; font-size: 20px; margin: 16px 0 22px; display: flex; align-items: center; gap: 14px; }
+.mpc-event { font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 700; color: #1d1733; line-height: 1.15; margin: 0; }
+.mpc-divider { color: #5427c7; font-size: 20px; margin: 12px 0 18px; display: flex; align-items: center; gap: 14px; }
 .mpc-divider span { width: 64px; height: 2px; background: #e6dfff; display: inline-block; border-radius: 2px; }
 .mpc-label { font-size: 17px; letter-spacing: 4px; font-weight: 700; color: #8f6fe0; }
-.mpc-guest { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #5427c7; margin: 8px 0 20px; }
+.mpc-guest { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; color: #5427c7; margin: 6px 0 16px; }
 .mpc-badge {
   display: inline-flex;
   align-items: center;
   gap: 12px;
   background: #ecf8f0;
   color: #23864d;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
-  padding: 14px 32px;
+  padding: 12px 28px;
   border-radius: 999px;
   letter-spacing: 1px;
 }
-.mpc-badge-check { width: 38px; height: 38px; border-radius: 50%; background: #23864d; color: #ffffff; display: grid; place-items: center; font-size: 20px; }
-.mpc-infos { display: flex; gap: 36px; justify-content: center; margin: 34px 0 4px; width: 100%; }
+.mpc-badge-check { width: 34px; height: 34px; border-radius: 50%; background: #23864d; color: #ffffff; display: grid; place-items: center; font-size: 18px; }
+.mpc-infos { display: flex; gap: 32px; justify-content: center; margin: 26px 0 4px; width: 100%; }
 .mpc-info { flex: 1; max-width: 280px; }
 .mpc-info-label { font-size: 16px; letter-spacing: 3px; font-weight: 700; color: #8f6fe0; margin-bottom: 8px; }
 .mpc-info-value { font-size: 25px; font-weight: 600; color: #1d1733; line-height: 1.3; }
 .mpc-info-sub { font-size: 19px; color: #667085; margin-top: 4px; }
-.mpc-people { margin-top: 22px; background: #f0ebff; border-radius: 18px; padding: 18px 44px; }
+.mpc-people { margin-top: 16px; background: #f0ebff; border-radius: 18px; padding: 14px 40px; }
 .mpc-people .mpc-label { color: #5427c7; }
-.mpc-people-count { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; color: #5427c7; margin-top: 4px; }
-.mpc-qr { margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.mpc-qr-img { width: 160px; height: 160px; }
+.mpc-people-count { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #5427c7; margin-top: 4px; }
+.mpc-qr { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; }
+.mpc-qr-img { width: 150px; height: 150px; }
 .mpc-qr-note { font-size: 18px; color: #667085; }
 .mpc-footer {
   flex-shrink: 0;
-  padding: 26px 0 40px;
+  padding: 20px 0 30px;
   text-align: center;
   background: #f8f7fc;
   border-top: 1px solid #e7e3f0;
