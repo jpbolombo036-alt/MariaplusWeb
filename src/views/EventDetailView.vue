@@ -14,6 +14,7 @@
           v-for="(p, idx) in photos"
           :key="idx"
           :src="absolutePhotoUrl(p)"
+          style="object-position: center 18%"
           class="w-full h-64 md:h-80 object-cover snap-center shrink-0"
           alt=""
         />
