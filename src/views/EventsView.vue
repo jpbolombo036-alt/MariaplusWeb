@@ -40,10 +40,27 @@
       <div class="px-6 pt-6 pb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 class="text-[18px] font-bold text-slate-900">Liste de vos événements</h2>
         <div class="flex items-center gap-3">
-          <button class="h-[42px] px-4 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 inline-flex items-center gap-2 hover:bg-slate-50 transition-colors">
-            <span class="material-symbols-outlined text-[18px]">filter_list</span> Tous les statuts
-            <span class="material-symbols-outlined text-[18px]">expand_more</span>
-          </button>
+          <div class="relative">
+            <button @click="openFilter = !openFilter" class="h-[42px] px-4 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 inline-flex items-center gap-2 hover:bg-slate-50 transition-colors">
+              <span class="material-symbols-outlined text-[18px]">filter_list</span>
+              {{ currentFilterLabel }}
+              <span class="material-symbols-outlined text-[18px]">expand_more</span>
+            </button>
+            <div v-if="openFilter" class="fixed inset-0 z-20" @click="openFilter = false"></div>
+            <div v-if="openFilter" class="absolute right-0 z-30 w-56 mt-2 rounded-xl border border-slate-200 bg-white shadow-xl py-1.5">
+              <button
+                v-for="opt in filterOptions"
+                :key="opt.value"
+                @click="setFilter(opt.value)"
+                class="w-full text-left px-4 py-2.5 text-[13px] font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors"
+                :class="opt.value === periodFilter ? 'text-primary' : 'text-slate-700'"
+              >
+                <span class="material-symbols-outlined text-[18px]" :class="opt.value === periodFilter ? 'text-primary' : 'text-slate-400'">{{ opt.icon }}</span>
+                {{ opt.label }}
+                <span v-if="opt.value === periodFilter" class="material-symbols-outlined text-[18px] ml-auto">check</span>
+              </button>
+            </div>
+          </div>
           <button @click="sortDateAsc = !sortDateAsc" class="h-[42px] px-4 rounded-lg bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
             <span class="material-symbols-outlined text-[18px]">{{ sortDateAsc ? 'calendar_month' : 'calendar_today' }}</span>
             {{ sortDateAsc ? 'Trier du plus ancien' : 'Trier par date' }}
@@ -140,8 +157,32 @@ const loading = ref(true)
 const error = ref('')
 const createOpen = ref(false)
 const query = ref('')
-const statusFilter = ref('')
 const imageUrls = reactive<Record<number, string>>({})
+
+/**
+ * Période affichée dans la liste.
+ *  - 'CURRENT' (défaut) : événements en cours/à venir — non passés et non annulés,
+ *    triés du plus récent au plus ancien.
+ *  - 'PAST' : événements passés (date antérieure à aujourd'hui, terminés, archivés ou annulés).
+ *  - 'ALL' : tous les événements.
+ */
+const periodFilter = ref<'CURRENT' | 'PAST' | 'ALL'>('CURRENT')
+const openFilter = ref(false)
+
+const filterOptions = computed(() => [
+  { value: 'CURRENT' as const, label: 'En cours', icon: 'event_available' },
+  { value: 'PAST' as const, label: 'Passés', icon: 'history' },
+  { value: 'ALL' as const, label: 'Tous les événements', icon: 'apps' },
+])
+
+const currentFilterLabel = computed(() =>
+  filterOptions.value.find((o) => o.value === periodFilter.value)?.label ?? 'En cours',
+)
+
+function setFilter(v: 'CURRENT' | 'PAST' | 'ALL') {
+  periodFilter.value = v
+  openFilter.value = false
+}
 
 if (route.query.new === '1') {
   createOpen.value = true
@@ -150,17 +191,10 @@ if (route.query.new === '1') {
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
-  const st = statusFilter.value
   return events.value.filter((ev) => {
-    if (st) {
-      // Filtre spécial « passés » : tout événement passé par la date, ou déjà
-      // terminé/archivé — pas seulement ceux marqués ARCHIVED.
-      if (st === 'PAST') {
-        if (!isPast(ev)) return false
-      } else if (ev.status !== st) {
-        return false
-      }
-    }
+    if (periodFilter.value === 'CURRENT' && (isPast(ev) || ev.status === 'CANCELLED')) return false
+    if (periodFilter.value === 'PAST' && !(isPast(ev) || ev.status === 'CANCELLED')) return false
+    // 'ALL' : aucun filtrage de période.
     if (q && !ev.name.toLowerCase().includes(q)) return false
     return true
   })
