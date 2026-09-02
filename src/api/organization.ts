@@ -45,12 +45,22 @@ export async function listMembers(orgId: number): Promise<OrgMember[]> {
 }
 
 export async function addMember(orgId: number, payload: OrgMemberPayload): Promise<OrgMember> {
-  const res = await http.post(membersPath(orgId), payload)
+  // Le backend attend "weddingId" (obligatoire pour les rôles agent) — pas "eventId".
+  const body: Record<string, unknown> = {
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    email: payload.email,
+    phone: payload.phone,
+    password: payload.password,
+    roleCode: payload.roleCode,
+    weddingId: payload.eventId ?? null,
+  }
+  const res = await http.post(membersPath(orgId), body)
   return parseMember(decodeMap(res.data))
 }
 
 export async function updateMemberWedding(orgId: number, memberId: number, eventId: number): Promise<OrgMember> {
-  const res = await http.put(`${membersPath(orgId)}/${memberId}`, { eventId })
+  const res = await http.put(`${membersPath(orgId)}/${memberId}`, { weddingId: eventId })
   return parseMember(decodeMap(res.data))
 }
 

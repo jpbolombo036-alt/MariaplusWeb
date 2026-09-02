@@ -8,7 +8,11 @@
           <p class="text-[13px] text-slate-500 mt-0.5 font-medium">Gérez et suivez tous vos événements en un seul endroit.</p>
         </div>
         <div class="flex items-center gap-3">
-          <button @click="$router.push({name:'events-new'})" class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all">
+          <button
+            v-if="auth.can([Perm.weddingCreate, Perm.eventCreate])"
+            @click="$router.push({name:'events-new'})"
+            class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all"
+          >
             <span class="material-symbols-outlined text-[18px]">add</span> Nouvel événement
           </button>
         </div>
@@ -125,7 +129,10 @@ import { listEvents, loadEventImage, type Event } from '../api/events'
 import PermGuard from '../components/common/PermGuard.vue'
 import StatusBadge from '../components/common/StatusBadge.vue'
 import CreateEventDialog from '../components/events/CreateEventDialog.vue'
+import { useAuthStore } from '../stores/auth'
+import { Perm } from '../permissions'
 
+const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const events = ref<Event[]>([])
