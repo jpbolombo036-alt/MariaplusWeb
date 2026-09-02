@@ -74,8 +74,12 @@ http.interceptors.response.use(
   async (error: AxiosError) => {
     const original = error.config as (typeof error.config & { _retry?: boolean }) | undefined
     const status = error.response?.status
-    const isRefreshPath = error.config?.url?.includes(ApiConfig.authRefresh)
-    if (status === 401 && original && !original._retry && !isRefreshPath) {
+    const url = error.config?.url ?? ''
+    const isRefreshPath = url.includes(ApiConfig.authRefresh)
+    // Un 401 sur login/register signifie des identifiants invalides (ou un email
+    // déjà utilisé), pas une session expirée : ne jamais déclencher le refresh ici.
+    const isAuthEndpoint = url.includes(ApiConfig.authLogin) || url.includes(ApiConfig.authRegister) || isRefreshPath
+    if (status === 401 && original && !original._retry && !isAuthEndpoint) {
       original._retry = true
       try {
         if (!refreshPromise) {

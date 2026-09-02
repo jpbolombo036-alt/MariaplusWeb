@@ -320,7 +320,7 @@ async function onSubmit() {
       await auth.login(email.value, password.value)
       router.replace((route.query.redirect as string) || '/dashboard')
     } catch (e: any) {
-      error.value = e?.message || 'Identifiants invalides'
+      error.value = e?.response?.data?.error || e?.message || 'Identifiants invalides'
     } finally {
       loading.value = false
     }
@@ -352,7 +352,7 @@ async function onSubmit() {
     // POST /auth/register renvoie un LoginResponse → déjà connecté.
     router.replace('/dashboard')
   } catch (e: any) {
-    error.value = e?.message || "Impossible de créer le compte (email peut-être déjà utilisé)"
+    error.value = e?.response?.data?.error || e?.message || "Impossible de créer le compte (email peut-être déjà utilisé)"
   } finally {
     loading.value = false
   }
