@@ -39,13 +39,28 @@
       </div>
     </div>
 
-    <!-- Actions (Modifier / Publier) — le héros de l'Overview les fournit pour les autres types -->
-    <div v-if="isWedding" class="mt-3 flex gap-2">
+    <!-- Bandeau : événement passé -->
+    <div
+      v-if="isPastEvent"
+      class="mt-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-center gap-2"
+    >
+      <span class="material-symbols-outlined text-[18px]">event_busy</span>
+      Cet événement est passé — passez-le en « Terminé » puis « Archivé » pour le clôturer.
+    </div>
+
+    <!-- Actions statut (tous les types) -->
+    <div class="mt-3 flex flex-wrap gap-2">
       <PermGuard :allow="['EVENT_UPDATE']">
-        <button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold">Modifier</button>
+        <button v-if="isWedding" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold">Modifier</button>
       </PermGuard>
-      <PermGuard :allow="['EVENT_PUBLISH']">
-        <button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold" @click="publish">Publier</button>
+      <PermGuard :allow="['WEDDING_PUBLISH']">
+        <button v-if="event.status === 'DRAFT'" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold" @click="changeStatus('PUBLISHED')">Publier</button>
+      </PermGuard>
+      <PermGuard :allow="['WEDDING_UPDATE']">
+        <button v-if="event.status === 'ACTIVE'" class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-sm font-semibold" @click="changeStatus('COMPLETED')">Terminer</button>
+      </PermGuard>
+      <PermGuard :allow="['WEDDING_ARCHIVE']">
+        <button v-if="event.status === 'COMPLETED'" class="px-3 py-1.5 rounded-lg bg-surface-variant text-on-surface-variant text-sm font-semibold" @click="changeStatus('ARCHIVED')">Archiver</button>
       </PermGuard>
     </div>
 
@@ -151,13 +166,25 @@ async function load() {
 }
 onBeforeUnmount(stopAutoplay)
 
-async function publish() {
+async function changeStatus(status: string) {
   try {
-    event.value = await updateEventStatus(eventId, 'PUBLISHED')
+    event.value = await updateEventStatus(eventId, status)
   } catch {
     /* ignoré */
   }
 }
+
+/** Un événement dont la date est dépassée (mais pas encore terminé/annulé). */
+const isPastEvent = computed(() => {
+  const e = event.value
+  if (!e) return false
+  if (e.status === 'ARCHIVED' || e.status === 'COMPLETED' || e.status === 'CANCELLED') return false
+  if (!e.eventDate) return false
+  const d = new Date(e.eventDate + 'T00:00:00')
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return d.getTime() < today.getTime()
+})
 
 const kind = (s: string) => `${s}`
 

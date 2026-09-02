@@ -40,8 +40,9 @@
             <span class="material-symbols-outlined text-[18px]">filter_list</span> Tous les statuts
             <span class="material-symbols-outlined text-[18px]">expand_more</span>
           </button>
-          <button class="h-[42px] px-4 rounded-lg bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
-            <span class="material-symbols-outlined text-[18px]">calendar_today</span> Trier par date
+          <button @click="sortDateAsc = !sortDateAsc" class="h-[42px] px-4 rounded-lg bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
+            <span class="material-symbols-outlined text-[18px]">{{ sortDateAsc ? 'calendar_month' : 'calendar_today' }}</span>
+            {{ sortDateAsc ? 'Trier du plus ancien' : 'Trier par date' }}
           </button>
         </div>
       </div>
@@ -144,30 +145,73 @@ const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   const st = statusFilter.value
   return events.value.filter((ev) => {
-    if (st && ev.status !== st) return false
+    if (st) {
+      // Filtre spécial « passés » : tout événement passé par la date, ou déjà
+      // terminé/archivé — pas seulement ceux marqués ARCHIVED.
+      if (st === 'PAST') {
+        if (!isPast(ev)) return false
+      } else if (ev.status !== st) {
+        return false
+      }
+    }
     if (q && !ev.name.toLowerCase().includes(q)) return false
     return true
   })
 })
 
-const paginated = computed(() => filtered.value)
+// Tri : par date d'événement (décroissante par défaut, bouton pour inverser)
+const sortDateAsc = ref(false)
+const paginated = computed(() => {
+  const arr = [...filtered.value]
+  arr.sort((a, b) => {
+    const da = a.eventDate ? new Date(a.eventDate + 'T00:00:00').getTime() : 0
+    const db = b.eventDate ? new Date(b.eventDate + 'T00:00:00').getTime() : 0
+    return sortDateAsc.value ? da - db : db - da
+  })
+  return arr
+})
 
-const statusMap: Record<string, string> = { DRAFT: 'Brouillons', PUBLISHED: 'À venir' }
+/** Un événement est « passé » si terminé/archivé, ou si sa date est antérieure à aujourd'hui. */
+function isPast(ev: Event): boolean {
+  if (ev.status === 'ARCHIVED' || ev.status === 'COMPLETED') return true
+  if (ev.status === 'CANCELLED') return false
+  if (!ev.eventDate) return false
+  const d = new Date(ev.eventDate + 'T00:00:00')
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return d.getTime() < today.getTime()
+}
+
+const statusMap: Record<string, string> = {
+  DRAFT: 'Brouillons',
+  PUBLISHED: 'À venir',
+  ACTIVE: 'En cours',
+  COMPLETED: 'Terminé',
+  ARCHIVED: 'Archivé',
+  CANCELLED: 'Annulé',
+}
 const statCards = computed(() => {
   const total = events.value.length
-  const upcoming = events.value.filter((e) => e.status === 'PUBLISHED').length
+  const upcoming = events.value.filter((e) => (e.status === 'PUBLISHED' || e.status === 'ACTIVE') && !isPast(e)).length
   const drafts = events.value.filter((e) => e.status === 'DRAFT').length
-  const past = events.value.filter((e) => e.status === 'ARCHIVED').length
+  const past = events.value.filter((e) => isPast(e)).length
   return [
     { label: 'Total Événements', value: total, sub: 'Tous vos événements', icon: 'calendar_month', bg: '#F0EBFF', color: '#4B24B5' },
-    { label: 'À venir', value: upcoming, sub: 'Publiés et à venir', icon: 'check_circle', bg: '#E7F6F0', color: '#176B5B' },
+    { label: 'À venir', value: upcoming, sub: 'Publiés et en cours', icon: 'check_circle', bg: '#E7F6F0', color: '#176B5B' },
     { label: 'Brouillons', value: drafts, sub: 'En cours de préparation', icon: 'schedule', bg: '#FFF4E5', color: '#F4A340' },
     { label: 'Passés', value: past, sub: 'Événements terminés', icon: 'event_busy', bg: '#FFECEC', color: '#C62828' },
   ]
 })
 
 function dateLabel(ev: Event): string {
-  return ev.createdAt || ev.updatedAt ? new Date(ev.createdAt || ev.updatedAt || '').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Non renseigné'
+  // Affiche la date réelle de l'événement (et l'heure) au lieu de la date de création.
+  if (ev.eventDate) {
+    const dateTxt = new Date(ev.eventDate + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+    return ev.startTime ? `${dateTxt} · ${String(ev.startTime).slice(0, 5)}` : dateTxt
+  }
+  return ev.createdAt
+    ? new Date(ev.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'Non renseigné'
 }
 
 onMounted(load)
