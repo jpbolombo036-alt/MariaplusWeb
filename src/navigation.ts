@@ -18,7 +18,11 @@ export interface NavEntry {
 // mariage sélectionné (/dashboard/events/{id}/{section}).
 export const navEntries: NavEntry[] = [
   { label: 'Dashboard', icon: 'dashboard', perm: [Perm.dashboardView] },
-  { label: 'Mes événements', icon: 'event', perm: [Perm.weddingView] },
+  {
+    label: 'Mes événements',
+    icon: 'event',
+    perm: [Perm.weddingView, Perm.eventView, Perm.guestView, Perm.invitationView, Perm.rsvpView, Perm.checkinView, Perm.tableView, Perm.drinkView],
+  },
   { label: 'Invités', icon: 'group', section: 'guests', perm: [Perm.guestView] },
   { label: 'Catégories', icon: 'category', section: 'categories', perm: [Perm.guestView] },
   { label: 'Invitations', icon: 'mail', section: 'invitations', perm: [Perm.invitationView] },

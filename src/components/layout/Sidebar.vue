@@ -82,7 +82,7 @@
         </span>
         <div class="min-w-0 leading-tight flex-1">
           <div style="font-size:14px" class="font-semibold text-slate-700 truncate">{{ auth.user?.firstName }} {{ auth.user?.lastName }}</div>
-          <div style="font-size:11px" class="font-semibold text-primary uppercase tracking-wide">Organisateur</div>
+          <div style="font-size:11px" class="font-semibold text-primary uppercase tracking-wide">{{ roleLabel }}</div>
         </div>
       </router-link>
     </div>
@@ -103,6 +103,37 @@ const route = useRoute()
 
 const canCreate = computed(() => hasAny(auth.permissions, Perm.weddingCreate))
 
+// Un rôle peut accéder à la liste des événements dès qu'il possède AU MOINS une
+// permission liée à un événement. NB : WEDDING_VIEW seul ne suffit pas car les
+// rôles opérationnels (AGENT_ACCUEIL, GESTIONNAIRE_INVITES) ne l'ont pas —
+// ils ont en revanche GUEST_VIEW / CHECKIN_VIEW / INVITATION_VIEW / EVENT_VIEW.
+const canAccessEvents = computed(() =>
+  hasAny(
+    auth.permissions,
+    Perm.weddingView,
+    Perm.eventView,
+    Perm.guestView,
+    Perm.invitationView,
+    Perm.rsvpView,
+    Perm.checkinView,
+    Perm.tableView,
+    Perm.drinkView,
+    Perm.statisticsView,
+  ),
+)
+
+// Libellé du rôle réel (jamais codé en dur) pour le badge sous le nom.
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: 'Super Admin',
+  ORGANISATEUR: 'Organisateur',
+  GESTIONNAIRE_INVITES: 'Gestionnaire d’invités',
+  AGENT_ACCUEIL: 'Agent d’accueil',
+}
+const roleLabel = computed(() => {
+  const role = (auth.user?.roles ?? [])[0]
+  return ROLE_LABELS[role] ?? role ?? 'Membre'
+})
+
 const initials = computed(() => {
   const first = auth.user?.firstName || ''
   const last = auth.user?.lastName || ''
@@ -113,8 +144,10 @@ const initials = computed(() => {
 const generalItems = computed(() => {
   const items: Array<{ label: string; icon: string; to: string; match: string; perm: string }> = [
     { label: 'Dashboard', icon: 'grid_view', to: '/dashboard', match: '/dashboard', perm: Perm.dashboardView },
-    { label: 'Événements', icon: 'calendar_month', to: '/dashboard/events', match: '/dashboard/events', perm: Perm.weddingView },
   ]
+  if (canAccessEvents.value) {
+    items.push({ label: 'Événements', icon: 'calendar_month', to: '/dashboard/events', match: '/dashboard/events', perm: Perm.eventView })
+  }
   if (hasAny(auth.permissions, Perm.organizationManageMembers)) {
     items.push({ label: 'Équipe', icon: 'manage_accounts', to: '/dashboard/members', match: '/dashboard/members', perm: Perm.organizationManageMembers })
   }
