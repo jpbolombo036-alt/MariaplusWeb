@@ -3,9 +3,9 @@
     <!-- Mobile : logo seul (comme la landing), pas de bouton menu -->
     <RouterLink to="/dashboard" class="md:hidden flex items-center gap-2">
       <span class="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-primary/20 grid place-items-center">
-        <img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" />
+        <img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" />
       </span>
-      <span class="font-bold text-slate-800 tracking-tight">Mariage<span class="text-primary">Plus</span></span>
+      <span class="font-bold text-slate-800 tracking-tight">Eventia<span class="text-primary">Easy</span></span>
     </RouterLink>
 
     <!-- Titre de la page courante (desktop) -->

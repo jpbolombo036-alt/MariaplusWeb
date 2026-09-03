@@ -7,10 +7,10 @@
     <div class="px-6 pt-6 pb-5">
       <div class="flex items-center gap-3.5">
         <span class="w-10 h-10 rounded-lg overflow-hidden grid place-items-center shrink-0 bg-slate-50 border border-slate-200">
-          <img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" />
+          <img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" />
         </span>
         <div class="leading-none min-w-0">
-          <div style="font-size:22px" class="font-bold text-slate-900 tracking-tight">Mariage<span class="text-primary">Plus</span></div>
+          <div style="font-size:22px" class="font-bold text-slate-900 tracking-tight">Eventia<span class="text-primary">Easy</span></div>
           <div style="font-size:12px" class="text-slate-500 mt-0.5 font-medium truncate">Event Management</div>
         </div>
       </div>

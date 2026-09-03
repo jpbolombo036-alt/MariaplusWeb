@@ -4,7 +4,7 @@
     <aside class="ag-sidebar" :class="{ 'ag-sidebar--open': mobileNav }">
       <div class="ag-logo">
         <img src="/logo.png" class="ag-logo-img" alt="" />
-        <span class="ag-logo-text">Mariage<span class="ag-logo-plus">Plus</span></span>
+        <span class="ag-logo-text">Eventia<span class="ag-logo-plus">Easy</span></span>
       </div>
       <p class="ag-sidebar-sub">Accueil / Check-in</p>
       <nav class="ag-nav">

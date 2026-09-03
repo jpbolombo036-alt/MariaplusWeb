@@ -46,7 +46,7 @@
 
           <div class="mp-inv-logo">
             <img src="/logo.png" alt="" class="mp-inv-logo-img" />
-            <span class="mp-inv-logo-text">MariagePlus</span>
+            <span class="mp-inv-logo-text">EventiaEasy</span>
           </div>
 
           <div class="mp-inv-cover-content">
@@ -265,7 +265,7 @@
         <footer class="mp-inv-footer">
           <p class="mp-inv-footer-brand">
             <span class="mp-inv-footer-heart">♥</span>
-            Propulsé par <strong class="mp-inv-footer-strong">MariagePlus</strong>
+            Propulsé par <strong class="mp-inv-footer-strong">EventiaEasy</strong>
           </p>
           <p v-if="deadlineText" class="mp-inv-footer-deadline">
             Merci de répondre avant le {{ deadlineText }}
@@ -280,7 +280,7 @@
         <div class="mpc-cover">
           <div v-if="photos.length" class="mpc-cover-bg" :style="{ backgroundImage: 'url(' + absoluteUrl(photos[0]) + ')' }"></div>
           <div class="mpc-cover-shade"></div>
-          <div class="mpc-logo"><img src="/logo.png" class="mpc-logo-img" alt="" /><span>MariagePlus</span></div>
+          <div class="mpc-logo"><img src="/logo.png" class="mpc-logo-img" alt="" /><span>EventiaEasy</span></div>
           <div class="mpc-confirm">INVITATION CONFIRMÉE</div>
         </div>
         <div class="mpc-body">
@@ -317,7 +317,7 @@
         </div>
         <div class="mpc-footer">
           <div class="mpc-footer-line">Invitation confirmée avec</div>
-          <div class="mpc-footer-brand"><img src="/logo.png" class="mpc-logo-img" alt="" />MariagePlus</div>
+          <div class="mpc-footer-brand"><img src="/logo.png" class="mpc-logo-img" alt="" />EventiaEasy</div>
           <div class="mpc-footer-heart">♥</div>
         </div>
       </div>
@@ -692,7 +692,7 @@ onBeforeUnmount(stopAutoplay)
 
 <style>
 /* ============================================================
-   Page publique d'invitation — design premium MariagePlus
+   Page publique d'invitation— design premium EventiaEasy
    Classes préfixées .mp-inv-* (global) pour ne pas entrer en
    conflit avec le dashboard. Mode sombre via html.dark.
    ============================================================ */

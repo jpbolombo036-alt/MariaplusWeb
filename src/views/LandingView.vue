@@ -5,9 +5,9 @@
       <div class="max-w-content mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         <RouterLink to="/" class="flex items-center gap-2 group">
           <span class="w-9 h-9 rounded-xl overflow-hidden ring-1 ring-primary/20 grid place-items-center group-hover:scale-105 transition-transform">
-            <img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" />
+            <img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" />
           </span>
-          <span class="text-lg font-bold tracking-tight">Mariage<span class="text-primary">Plus</span></span>
+          <span class="text-lg font-bold tracking-tight">Eventia<span class="text-primary">Easy</span></span>
         </RouterLink>
         <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-on-surface-variant">
           <RouterLink to="/" class="hover:text-primary transition-colors">Accueil</RouterLink>
@@ -150,7 +150,7 @@
         <div class="absolute -bottom-20 -left-10 w-80 h-80 rounded-full bg-fuchsia-400/20 blur-2xl"></div>
         <span class="material-symbols-outlined text-5xl mb-4 relative">celebration</span>
         <h2 class="text-3xl md:text-4xl font-extrabold relative">Prêt à célébrer en toute sérénité ?</h2>
-        <p class="mt-4 text-white/80 max-w-xl mx-auto relative">Rejoignez MariagePlus et prenez le contrôle de vos événements dès aujourd'hui.</p>
+        <p class="mt-4 text-white/80 max-w-xl mx-auto relative">Rejoignez EventiaEasy et prenez le contrôle de vos événements dès aujourd'hui.</p>
         <RouterLink to="/login" class="mt-8 inline-flex items-center gap-2 px-8 h-12 rounded-full bg-white text-primary-dark font-bold shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all relative">
           Créer mon espace <span class="material-symbols-outlined">arrow_forward</span>
         </RouterLink>
@@ -176,8 +176,8 @@
       <div class="max-w-content mx-auto px-4 md:px-8 py-10">
         <div class="flex flex-col md:flex-row items-center justify-between gap-6">
           <div class="flex items-center gap-2">
-            <span class="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-primary/20 grid place-items-center"><img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" /></span>
-            <span class="font-bold">Mariage<span class="text-primary">Plus</span></span>
+            <span class="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-primary/20 grid place-items-center"><img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" /></span>
+            <span class="font-bold">Eventia<span class="text-primary">Easy</span></span>
           </div>
 
           <!-- Contacts -->
@@ -194,7 +194,7 @@
             </a>
           </div>
 
-          <div class="text-sm text-on-surface-variant">© 2026 MariagePlus. Tous droits réservés.</div>
+          <div class="text-sm text-on-surface-variant">© 2026 EventiaEasy. Tous droits réservés.</div>
         </div>
       </div>
     </footer>
@@ -230,7 +230,7 @@ const steps = [
 ]
 
 const testimonials = [
-  { initials: 'SG', name: 'Sophie & David', role: 'Mariage · Lyon', text: 'MariagePlus nous a simplifié toute l’organisation. Le suivi RSVP est génial, nos 180 invités ont tout géré en ligne.', color: 'linear-gradient(135deg,#5b2ecc,#8b5cf6)' },
+  { initials: 'SG', name: 'Sophie & David', role: 'Mariage · Lyon', text: 'EventiaEasy nous a simplifié toute l’organisation. Le suivi RSVP est génial, nos 180 invités ont tout géré en ligne.', color: 'linear-gradient(135deg,#5b2ecc,#8b5cf6)' },
   { initials: 'KM', name: 'Kevin M.', role: 'Wedding planner', text: 'La plateforme la plus complète que j’ai utilisée : invitations, tables, check-in. Mes clients sont conquis.', color: 'linear-gradient(135deg,#176b5b,#2dd4a7)' },
   { initials: 'AL', name: 'Alexia L.', role: 'Événement privé', text: 'Interface magnifique et intuitive. Le QR code à l’entrée a fluidifié toute la réception.', color: 'linear-gradient(135deg,#f4a340,#fbbf24)' },
 ]

@@ -5,9 +5,9 @@
       <section class="hidden lg:flex w-full lg:w-5/12 bg-image-overlay p-12 flex-col justify-between text-white relative">
         <div class="flex items-center gap-3 z-10">
           <div class="w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md border border-primary/30 overflow-hidden">
-            <span class="w-10 h-10 rounded-xl overflow-hidden grid place-items-center"><img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" /></span>
+            <span class="w-10 h-10 rounded-xl overflow-hidden grid place-items-center"><img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" /></span>
           </div>
-          <span class="text-2xl font-bold tracking-tight">Mariage<span class="text-primary">Plus</span></span>
+          <span class="text-2xl font-bold tracking-tight">Eventia<span class="text-primary">Easy</span></span>
         </div>
 
         <div class="z-10 mt-16 max-w-md">
@@ -38,8 +38,8 @@
           </RouterLink>
 
           <div class="flex lg:hidden items-center justify-center gap-2 mb-6">
-            <span class="w-9 h-9 rounded-lg overflow-hidden grid place-items-center"><img src="/logo.png" alt="MariagePlus" class="w-full h-full object-contain" /></span>
-            <span class="text-xl font-bold">MariagePlus</span>
+            <span class="w-9 h-9 rounded-lg overflow-hidden grid place-items-center"><img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" /></span>
+            <span class="text-xl font-bold">EventiaEasy</span>
           </div>
 
           <!-- Bascule Connexion / Inscription -->
@@ -245,7 +245,7 @@
             </p>
           </template>
 
-          <p class="mt-8 text-center text-xs text-on-surface-variant">© 2026 MariagePlus. Tous droits réservés.</p>
+          <p class="mt-8 text-center text-xs text-on-surface-variant">© 2026 EventiaEasy. Tous droits réservés.</p>
         </div>
       </section>
     </main>
