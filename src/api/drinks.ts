@@ -8,6 +8,8 @@ export interface Drink {
   description?: string | null
   displayOrder?: number | null
   active: boolean
+  /** Photo de la boisson (affichée sur la carte du RSVP). */
+  imageUrl?: string | null
 }
 
 export interface CreateDrinkRequest {
@@ -33,6 +35,7 @@ export async function listDrinks(eventId: number): Promise<Drink[]> {
     description: e.description ? String(e.description) : null,
     displayOrder: e.displayOrder != null ? Number(e.displayOrder) : null,
     active: Boolean(e.active ?? true),
+    imageUrl: e.imageUrl ? String(e.imageUrl) : null,
   }))
 }
 
@@ -64,4 +67,18 @@ export async function updateDrink(eventId: number, drinkId: number, payload: Upd
 
 export async function deleteDrink(eventId: number, drinkId: number): Promise<void> {
   await http.delete(`${ApiConfig.weddingDrinksPath(eventId)}/${drinkId}`)
+}
+
+/** Upload / remplace la photo d'une boisson (JPEG, PNG, GIF, WebP — max 2 Mo). */
+export async function uploadDrinkImage(eventId: number, drinkId: number, file: File): Promise<void> {
+  const form = new FormData()
+  form.append('file', file)
+  await http.put(`${ApiConfig.weddingDrinksPath(eventId)}/${drinkId}/image`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+/** Supprime la photo d'une boisson. */
+export async function deleteDrinkImage(eventId: number, drinkId: number): Promise<void> {
+  await http.delete(`${ApiConfig.weddingDrinksPath(eventId)}/${drinkId}/image`)
 }

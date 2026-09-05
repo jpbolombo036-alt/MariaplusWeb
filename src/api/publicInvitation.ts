@@ -18,7 +18,10 @@ export interface PublicInvitation {
   rsvpStatus?: string | null
   rsvpNumberOfAttendees?: number | null
   rsvpDrinkChoice?: string | null
+  rsvpDrinkChoices?: string[] | null
   publicToken?: string | null
+  /** Programme de la journée (sessions actives de l'événement) — additif. */
+  sessions?: PublicSessionItem[] | null
 }
 
 export interface PublicRsvp {
@@ -27,12 +30,28 @@ export interface PublicRsvp {
   numberOfAttendees: number
 }
 
+/** Session du programme de la journée (additif — peut être absent). */
+export interface PublicSessionItem {
+  name: string
+  type?: string | null
+  description?: string | null
+  sessionDate?: string | null
+  startTime?: string | null
+  endTime?: string | null
+  venueName?: string | null
+  venueAddress?: string | null
+  city?: string | null
+  mapUrl?: string | null
+}
+
 export interface PublicDrink {
   id: number
   name: string
   description?: string | null
   displayOrder?: number | null
   active: boolean
+  /** Photo de la boisson (carte visuelle du RSVP) ; null si aucune. */
+  imageUrl?: string | null
 }
 
 export async function getPublicInvitation(token: string): Promise<PublicInvitation> {
@@ -55,7 +74,24 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
     rsvpStatus: j.rsvpStatus ? String(j.rsvpStatus) : null,
     rsvpNumberOfAttendees: j.rsvpNumberOfAttendees != null ? Number(j.rsvpNumberOfAttendees) : null,
     rsvpDrinkChoice: j.rsvpDrinkChoice ? String(j.rsvpDrinkChoice) : null,
+    rsvpDrinkChoices: Array.isArray(j.rsvpDrinkChoices)
+      ? (j.rsvpDrinkChoices as unknown[]).map((x) => String(x))
+      : null,
     publicToken: j.publicToken ? String(j.publicToken) : null,
+    sessions: Array.isArray(j.sessions)
+      ? (j.sessions as Record<string, unknown>[]).map((s) => ({
+          name: String(s.name ?? ''),
+          type: s.type ? String(s.type) : null,
+          description: s.description ? String(s.description) : null,
+          sessionDate: s.sessionDate ? String(s.sessionDate) : null,
+          startTime: s.startTime ? String(s.startTime) : null,
+          endTime: s.endTime ? String(s.endTime) : null,
+          venueName: s.venueName ? String(s.venueName) : null,
+          venueAddress: s.venueAddress ? String(s.venueAddress) : null,
+          city: s.city ? String(s.city) : null,
+          mapUrl: s.mapUrl ? String(s.mapUrl) : null,
+        }))
+      : null,
   }
 }
 
@@ -71,11 +107,11 @@ export async function listPublicDrinks(token: string): Promise<PublicDrink[]> {
   }))
 }
 
-export async function submitPublicRsvp(token: string, status: string, attendees: number, drinkChoice?: string): Promise<PublicRsvp> {
+export async function submitPublicRsvp(token: string, status: string, attendees: number, drinkChoices?: string[]): Promise<PublicRsvp> {
   const res = await http.post(`${ApiConfig.publicInvitationsPath}/${token}/rsvp`, {
     status,
     numberOfAttendees: attendees,
-    drinkChoice,
+    drinkChoices: drinkChoices && drinkChoices.length ? drinkChoices : undefined,
   })
   const j = decodeMap(res.data)
   return {

@@ -35,6 +35,15 @@
           class="hidden"
           @change="onAvatarPick"
         />
+        <ImageCropModal
+          v-if="cropSrc"
+          :src="cropSrc"
+          title="Recadrer votre photo de profil"
+          :aspect-ratio="1"
+          :max-width="800"
+          @close="releaseCrop"
+          @confirm="onCropped"
+        />
         <div class="min-w-0">
           <div class="text-[18px] font-bold text-slate-900 truncate">{{ auth.user?.firstName }} {{ auth.user?.lastName }}</div>
           <div class="text-[13px] text-slate-500 truncate">{{ auth.user?.email }}</div>
@@ -184,6 +193,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { updateMyProfile, changeMyPassword, loadMyAvatar, uploadMyAvatar, deleteMyAvatar } from '../api/user'
+import ImageCropModal from '../components/common/ImageCropModal.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -197,6 +207,7 @@ const avatarVersion = ref(Date.now())
 const avatarMsg = ref('')
 const avatarErr = ref(false)
 const avatarBusy = ref(false)
+const cropSrc = ref<string | null>(null)
 
 onMounted(async () => {
   avatarSrc.value = await loadMyAvatar(avatarVersion.value)
@@ -219,9 +230,15 @@ async function onAvatarPick(e: Event) {
     avatarMsg.value = 'Image trop volumineuse (max 2 Mo).'
     return
   }
+  if (cropSrc.value) URL.revokeObjectURL(cropSrc.value)
+  cropSrc.value = URL.createObjectURL(file)
+}
+
+async function onCropped(blob: Blob) {
+  releaseCrop()
   avatarBusy.value = true
   try {
-    await uploadMyAvatar(file)
+    await uploadMyAvatar(new File([blob], 'avatar.jpg', { type: 'image/jpeg' }))
     if (avatarSrc.value) URL.revokeObjectURL(avatarSrc.value)
     avatarSrc.value = await loadMyAvatar(++avatarVersion.value)
     avatarMsg.value = 'Photo mise à jour.'
@@ -231,6 +248,11 @@ async function onAvatarPick(e: Event) {
   } finally {
     avatarBusy.value = false
   }
+}
+
+function releaseCrop() {
+  if (cropSrc.value) URL.revokeObjectURL(cropSrc.value)
+  cropSrc.value = null
 }
 
 async function removeAvatar() {

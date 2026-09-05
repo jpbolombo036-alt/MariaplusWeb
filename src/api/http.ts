@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios'
 import { ApiConfig } from './config'
+import { useNotificationStore } from '../stores/notifications'
 
 export interface AuthTokens {
   accessToken: string
@@ -51,13 +52,22 @@ http.interceptors.request.use((config) => {
   return config
 })
 
+function extractMessage(error: AxiosError): string {
+  const data = error.response?.data
+  if (data && typeof data === 'object' && 'error' in data) {
+    const msg = (data as Record<string, unknown>).error
+    if (typeof msg === 'string' && msg.trim()) return msg.trim()
+  }
+  if (typeof data === 'string' && data.trim()) return data.trim()
+  return error.message || 'Une erreur est survenue.'
+}
+
 // Le endpoint refresh attend un corps brut = refresh token (rotation).
 async function doRefresh(): Promise<string> {
   if (!refreshToken) throw new Error('no refresh token')
   const res = await axios.post(
     `${ApiConfig.baseUrl}${ApiConfig.authRefresh}`,
-    refreshToken,
-    { headers: { 'Content-Type': 'application/json' } },
+    { refreshToken },
   )
   const data = (typeof res.data === 'string' ? JSON.parse(res.data) : res.data) as Record<string, unknown>
   const nextAuth: AuthTokens = {
@@ -76,9 +86,8 @@ http.interceptors.response.use(
     const status = error.response?.status
     const url = error.config?.url ?? ''
     const isRefreshPath = url.includes(ApiConfig.authRefresh)
-    // Un 401 sur login/register signifie des identifiants invalides (ou un email
-    // déjà utilisé), pas une session expirée : ne jamais déclencher le refresh ici.
     const isAuthEndpoint = url.includes(ApiConfig.authLogin) || url.includes(ApiConfig.authRegister) || isRefreshPath
+
     if (status === 401 && original && !original._retry && !isAuthEndpoint) {
       original._retry = true
       try {
@@ -96,6 +105,12 @@ http.interceptors.response.use(
         return Promise.reject(e)
       }
     }
+
+    if (status && status !== 401) {
+      const notify = useNotificationStore()
+      notify.push(extractMessage(error), 'error')
+    }
+
     return Promise.reject(error)
   },
 )
@@ -125,3 +140,4 @@ export function decodeList(data: unknown): unknown[] {
   }
   return []
 }
+

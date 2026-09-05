@@ -8,6 +8,11 @@
           <p class="text-[13px] text-slate-500 mt-0.5 font-medium">{{ invitations.length }} invitation(s)</p>
         </div>
         <div class="flex items-center gap-3">
+          <PermGuard :allow="['INVITATION_SEND']">
+            <button class="h-10 px-5 rounded-lg border border-primary text-primary text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-primary/10 transition-all" @click="bulkOpen = true">
+              <span class="material-symbols-outlined text-[18px]">forward_to_inbox</span> Envoyer en masse
+            </button>
+          </PermGuard>
           <PermGuard :allow="['INVITATION_CREATE']">
             <button class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all" @click="$router.push(`/dashboard/events/${id}/invitations/new`)">
               <span class="material-symbols-outlined text-[18px]">add</span> Inviter
@@ -33,10 +38,6 @@
           </span>
           <input v-model="query" placeholder="Code ou invité…" class="h-11 pl-10 pr-4 rounded-lg border border-slate-200 bg-white text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 w-full transition-all" />
         </div>
-        <button class="h-11 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
-          <span class="material-symbols-outlined text-[18px]">search</span>
-          <span class="hidden sm:inline">Rechercher</span>
-        </button>
       </div>
     </div>
 
@@ -170,6 +171,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Envoi en masse WhatsApp -->
+    <BulkSendPanel :event-id="id" :open="bulkOpen" :guests="guests" @close="bulkOpen=false" @completed="load" />
   </div>
 </template>
 <script setup lang="ts">
@@ -183,9 +187,12 @@ import { listGuests, type Guest } from '../../api/guests'
 import PermGuard from '../../components/common/PermGuard.vue'
 import StatusBadge from '../../components/common/StatusBadge.vue'
 import InvitationActions from '../../components/invitations/InvitationActions.vue'
+import BulkSendPanel from '../../components/invitations/BulkSendPanel.vue'
+import { useNotificationStore } from '../../stores/notifications'
 
 const route = useRoute()
 const id = Number(route.params.id)
+const notifications = useNotificationStore()
 const invitations = ref<Invitation[]>([])
 const guests = ref<Guest[]>([])
 const loading = ref(true)
@@ -197,6 +204,7 @@ const qrInv = ref<Invitation | null>(null)
 const shareOpen = ref(false)
 const shareUrl = ref('')
 const shareEmailSent = ref(false)
+const bulkOpen = ref(false)
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -273,9 +281,9 @@ async function rotate() {
 async function copyShare() {
   try {
     await navigator.clipboard.writeText(shareUrl.value)
-    alert('Lien copié !')
+    notifications.push('Lien copié !', 'success')
   } catch {
-    alert('Impossible de copier le lien.')
+    notifications.push('Impossible de copier le lien.', 'error')
   }
 }
 </script>

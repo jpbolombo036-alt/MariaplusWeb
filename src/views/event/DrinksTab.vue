@@ -34,12 +34,24 @@
         </thead>
         <tbody class="divide-y divide-outline-variant">
           <tr v-for="d in drinks" :key="d.id" class="text-on-surface hover:bg-surface-container/40">
-            <td class="px-5 py-3.5 font-medium">{{ d.name }}</td>
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <img v-if="d.imageUrl" :src="d.imageUrl" :alt="d.name" class="w-10 h-10 rounded-lg object-cover bg-surface-container-high" />
+                <span v-else class="w-10 h-10 rounded-lg bg-surface-container-high grid place-items-center text-on-surface-variant"><span class="material-symbols-outlined text-base">local_bar</span></span>
+                <span class="font-medium">{{ d.name }}</span>
+              </div>
+            </td>
             <td class="px-5 py-3.5 text-on-surface-variant">{{ d.description || '—' }}</td>
             <td class="px-5 py-3.5">{{ d.displayOrder ?? '—' }}</td>
             <td class="px-5 py-3.5"><StatusBadge :status="d.active ? 'ACTIVE' : 'INACTIVE'" /></td>
             <td class="px-5 py-3.5 text-right">
               <div class="inline-flex items-center gap-1">
+                <PermGuard :allow="['DRINK_UPDATE']">
+                  <button class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg" title="Photo de la boisson" @click="pickImage(d)"><span class="material-symbols-outlined text-base">image</span></button>
+                </PermGuard>
+                <PermGuard v-if="d.imageUrl" :allow="['DRINK_UPDATE']">
+                  <button class="px-2 py-1 text-amber-500 hover:bg-amber-50 rounded-lg" title="Retirer la photo" @click="removeImage(d)"><span class="material-symbols-outlined text-base">hide_image</span></button>
+                </PermGuard>
                 <PermGuard :allow="['DRINK_UPDATE']">
                   <button class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg" title="Modifier" @click="openEdit(d)"><span class="material-symbols-outlined text-base">edit</span></button>
                 </PermGuard>
@@ -80,23 +92,87 @@
         </div>
       </div>
     </div>
+
+    <!-- Sélecteur de fichier caché pour la photo d'une boisson -->
+    <input ref="imageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="hidden" @change="onImagePicked" />
+    <ImageCropModal
+      v-if="cropSrc"
+      :src="cropSrc"
+      title="Recadrer la photo de la boisson"
+      :aspect-ratio="1"
+      :max-width="800"
+      @close="releaseCrop"
+      @confirm="onCropped"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { listDrinks, createDrink, updateDrink, deleteDrink, type Drink, type CreateDrinkRequest, type UpdateDrinkRequest } from '../../api/drinks'
+import { listDrinks, createDrink, updateDrink, deleteDrink, uploadDrinkImage, deleteDrinkImage, type Drink, type CreateDrinkRequest, type UpdateDrinkRequest } from '../../api/drinks'
+import { useNotificationStore } from '../../stores/notifications'
 import PermGuard from '../../components/common/PermGuard.vue'
 import StatusBadge from '../../components/common/StatusBadge.vue'
+import ImageCropModal from '../../components/common/ImageCropModal.vue'
 
 const route = useRoute()
+const notifications = useNotificationStore()
 const eventId = Number(route.params.id)
 const drinks = ref<Drink[]>([])
 const loading = ref(false)
 const formOpen = ref(false)
 const editId = ref<number | null>(null)
 const form = ref<CreateDrinkRequest & { active?: boolean }>({ name: '', description: '', displayOrder: 0, active: true })
+
+/* ---------- Photo d'une boisson ---------- */
+const imageInput = ref<HTMLInputElement | null>(null)
+const pendingDrink = ref<Drink | null>(null)
+const cropSrc = ref<string | null>(null)
+
+function pickImage(d: Drink) {
+  pendingDrink.value = d
+  imageInput.value?.click()
+}
+
+function onImagePicked(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  const d = pendingDrink.value
+  input.value = ''
+  if (!file || !d) return
+  if (file.size > 2 * 1024 * 1024) {
+    notifications.push('Image trop volumineuse (max 2 Mo).', 'error')
+    return
+  }
+  if (cropSrc.value) URL.revokeObjectURL(cropSrc.value)
+  cropSrc.value = URL.createObjectURL(file)
+}
+
+async function onCropped(blob: Blob) {
+  releaseCrop()
+  const d = pendingDrink.value
+  if (!d) return
+  try {
+    await uploadDrinkImage(eventId, d.id, new File([blob], 'boisson.jpg', { type: 'image/jpeg' }))
+    notifications.push('Photo de la boisson enregistrée.', 'success')
+    await load()
+  } catch {
+    // le message d'erreur est déjà notifié par l'intercepteur HTTP
+  }
+}
+
+function releaseCrop() {
+  if (cropSrc.value) URL.revokeObjectURL(cropSrc.value)
+  cropSrc.value = null
+}
+
+async function removeImage(d: Drink) {
+  if (!confirm(`Retirer la photo de "${d.name}" ?`)) return
+  await deleteDrinkImage(eventId, d.id)
+  notifications.push('Photo retirée.', 'success')
+  await load()
+}
 
 onMounted(load)
 async function load() {

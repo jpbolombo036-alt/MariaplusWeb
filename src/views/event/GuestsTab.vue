@@ -8,6 +8,11 @@
           <p class="text-[13px] text-slate-500 mt-0.5 font-medium">{{ guests.length }} invité(s) au total</p>
         </div>
         <div class="flex items-center gap-3">
+          <PermGuard :allow="['GUEST_EXPORT']">
+            <button class="h-10 px-5 rounded-lg bg-white border border-slate-200 text-slate-700 text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-slate-50 transition-all" @click="exportCsv">
+              <span class="material-symbols-outlined text-[18px]">download</span> Exporter CSV
+            </button>
+          </PermGuard>
           <PermGuard :allow="['GUEST_CREATE', 'GUEST_IMPORT']">
             <button class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all" @click="$router.push(`/dashboard/events/${id}/guests/new`)">
               <span class="material-symbols-outlined text-[18px]">person_add</span> Ajouter
@@ -134,7 +139,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { listGuests, deleteGuest, listCategories, type Guest, type GuestCategory } from '../../api/guests'
+import { listGuests, deleteGuest, listCategories, exportGuestsCsv, type Guest, type GuestCategory } from '../../api/guests'
 import PermGuard from '../../components/common/PermGuard.vue'
 
 const route = useRoute()
@@ -170,6 +175,15 @@ async function remove(g: Guest) {
   if (!confirm(`Supprimer l'invité ${g.firstName} ${g.lastName} ?`)) return
   await deleteGuest(id, g.id)
   guests.value = guests.value.filter((x) => x.id !== g.id)
+}
+async function exportCsv() {
+  const blob = await exportGuestsCsv(id)
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'guests.csv'
+  a.click()
+  URL.revokeObjectURL(url)
 }
 </script>
 

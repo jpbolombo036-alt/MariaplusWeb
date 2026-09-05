@@ -24,7 +24,7 @@
         <div class="min-w-0">
           <button type="button" class="px-4 h-9 rounded-lg bg-primary/10 text-primary text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-primary/20 transition-colors" @click="fileInput?.click()"><span class="material-symbols-outlined text-[17px]">photo_camera</span> Choisir une photo</button>
           <button v-if="photoFile" type="button" class="ml-2 text-[12px] text-error hover:bg-error/10 rounded-lg px-2 py-1 transition-colors" @click="clearPhoto">Retirer</button>
-          <p class="text-[11px] text-on-surface-variant mt-1.5">JPEG, PNG, GIF ou WebP — max 2 Mo</p>
+          <p class="text-[11px] text-on-surface-variant mt-1.5">Un outil de recadrage s'ouvrira automatiquement après le choix de l'image.</p>
         </div>
       </div>
       <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onPhotoPick" />
@@ -38,6 +38,15 @@
         </button>
       </div>
     </form>
+    <ImageCropModal
+      v-if="cropSrc"
+      :src="cropSrc"
+      title="Recadrer la photo du couple"
+      :aspect-ratio="1"
+      :max-width="900"
+      @close="releaseCrop"
+      @confirm="onCropped"
+    />
   </div>
 </template>
 
@@ -45,6 +54,7 @@
 import { reactive, ref } from 'vue'
 import { createEvent, uploadEventImage, uploadEventPhoto, type Event as EventModel } from '../../api/events'
 import { useAuthStore } from '../../stores/auth'
+import ImageCropModal from '../common/ImageCropModal.vue'
 
 const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: EventModel): void }>()
 const auth = useAuthStore()
@@ -54,6 +64,7 @@ const error = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 const photoFile = ref<File | null>(null)
 const photoPreview = ref<string | null>(null)
+const cropSrc = ref<string | null>(null)
 
 function onPhotoPick(e: Event) {
   const input = e.target as HTMLInputElement
@@ -63,9 +74,20 @@ function onPhotoPick(e: Event) {
   if (!/^image\/(jpeg|png|gif|webp)$/.test(file.type)) { error.value = 'Format non supporté (JPEG, PNG, GIF ou WebP attendu).'; return }
   if (file.size > 2 * 1024 * 1024) { error.value = 'Image trop volumineuse (max 2 Mo).'; return }
   error.value = ''
-  photoFile.value = file
+  if (cropSrc.value) URL.revokeObjectURL(cropSrc.value)
+  cropSrc.value = URL.createObjectURL(file)
+}
+
+function onCropped(blob: Blob) {
+  photoFile.value = new File([blob], 'photo-couple.jpg', { type: 'image/jpeg' })
   if (photoPreview.value) URL.revokeObjectURL(photoPreview.value)
-  photoPreview.value = URL.createObjectURL(file)
+  photoPreview.value = URL.createObjectURL(blob)
+  releaseCrop()
+}
+
+function releaseCrop() {
+  if (cropSrc.value) URL.revokeObjectURL(cropSrc.value)
+  cropSrc.value = null
 }
 
 function clearPhoto() {

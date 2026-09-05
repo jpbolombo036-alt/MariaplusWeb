@@ -29,7 +29,7 @@ const router = createRouter({
       children: [
         { path: '', name: 'dashboard', component: () => import('../views/DashboardView.vue') },
         { path: 'events', name: 'events', component: () => import('../views/EventsView.vue') },
-        { path: 'events/new', name: 'events-new', component: () => import('../views/forms/WeddingForm.vue') },
+        { path: 'events/new', name: 'events-new', component: () => import('../views/forms/EventWizard.vue') },
         {
           path: 'events/:id',
           name: 'event-detail',

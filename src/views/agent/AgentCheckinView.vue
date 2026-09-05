@@ -69,7 +69,6 @@
               <button type="button" class="ag-linkbtn" @click="openScanner">
                 <span class="material-symbols-outlined">photo_camera</span>Utiliser la caméra
               </button>
-              <p v-if="scanError" class="ag-error">{{ scanError }}</p>
             </div>
 
             <!-- Recherche invité -->
@@ -286,9 +285,11 @@ import {
   type PresentGuest,
 } from '../../api/checkin'
 import { publicCardUrl } from '../../api/publicInvitation'
+import { useNotificationStore } from '../../stores/notifications'
 
 const route = useRoute()
 const id = Number(route.params.id)
+const notifications = useNotificationStore()
 
 /* ---------- Navigation latérale ---------- */
 const mobileNav = ref(false)
@@ -300,7 +301,6 @@ function scrollToSec(sec: string) {
 /* ---------- Scan / recherche / check-in ---------- */
 const qr = ref('')
 const scanning = ref(false)
-const scanError = ref('')
 const sel = ref<CheckInScan | null>(null)
 const checkinBusy = ref(false)
 
@@ -320,17 +320,17 @@ function extractToken(raw: string): string {
 }
 
 async function doScan() {
-  scanError.value = ''
-  if (!qr.value.trim()) return
+  if (!qr.value.trim() || !Number.isFinite(id) || id <= 0) return
   scanning.value = true
   try {
     sel.value = await scan(extractToken(qr.value), id)
     await loadPresent()
   } catch (e: any) {
     sel.value = null
-    scanError.value = e?.response?.status === 404
+    const msg = e?.response?.status === 404
       ? 'Invitation introuvable. Aucune invitation correspondante n’a été trouvée.'
       : (e?.response?.data?.error || 'Impossible de vérifier cette invitation.')
+    notifications.push(msg, 'error')
   } finally {
     scanning.value = false
   }
@@ -338,12 +338,13 @@ async function doScan() {
 
 async function doSearch() {
   const q = searchQuery.value.trim()
-  if (q.length < 2) return
+  if (q.length < 2 || !Number.isFinite(id) || id <= 0) return
   searching.value = true
   try {
     searchResults.value = await searchGuests(id, q)
   } catch {
     searchResults.value = []
+    notifications.push('Recherche impossible pour le moment.', 'error')
   } finally {
     searching.value = false
   }
@@ -351,25 +352,25 @@ async function doSearch() {
 
 async function selectGuest(r: CheckInSearchItem) {
   if (!r.publicToken) return
-  scanError.value = ''
   qr.value = r.publicToken
   try {
     sel.value = await scan(r.publicToken, id)
   } catch {
     sel.value = null
-    scanError.value = 'Invitation introuvable. Aucune invitation correspondante n’a été trouvée.'
+    notifications.push('Invitation introuvable. Aucune invitation correspondante n’a été trouvée.', 'error')
   }
 }
 
 async function doCheckIn() {
-  if (!sel.value?.publicToken || !sel.value.canCheckIn) return
+  if (!sel.value?.publicToken || !sel.value.canCheckIn || !Number.isFinite(id) || id <= 0) return
   checkinBusy.value = true
   try {
     await checkIn(sel.value.publicToken, id, 1)
     sel.value = await scan(sel.value.publicToken, id)
     await loadPresent()
+    notifications.push('Entrée enregistrée.', 'success')
   } catch (e: any) {
-    scanError.value = e?.response?.data?.error || 'Erreur lors du check-in.'
+    notifications.push(e?.response?.data?.error || 'Erreur lors du check-in.', 'error')
   } finally {
     checkinBusy.value = false
   }
@@ -379,14 +380,15 @@ function newSearch() {
   sel.value = null
   qr.value = ''
   searchQuery.value = ''
-  scanError.value = ''
   document.getElementById('sec-search')?.scrollIntoView({ behavior: 'smooth' })
 }
 
 async function loadPresent() {
   presentLoading.value = true
   try {
-    present.value = await listPresent(id)
+    if (Number.isFinite(id) && id > 0) {
+      present.value = await listPresent(id)
+    }
   } catch {
     present.value = []
   } finally {

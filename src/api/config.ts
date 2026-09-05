@@ -28,6 +28,7 @@ export const ApiConfig = {
   weddingGuestsPath: (eventId: number) => `/api/events/${eventId}/guests`,
   weddingCategoriesPath: (eventId: number) => `/api/events/${eventId}/guest-categories`,
   weddingInvitationsPath: (eventId: number) => `/api/events/${eventId}/invitations`,
+  weddingBulkSendPath: (eventId: number) => `/api/events/${eventId}/invitations/send-bulk`,
   weddingEventsPath: (eventId: number) => `/api/events/${eventId}/sessions`,
   weddingTablesPath: (eventId: number) => `/api/events/${eventId}/tables`,
   weddingAssignmentsPath: (eventId: number) => `/api/events/${eventId}/assignments`,

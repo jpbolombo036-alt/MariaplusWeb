@@ -44,11 +44,20 @@
                   <span class="material-symbols-outlined text-[17px]">photo_camera</span> Choisir une photo
                 </button>
                 <button v-if="coverFile" type="button" class="ml-2 text-[12px] text-error hover:bg-error/10 rounded-lg px-2 py-1 transition-colors" @click="clearCover">Retirer</button>
-                <p class="text-[11px] text-slate-400 mt-1.5">JPEG, PNG, GIF ou WebP — max 2 Mo</p>
+                <p class="text-[11px] text-slate-400 mt-1.5">Un outil de recadrage s'ouvrira automatiquement après le choix de l'image.</p>
               </div>
             </div>
             <input ref="coverInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onCoverPick" />
           </div>
+          <ImageCropModal
+            v-if="crop"
+            :src="crop.src"
+            :title="crop.target === 'cover' ? 'Recadrer la photo de couverture' : 'Recadrer la photo'"
+            :aspect-ratio="crop.target === 'cover' ? 16 / 9 : 1"
+            :max-width="crop.target === 'cover' ? 1600 : 900"
+            @close="releaseCrop"
+            @confirm="onCropped"
+          />
 
           <div v-if="form.type === 'WEDDING'" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <label class="block">
@@ -140,6 +149,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createEvent, uploadEventPhoto, uploadEventImage } from '../../api/events'
+import ImageCropModal from '../../components/common/ImageCropModal.vue'
 import { useAuthStore } from '../../stores/auth'
 
 const auth = useAuthStore()
@@ -179,6 +189,7 @@ const photoState = reactive<Record<string, { file: File | null; preview: string 
   couple: { file: null, preview: null },
 })
 const photoError = ref('')
+const crop = ref<{ src: string; target: string } | null>(null)
 
 /* --- Photo de couverture (tous types) --- */
 const coverInput = ref<HTMLInputElement | null>(null)
@@ -199,9 +210,8 @@ function onCoverPick(e: Event) {
     return
   }
   photoError.value = ''
-  coverFile.value = file
-  if (coverPreview.value) URL.revokeObjectURL(coverPreview.value)
-  coverPreview.value = URL.createObjectURL(file)
+  if (crop.value) URL.revokeObjectURL(crop.value.src)
+  crop.value = { src: URL.createObjectURL(file), target: 'cover' }
 }
 function clearCover() {
   coverFile.value = null
@@ -226,9 +236,29 @@ function onPick(kind: string, e: Event) {
     return
   }
   photoError.value = ''
-  photoState[kind].file = file
-  if (photoState[kind].preview) URL.revokeObjectURL(photoState[kind].preview!)
-  photoState[kind].preview = URL.createObjectURL(file)
+  openCrop(kind, file)
+}
+function openCrop(target: string, file: File) {
+  if (crop.value) URL.revokeObjectURL(crop.value.src)
+  crop.value = { src: URL.createObjectURL(file), target }
+}
+function onCropped(blob: Blob) {
+  const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' })
+  if (!crop.value) return
+  if (crop.value.target === 'cover') {
+    coverFile.value = file
+    if (coverPreview.value) URL.revokeObjectURL(coverPreview.value)
+    coverPreview.value = URL.createObjectURL(blob)
+  } else {
+    photoState[crop.value.target].file = file
+    if (photoState[crop.value.target].preview) URL.revokeObjectURL(photoState[crop.value.target].preview!)
+    photoState[crop.value.target].preview = URL.createObjectURL(blob)
+  }
+  releaseCrop()
+}
+function releaseCrop() {
+  if (crop.value) URL.revokeObjectURL(crop.value.src)
+  crop.value = null
 }
 function clearPhoto(kind: string) {
   photoState[kind].file = null

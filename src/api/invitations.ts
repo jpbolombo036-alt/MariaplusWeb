@@ -103,3 +103,89 @@ export async function rotateQr(eventId: number, invitationId: number): Promise<Q
   const res = await http.post(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/qr/rotate`)
   return { dataUri: String(decodeMap(res.data).qrDataUri ?? '') }
 }
+
+// ————— Envoi en masse (WhatsApp, batch asynchrone) —————
+
+export interface BulkSendBatch {
+  id: number
+  weddingId: number
+  channel: string
+  status: string
+  totalCount: number
+  sentCount: number
+  failedCount: number
+  skippedCount: number
+  createdAt?: string | null
+}
+
+export interface NotificationLog {
+  id: number
+  invitationId?: number | null
+  guestId?: number | null
+  channel: string
+  status: string
+  errorMessage?: string | null
+  createdAt?: string | null
+}
+
+export interface BulkSendOptions {
+  /** Cibler une seule catégorie d'invités. */
+  categoryId?: number | null
+  /** Cibler des invitations précises. */
+  invitationIds?: number[] | null
+  /** Relancer des invitations déjà envoyées (plafonné côté serveur). */
+  resend?: boolean
+  /** Relancer uniquement les invitations sans réponse RSVP. */
+  onlyPendingRsvp?: boolean
+}
+
+function parseBatch(json: Record<string, unknown>): BulkSendBatch {
+  return {
+    id: Number(json.id ?? 0),
+    weddingId: Number(json.weddingId ?? 0),
+    channel: String(json.channel ?? 'WHATSAPP'),
+    status: String(json.status ?? 'PENDING'),
+    totalCount: Number(json.totalCount ?? 0),
+    sentCount: Number(json.sentCount ?? 0),
+    failedCount: Number(json.failedCount ?? 0),
+    skippedCount: Number(json.skippedCount ?? 0),
+    createdAt: json.createdAt ? String(json.createdAt) : null,
+  }
+}
+
+function parseLog(json: Record<string, unknown>): NotificationLog {
+  return {
+    id: Number(json.id ?? 0),
+    invitationId: json.invitationId != null ? Number(json.invitationId) : null,
+    guestId: json.guestId != null ? Number(json.guestId) : null,
+    channel: String(json.channel ?? 'WHATSAPP'),
+    status: String(json.status ?? ''),
+    errorMessage: json.errorMessage ? String(json.errorMessage) : null,
+    createdAt: json.createdAt ? String(json.createdAt) : null,
+  }
+}
+
+/** Démarre un envoi en masse (répond 202 + batch à suivre). */
+export async function startBulkSend(eventId: number, opts: BulkSendOptions = {}): Promise<BulkSendBatch> {
+  const res = await http.post(ApiConfig.weddingBulkSendPath(eventId), {
+    channel: 'WHATSAPP',
+    categoryId: opts.categoryId ?? null,
+    invitationIds: opts.invitationIds ?? null,
+    resend: opts.resend ?? false,
+    onlyPendingRsvp: opts.onlyPendingRsvp ?? false,
+  })
+  return parseBatch(decodeMap(res.data))
+}
+
+/** État d'avancement d'un batch. */
+export async function getBulkBatch(eventId: number, batchId: number): Promise<BulkSendBatch> {
+  const res = await http.get(`${ApiConfig.weddingBulkSendPath(eventId)}/${batchId}`)
+  return parseBatch(decodeMap(res.data))
+}
+
+/** Détail par invitation (statut + raison d'échec éventuelle). */
+export async function getBulkBatchLogs(eventId: number, batchId: number): Promise<NotificationLog[]> {
+  const res = await http.get(`${ApiConfig.weddingBulkSendPath(eventId)}/${batchId}/logs`, { params: { size: 200 } })
+  const json = decodeMap(res.data)
+  return decodeList(json.content).map((e) => parseLog(e as Record<string, unknown>))
+}

@@ -96,6 +96,29 @@
             <p v-if="inv.message" class="mp-inv-message">{{ inv.message }}</p>
           </section>
 
+          <!-- Programme de la journée (sessions de l'événement — additif) -->
+          <section v-if="programSessions.length" class="mp-inv-section">
+            <h2 class="mp-inv-section-title">
+              <span class="mp-inv-sep mp-inv-sep--left"></span>
+              Programme
+              <span class="mp-inv-sep mp-inv-sep--right"></span>
+            </h2>
+            <div class="mp-inv-program">
+              <div v-for="(s, i) in programSessions" :key="i" class="mp-inv-program-item">
+                <div class="mp-inv-program-time">{{ sessionTime(s) }}</div>
+                <div class="mp-inv-program-dot"></div>
+                <div class="mp-inv-program-body">
+                  <p class="mp-inv-program-name">{{ s.name }}</p>
+                  <p v-if="sessionDateLabel(s)" class="mp-inv-program-date">{{ sessionDateLabel(s) }}</p>
+                  <p v-if="sessionPlace(s)" class="mp-inv-program-place">
+                    <span class="material-symbols-outlined">location_on</span>{{ sessionPlace(s) }}
+                  </p>
+                  <p v-if="s.description" class="mp-inv-program-desc">{{ s.description }}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <!-- Votre invitation -->
           <section class="mp-inv-you">
             <h3 class="mp-inv-you-title">
@@ -205,16 +228,27 @@
               </div>
               <p class="mp-inv-hint">Vous pouvez inviter jusqu'à {{ maxAccepted }} personne(s) au total.</p>
 
-              <label class="mp-inv-label" for="mp-drink">
-                Votre boisson préférée <span class="mp-inv-label-muted">(optionnel)</span>
+              <label class="mp-inv-label">
+                Vos boissons <span class="mp-inv-label-muted">(optionnel — 3 max)</span>
               </label>
-              <select id="mp-drink" v-model="drinkChoice" class="mp-inv-input" :disabled="drinksLoading || !drinks.length">
-                <option value="">Choisir une boisson…</option>
-                <option v-if="!drinks.length" value="" disabled>
-                  {{ drinksLoading ? 'Chargement…' : 'Aucune boisson disponible' }}
-                </option>
-                <option v-for="d in drinks" :key="d.id" :value="d.name">{{ d.name }}</option>
-              </select>
+              <div v-if="drinksLoading" class="mp-inv-hint">Chargement des boissons…</div>
+              <p v-else-if="!drinks.length" class="mp-inv-hint">Aucune boisson disponible pour le moment.</p>
+              <div v-else class="mp-drinks-grid">
+                <button
+                  v-for="d in drinks"
+                  :key="d.id"
+                  type="button"
+                  class="mp-drink-card"
+                  :class="{ 'mp-drink-card--selected': drinkChoices.includes(d.name) }"
+                  @click="toggleDrink(d.name)"
+                >
+                  <span v-if="drinkChoices.includes(d.name)" class="mp-drink-check">✓</span>
+                  <img v-if="d.imageUrl" :src="d.imageUrl" :alt="d.name" class="mp-drink-img" loading="lazy" />
+                  <span v-else class="mp-drink-img mp-drink-img--empty">🍹</span>
+                  <span class="mp-drink-name">{{ d.name }}</span>
+                </button>
+              </div>
+              <p v-if="drinkChoices.length" class="mp-inv-hint">{{ drinkChoices.length }} / 3 sélectionnée(s)</p>
 
               <label class="mp-inv-label" for="mp-note">
                 Message pour les mariés <span class="mp-inv-label-muted">(optionnel)</span>
@@ -237,9 +271,6 @@
                 {{ sending ? 'Envoi en cours…' : 'Confirmer mon absence' }}
               </button>
             </form>
-
-            <!-- Erreur -->
-            <p v-if="errorMessage" class="mp-inv-error">{{ errorMessage }}</p>
           </section>
 
           <!-- Besoin d'aide ? (uniquement si le backend fournit les coordonnées) -->
@@ -337,10 +368,13 @@ import {
   submitPublicRsvp,
   uploadCardImage,
   type PublicInvitation,
+  type PublicSessionItem,
 } from '../api/publicInvitation'
+import { useNotificationStore } from '../stores/notifications'
 
 const route = useRoute()
 const token = String(route.params.token ?? '')
+const notifications = useNotificationStore()
 
 /* ---------- États ---------- */
 const loading = ref(true)
@@ -351,11 +385,10 @@ const choice = ref<'ACCEPTED' | 'DECLINED' | ''>('')
 const success = ref<'ACCEPTED' | 'DECLINED' | ''>('')
 const attendees = ref(1)
 const note = ref('')
-const drinkChoice = ref('')
-const drinks = ref<{ id: number; name: string }[]>([])
+const drinkChoices = ref<string[]>([])
+const drinks = ref<{ id: number; name: string; imageUrl?: string | null }[]>([])
 const drinksLoading = ref(false)
 const sending = ref(false)
-const errorMessage = ref('')
 const qrDataUri = ref('')
 
 /* ---------- Données dérivées (source de vérité = backend) ---------- */
@@ -423,6 +456,38 @@ const venueValue = computed(() => venueParts.value[0] || '')
 const venueSub = computed(() => (venueParts.value.length > 1 ? venueParts.value.slice(1).join(' · ') : ''))
 const hasEventInfo = computed(() => Boolean(dateValue.value || timeValue.value || venueValue.value))
 
+/* ---------- Programme de la journée (sessions backend — additif) ---------- */
+const programSessions = computed<PublicSessionItem[]>(() => {
+  const list = inv.value?.sessions
+  return Array.isArray(list) ? list.filter((s) => s && s.name) : []
+})
+
+function sessionTime(s: PublicSessionItem): string {
+  const fmt = (t?: string | null) => {
+    if (!t) return ''
+    const m = t.match(/^(\d{1,2}):(\d{2})/)
+    return m ? `${m[1]}h${m[2]}` : t
+  }
+  const start = fmt(s.startTime)
+  const end = fmt(s.endTime)
+  return [start, end].filter(Boolean).join(' – ')
+}
+
+function sessionDateLabel(s: PublicSessionItem): string {
+  if (!s.sessionDate) return ''
+  const d = new Date(`${s.sessionDate}T00:00:00`)
+  if (isNaN(d.getTime())) return s.sessionDate
+  try {
+    return new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(d)
+  } catch {
+    return s.sessionDate
+  }
+}
+
+function sessionPlace(s: PublicSessionItem): string {
+  return [s.venueName, s.city].filter(Boolean).join(', ')
+}
+
 /* Coordonnées organisateur & date limite — uniquement si le backend les fournit. */
 const helpPhone = computed(() => String((inv.value as unknown as { organizerPhone?: string })?.organizerPhone ?? ''))
 const helpEmail = computed(() => String((inv.value as unknown as { organizerEmail?: string })?.organizerEmail ?? ''))
@@ -445,7 +510,6 @@ const successText = computed(() =>
 function editAnswer() {
   success.value = ''
   choice.value = ''
-  errorMessage.value = ''
   if (inv.value?.rsvpNumberOfAttendees) {
     attendees.value = Math.min(Math.max(inv.value.rsvpNumberOfAttendees, 1), maxAccepted.value)
   }
@@ -514,9 +578,22 @@ async function loadDrinks() {
   }
 }
 
+/* ---------- Sélection des boissons (3 max) ---------- */
+const MAX_DRINK_CHOICES = 3
+
+function toggleDrink(name: string) {
+  const idx = drinkChoices.value.indexOf(name)
+  if (idx >= 0) {
+    drinkChoices.value.splice(idx, 1)
+  } else if (drinkChoices.value.length >= MAX_DRINK_CHOICES) {
+    notifications.push(`Vous pouvez choisir au maximum ${MAX_DRINK_CHOICES} boissons.`, 'error')
+  } else {
+    drinkChoices.value.push(name)
+  }
+}
+
 async function load() {
   loading.value = true
-  errorMessage.value = ''
   try {
     inv.value = await getPublicInvitation(token)
     const st = inv.value?.status
@@ -534,7 +611,7 @@ async function load() {
     } else {
       success.value = ''
     }
-    drinkChoice.value = inv.value?.rsvpDrinkChoice || ''
+    drinkChoices.value = inv.value?.rsvpDrinkChoices?.length ? [...inv.value.rsvpDrinkChoices] : []
     startAutoplay()
   } catch (e: any) {
     unavailable.value = true
@@ -555,24 +632,24 @@ async function load() {
 /* ---------- Soumission ---------- */
 async function submitAccepted() {
   if (attendees.value < 1 || attendees.value > maxAccepted.value) {
-    errorMessage.value = `Le nombre doit être compris entre 1 et ${maxAccepted.value}.`
+    notifications.push(`Le nombre doit être compris entre 1 et ${maxAccepted.value}.`, 'error')
     return
   }
   sending.value = true
-  errorMessage.value = ''
   try {
-    await submitPublicRsvp(token, 'ACCEPTED', attendees.value, drinkChoice.value || undefined)
+    await submitPublicRsvp(token, 'ACCEPTED', attendees.value, drinkChoices.value)
     inv.value = await getPublicInvitation(token)
     success.value = 'ACCEPTED'
     qrDataUri.value = await genQr()
+    notifications.push('Votre présence a bien été confirmée.', 'success')
   } catch (e: any) {
     const msg = String(e?.response?.data?.error || '')
     if (/limit|capacit|maximum|dépass|dépasse|places/i.test(msg)) {
-      errorMessage.value = 'La limite de participants pour cette invitation est atteinte.'
+      notifications.push('La limite de participants pour cette invitation est atteinte.', 'error')
     } else if (!e?.response) {
-      errorMessage.value = 'Erreur réseau. Vérifiez votre connexion et réessayez.'
+      notifications.push('Erreur réseau. Vérifiez votre connexion et réessayez.', 'error')
     } else {
-      errorMessage.value = 'Erreur serveur. Merci de réessayer.'
+      notifications.push('Erreur serveur. Merci de réessayer.', 'error')
     }
   } finally {
     sending.value = false
@@ -581,14 +658,14 @@ async function submitAccepted() {
 
 async function submitDecline() {
   sending.value = true
-  errorMessage.value = ''
   try {
     await submitPublicRsvp(token, 'DECLINED', 0)
     inv.value = await getPublicInvitation(token)
     success.value = 'DECLINED'
     qrDataUri.value = ''
+    notifications.push('Votre réponse a bien été enregistrée.', 'success')
   } catch (e: any) {
-    errorMessage.value = e?.response ? 'Erreur serveur. Merci de réessayer.' : 'Erreur réseau. Vérifiez votre connexion et réessayez.'
+    notifications.push(e?.response ? 'Erreur serveur. Merci de réessayer.' : 'Erreur réseau. Vérifiez votre connexion et réessayez.', 'error')
   } finally {
     sending.value = false
   }
@@ -980,6 +1057,77 @@ onBeforeUnmount(stopAutoplay)
   font-style: italic;
 }
 
+/* ---------- Programme de la journée (timeline) ---------- */
+.mp-inv-program {
+  margin: 24px auto 6px;
+  max-width: 560px;
+}
+.mp-inv-program-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  position: relative;
+  padding-bottom: 20px;
+}
+.mp-inv-program-item:last-child { padding-bottom: 4px; }
+.mp-inv-program-time {
+  min-width: 92px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #5427c7;
+  text-align: right;
+  padding-top: 2px;
+}
+.mp-inv-program-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #8f6fe0;
+  border: 2px solid #e6dfff;
+  margin-top: 4px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.mp-inv-program-item::before {
+  content: '';
+  position: absolute;
+  left: calc(92px + 14px + 5px);
+  top: 16px;
+  bottom: 0;
+  width: 2px;
+  background: #e6dfff;
+}
+.mp-inv-program-item:last-child::before { display: none; }
+.mp-inv-program-body { flex: 1; }
+.mp-inv-program-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1733;
+}
+.mp-inv-program-date {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: #8f6fe0;
+  font-weight: 600;
+}
+.mp-inv-program-place {
+  margin: 3px 0 0;
+  font-size: 13.5px;
+  color: #667085;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mp-inv-program-place .material-symbols-outlined { font-size: 16px; color: #8f6fe0; }
+.mp-inv-program-desc {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #667085;
+}
+
 /* ---------- Votre invitation ---------- */
 .mp-inv-you {
   margin-top: 26px;
@@ -1157,6 +1305,67 @@ textarea.mp-inv-input {
 .mp-inv-input:focus {
   border-color: #5427c7;
   box-shadow: 0 0 0 3px rgba(84, 39, 199, 0.14);
+}
+/* ——— Cartes de sélection des boissons (RSVP) ——— */
+.mp-drinks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.mp-drink-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 6px 8px;
+  background: #ffffff;
+  border: 2px solid #d8d3e8;
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+}
+.mp-drink-card:hover { transform: translateY(-2px); }
+.mp-drink-card--selected {
+  border-color: #5427c7;
+  background: #f0ebff;
+  box-shadow: 0 4px 14px rgba(84, 39, 199, 0.18);
+}
+.mp-drink-img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #f4f2fa;
+}
+.mp-drink-img--empty {
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+}
+.mp-drink-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #1d1733;
+  text-align: center;
+  line-height: 1.2;
+  word-break: break-word;
+}
+.mp-drink-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #5427c7;
+  border-radius: 999px;
 }
 .mp-inv-count {
   align-self: flex-end;
