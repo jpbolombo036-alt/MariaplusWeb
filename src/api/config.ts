@@ -37,6 +37,8 @@ export const ApiConfig = {
   weddingDrinksPath: (eventId: number) => `/api/events/${eventId}/drinks`,
 
   checkinsPath: '/api/checkins',
+  // Réglages plateforme (lecture : tout utilisateur authentifié ; écriture : SUPER_ADMIN)
+  adminWhatsappSettingsPath: '/api/admin/settings/whatsapp',
   publicInvitationsPath: '/api/public/invitations',
 
   usersPath: '/api/users',
