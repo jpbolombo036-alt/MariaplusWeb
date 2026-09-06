@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <button class="mt-5 h-10 rounded-lg border border-primary text-primary text-[13px] font-semibold hover:bg-primary-light transition-colors relative w-full">
+    <button class="mt-5 h-10 rounded-lg border border-primary text-primary text-[13px] font-semibold hover:bg-primary-light transition-colors relative w-full" @click="goInternalEvents">
       Détails Logistiques
     </button>
   </div>
@@ -32,6 +32,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useWeddingStore } from '../../stores/wedding'
+
+const router = useRouter()
+const weddingStore = useWeddingStore()
+
+function goInternalEvents() {
+  const id = weddingStore.activeId
+  if (id) router.push(`/dashboard/events/${id}/internal-events`)
+}
 
 const props = defineProps<{ date?: string; name?: string; time?: string; venue?: string; guests?: number }>()
 

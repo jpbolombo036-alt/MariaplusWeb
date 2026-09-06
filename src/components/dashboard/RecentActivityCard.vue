@@ -2,7 +2,7 @@
   <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
     <div class="px-6 py-4 flex items-center justify-between border-b border-slate-100">
       <span class="font-semibold text-slate-800 text-[15px]">Activité récente</span>
-      <button class="flex items-center gap-1 text-sm text-primary font-semibold hover:underline">Voir tout
+      <button class="flex items-center gap-1 text-sm text-primary font-semibold hover:underline" @click="goOverview">Voir tout
         <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
       </button>
     </div>
@@ -27,6 +27,16 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { useWeddingStore } from '../../stores/wedding'
+
+const router = useRouter()
+const weddingStore = useWeddingStore()
+
+function goOverview() {
+  const id = weddingStore.activeId
+  if (id) router.push(`/dashboard/events/${id}`)
+}
 interface ActivityRow {
   id: string
   type: 'guest' | 'invitation' | 'checkin' | 'table'

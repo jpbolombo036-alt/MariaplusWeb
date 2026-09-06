@@ -305,51 +305,38 @@
       </template>
     </div>
 
-    <!-- Carte 1080x1350 générée hors écran → export PNG + sauvegarde serveur -->
+    <!-- Carte 1080x1350 générée hors écran → export PNG + sauvegarde serveur
+         (design « pass invité » : logo, INVITATION, QR, nom, validité, infos) -->
     <div v-if="success === 'ACCEPTED' && inv" ref="cardRenderEl" class="mp-inv-render" aria-hidden="true">
-      <div class="mpc">
-        <div class="mpc-cover">
-          <div v-if="photos.length" class="mpc-cover-bg" :style="{ backgroundImage: 'url(' + absoluteUrl(photos[0]) + ')' }"></div>
-          <div class="mpc-cover-shade"></div>
-          <div class="mpc-logo"><img src="/logo.png" class="mpc-logo-img" alt="" /><span>EventiaEasy</span></div>
-          <div class="mpc-confirm">INVITATION CONFIRMÉE</div>
-        </div>
-        <div class="mpc-body">
-          <h2 class="mpc-event">{{ title }}</h2>
-          <div class="mpc-divider"><span></span>♥<span></span></div>
-          <div class="mpc-label">INVITATION DE</div>
-          <div class="mpc-guest">{{ guestFullName }}</div>
-          <div class="mpc-badge"><span class="mpc-badge-check">✓</span>PRÉSENCE CONFIRMÉE</div>
-          <div class="mpc-infos">
-            <div v-if="dateValue" class="mpc-info">
-              <div class="mpc-info-label">DATE</div>
-              <div class="mpc-info-value">{{ dateValue }}</div>
-              <div v-if="dayOfWeekText" class="mpc-info-sub">{{ dayOfWeekText }}</div>
+      <div class="mcq">
+        <div v-if="cardBgUrl" class="mcq-bg" :style="{ backgroundImage: 'url(' + cardBgUrl + ')' }"></div>
+        <div class="mcq-bg-overlay"></div>
+        <div class="mcq-content">
+          <img src="/logo.png" class="mcq-logo" alt="" />
+          <div class="mcq-title">INVITATION</div>
+          <div class="mcq-event">{{ title }}</div>
+          <div v-if="qrDataUri" class="mcq-qr"><img :src="qrDataUri" alt="QR" /></div>
+          <div class="mcq-guest">{{ guestFullName }}</div>
+          <div class="mcq-badge"><span class="mcq-badge-check">✓</span><span>Invitation valide</span></div>
+          <div class="mcq-infos">
+            <div v-if="cardDateShort" class="mcq-info">
+              <svg class="mcq-ico" width="42" height="42" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+              <span>{{ cardDateShort }}</span>
             </div>
-            <div v-if="timeValue" class="mpc-info">
-              <div class="mpc-info-label">HEURE</div>
-              <div class="mpc-info-value">{{ timeValue }}</div>
-              <div class="mpc-info-sub">Heure locale</div>
+            <div v-if="venueValue || venueSub" class="mcq-info">
+              <svg class="mcq-ico" width="42" height="42" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+              <span class="mcq-info-col">
+                <span v-if="venueValue" class="mcq-info-main">{{ venueValue }}</span>
+                <span v-if="venueSub" class="mcq-info-sub">{{ venueSub }}</span>
+              </span>
             </div>
-            <div v-if="venueValue" class="mpc-info">
-              <div class="mpc-info-label">LIEU</div>
-              <div class="mpc-info-value">{{ venueValue }}</div>
-              <div v-if="venueSub" class="mpc-info-sub">{{ venueSub }}</div>
+            <div v-if="cardTimeShort" class="mcq-info">
+              <svg class="mcq-ico" width="42" height="42" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+              <span>{{ cardTimeShort }}</span>
             </div>
           </div>
-          <div class="mpc-people">
-            <div class="mpc-label">INVITATION POUR</div>
-            <div class="mpc-people-count">{{ confirmedCount }} personne(s)</div>
-          </div>
-          <div v-if="qrDataUri" class="mpc-qr">
-            <img :src="qrDataUri" class="mpc-qr-img" alt="QR" />
-            <div class="mpc-qr-note">Présentez ce QR Code à l'accueil</div>
-          </div>
-        </div>
-        <div class="mpc-footer">
-          <div class="mpc-footer-line">Invitation confirmée avec</div>
-          <div class="mpc-footer-brand"><img src="/logo.png" class="mpc-logo-img" alt="" />EventiaEasy</div>
-          <div class="mpc-footer-heart">♥</div>
+          <div class="mcq-note">Présentez ce QR Code à l'entrée</div>
+          <div class="mcq-footer">Propulsé par <strong>EventiaEasy</strong></div>
         </div>
       </div>
     </div>
@@ -455,6 +442,22 @@ const venueParts = computed(() =>
 const venueValue = computed(() => venueParts.value[0] || '')
 const venueSub = computed(() => (venueParts.value.length > 1 ? venueParts.value.slice(1).join(' · ') : ''))
 const hasEventInfo = computed(() => Boolean(dateValue.value || timeValue.value || venueValue.value))
+
+/* Format court pour la carte téléchargeable : « Sam 12 oct 2025 » / « 18h00 » */
+const cardDateShort = computed(() => {
+  if (!dateValue.value) return ''
+  const d = parseFrenchDate(dateValue.value)
+  if (!d) return dateValue.value
+  try {
+    const wd = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(d).replace('.', '')
+    const mo = new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(d).replace('.', '')
+    const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+    return `${cap(wd)} ${d.getDate()} ${cap(mo)} ${d.getFullYear()}`
+  } catch {
+    return dateValue.value
+  }
+})
+const cardTimeShort = computed(() => timeValue.value.replace(':', 'h'))
 
 /* ---------- Programme de la journée (sessions backend — additif) ---------- */
 const programSessions = computed<PublicSessionItem[]>(() => {
@@ -694,10 +697,40 @@ const guestFullName = computed(() => {
   return `${fn} ${ln}`.trim() || 'Cher invité'
 })
 
+/* Photo du couple en fond de carte, floutée : l'image est réduite à une
+   miniature (36 px) puis étirée en fond — l'upscaling lissé produit un flou
+   fiable à l'export html2canvas (qui ne supporte pas CSS filter). */
+const cardBgUrl = ref('')
+
+async function prepareCardBackground(): Promise<void> {
+  if (cardBgUrl.value || !photos.value.length) return
+  try {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = () => reject(new Error('load'))
+      img.src = absoluteUrl(photos.value[0])
+    })
+    const w = 36
+    const h = Math.max(1, Math.round((img.naturalHeight / img.naturalWidth) * w))
+    const c = document.createElement('canvas')
+    c.width = w
+    c.height = h
+    const ctx = c.getContext('2d')
+    if (!ctx) return
+    ctx.drawImage(img, 0, 0, w, h)
+    cardBgUrl.value = c.toDataURL('image/jpeg', 0.6)
+  } catch {
+    /* image non chargeable (CORS/absente) : la carte reste blanche */
+  }
+}
+
 async function generateCard(): Promise<void> {
   cardError.value = ''
   if (!cardRenderEl.value) return
   try {
+    await prepareCardBackground()
     const canvas = await html2canvas(cardRenderEl.value, {
       width: 1080,
       height: 1350,
@@ -1837,4 +1870,71 @@ html.dark .mp-inv-qr img { background: #ffffff; }
   .mp-inv-section-title { font-size: 20px; }
   .mp-inv-help { flex-direction: column; align-items: flex-start; }
 }
+
+/* ============================================================
+   CARTE TÉLÉCHARGEABLE « PASS INVITÉ » (1080×1350, style maquette)
+   Rendue hors écran puis exportée en PNG via html2canvas.
+   Icônes en emoji : fiables dans html2canvas (pas de police à ligatures).
+   ============================================================ */
+.mcq {
+  position: relative;
+  width: 1080px;
+  height: 1350px;
+  box-sizing: border-box;
+  background: #ffffff;
+  overflow: hidden;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+.mcq-bg { position: absolute; inset: 0; background-size: cover; background-position: center 22%; }
+.mcq-bg-overlay { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.86); }
+.mcq-content {
+  position: relative;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 58px 80px 40px;
+}
+.mcq-event { margin-top: 10px; font-size: 34px; font-weight: 700; color: #5b2ecc; }
+.mcq-logo { width: 170px; height: auto; object-fit: contain; }
+.mcq-title { margin-top: 14px; font-size: 56px; font-weight: 900; letter-spacing: 10px; color: #172554; }
+.mcq-qr { margin-top: 24px; }
+.mcq-qr img { width: 410px; height: 410px; display: block; }
+.mcq-guest { margin-top: 16px; font-size: 48px; font-weight: 800; color: #0f172a; }
+.mcq-badge {
+  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  background: #e9f9ef;
+  border: 2px solid #bfe9cf;
+  color: #15803d;
+  font-size: 32px;
+  font-weight: 800;
+  padding: 16px 38px;
+  border-radius: 999px;
+}
+.mcq-badge-check {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #22a45d;
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.mcq-infos { margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.mcq-info { display: flex; align-items: center; gap: 18px; font-size: 36px; font-weight: 600; color: #1f2937; }
+.mcq-info-col { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 6px; }
+.mcq-info-main { font-size: 36px; font-weight: 600; color: #1f2937; }
+.mcq-info-sub { font-size: 28px; font-weight: 500; color: #4b5563; line-height: 1.25; }
+.mcq-ico { display: block; width: 42px; height: 42px; color: #5b2ecc; flex-shrink: 0; }
+.mcq-note { margin-top: auto; font-size: 26px; color: #98a2b3; }
+.mcq-footer { margin-top: 12px; font-size: 22px; color: #cbd2dc; }
+.mcq-footer strong { color: #5b2ecc; }
 </style>

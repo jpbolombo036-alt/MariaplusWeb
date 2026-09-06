@@ -8,7 +8,7 @@
           <p class="text-[13px] text-slate-500 mt-0.5 font-medium">Vue d'ensemble des statistiques</p>
         </div>
         <div class="flex items-center gap-3">
-          <button class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
+          <button :disabled="loading" @click="load" class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all disabled:opacity-50">
             <span class="material-symbols-outlined text-[18px]">refresh</span> Actualiser
           </button>
         </div>
@@ -46,11 +46,13 @@ const route = useRoute()
 const id = Number(route.params.id)
 const stats = ref<Dashboard | null>(null)
 const loading = ref(true)
-onMounted(async () => {
+onMounted(load)
+async function load() {
+  loading.value = true
   try {
     stats.value = await getDashboard(id)
   } finally {
     loading.value = false
   }
-})
+}
 </script>

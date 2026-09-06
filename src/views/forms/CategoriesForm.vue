@@ -6,13 +6,13 @@
           <span class="material-symbols-outlined text-[20px]">arrow_back</span>
         </button>
         <div>
-          <h1 class="text-[22px] font-bold text-slate-900 tracking-tight">Nouvelle catégorie</h1>
-          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">Créez une catégorie pour organiser vos invités.</p>
+          <h1 class="text-[22px] font-bold text-slate-900 tracking-tight">{{ isEdit ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}</h1>
+          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">{{ isEdit ? 'Mettez à jour la catégorie.' : 'Créez une catégorie pour organiser vos invités.' }}</p>
         </div>
       </div>
 
       <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-        <form @submit.prevent="submitCreate" class="space-y-5">
+        <form @submit.prevent="submit" class="space-y-5">
           <label class="block">
             <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Nom *</span>
             <input v-model="form.name" required placeholder="Ex : Famille" class="input" />
@@ -24,7 +24,7 @@
 
           <div class="flex justify-end gap-3 pt-2">
             <button type="button" @click="$router.back()" class="px-4 h-10 text-slate-500 text-[13px] font-medium hover:text-slate-700 transition-colors">Annuler</button>
-            <button type="submit" class="px-5 h-10 rounded-lg bg-primary text-white text-[13px] font-bold shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">Créer</button>
+            <button type="submit" class="px-5 h-10 rounded-lg bg-primary text-white text-[13px] font-bold shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">{{ isEdit ? 'Enregistrer' : 'Créer' }}</button>
           </div>
         </form>
       </div>
@@ -33,16 +33,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { createCategory } from '../../api/guests'
+import { createCategory, updateCategory, listCategories } from '../../api/guests'
 
 const route = useRoute()
 const id = Number(route.params.id)
+const categoryId = route.params.categoryId != null ? Number(route.params.categoryId) : null
+const isEdit = computed(() => categoryId != null)
 const form = reactive({ name: '', description: '' })
 
-async function submitCreate() {
-  await createCategory(id, form.name, form.description)
+onMounted(async () => {
+  if (!isEdit.value) return
+  const cats = await listCategories(id)
+  const c = cats.find((x) => x.id === categoryId)
+  if (c) {
+    form.name = c.name
+    form.description = c.description ?? ''
+  }
+})
+
+async function submit() {
+  if (isEdit.value && categoryId != null) {
+    await updateCategory(id, categoryId, { name: form.name, description: form.description || null })
+  } else {
+    await createCategory(id, form.name, form.description)
+  }
   window.history.length > 1 ? window.history.back() : window.location.href = `/dashboard/events/${id}/categories`
 }
 </script>

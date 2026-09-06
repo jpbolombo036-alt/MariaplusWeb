@@ -25,7 +25,7 @@
 
         <div class="flex items-center gap-3">
           <PermGuard :allow="['WEDDING_UPDATE']">
-            <button class="h-11 px-6 rounded-lg bg-white text-on-surface text-sm font-semibold flex items-center gap-2 hover:bg-white/90 shadow-sm">
+            <button class="h-11 px-6 rounded-lg bg-white text-on-surface text-sm font-semibold flex items-center gap-2 hover:bg-white/90 shadow-sm" @click="$router.push(`/dashboard/events/${id}/edit`)">
               <span class="material-symbols-outlined text-base">edit</span> Modifier
             </button>
           </PermGuard>
@@ -45,7 +45,7 @@
           <h3 class="text-[15px] font-bold text-slate-800">Aperçu de l'événement</h3>
           <p class="text-[13px] text-slate-500 mt-0.5">Statistiques et progression</p>
         </div>
-        <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+        <button :disabled="loading" @click="load" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50">
           <span class="material-symbols-outlined text-[16px]">refresh</span> Actualiser
         </button>
       </div>
@@ -151,7 +151,9 @@ const tableFillRate = computed(() => {
   return c > 0 ? Math.round(((stats.value?.tables.assignedGuests ?? 0) / c) * 100) : 0
 })
 
-onMounted(async () => {
+onMounted(load)
+async function load() {
+  loading.value = true
   try {
     const [w, d] = await Promise.all([getEvent(id), getDashboard(id)])
     event.value = w
@@ -169,7 +171,7 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
 
 async function publish() {
   try {

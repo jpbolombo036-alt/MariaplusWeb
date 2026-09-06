@@ -31,6 +31,11 @@ export async function createTable(eventId: number, name: string, capacity: numbe
   return parseTable(decodeMap(res.data))
 }
 
+export async function updateTable(eventId: number, tableId: number, name: string, capacity: number): Promise<WeddingTable> {
+  const res = await http.put(`${ApiConfig.weddingTablesPath(eventId)}/${tableId}`, { name, capacity })
+  return parseTable(decodeMap(res.data))
+}
+
 export async function deleteTable(eventId: number, tableId: number): Promise<void> {
   await http.delete(`${ApiConfig.weddingTablesPath(eventId)}/${tableId}`)
 }

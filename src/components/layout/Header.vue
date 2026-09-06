@@ -24,9 +24,8 @@
       />
     </div>
 
-    <button class="relative text-slate-500 hover:text-primary transition-colors p-2 rounded-lg hover:bg-slate-50" title="Notifications">
+    <button class="relative text-slate-500 hover:text-primary transition-colors p-2 rounded-lg hover:bg-slate-50" title="Notifications" @click="onNotifications">
       <span class="material-symbols-outlined text-[22px]">notifications</span>
-      <span class="absolute right-1.5 top-1.5 w-2 h-2 rounded-full bg-error"></span>
     </button>
 
     <!-- Toggle sombre/clair -->
@@ -87,10 +86,12 @@
 import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useNotificationStore } from '../../stores/notifications'
 import { initialsOf } from '../../utils/initials'
 import { useThemeStore } from '../../stores/theme'
 
 const auth = useAuthStore()
+const notifications = useNotificationStore()
 const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
@@ -139,6 +140,10 @@ const pageTitle = computed(() => {
 })
 
 const initials = computed(() => initialsOf(auth.user?.firstName, auth.user?.lastName || auth.user?.email))
+
+function onNotifications() {
+  notifications.push('Aucune nouvelle notification pour le moment.', 'info')
+}
 
 function toggleTheme() {
   themeStore.toggle()

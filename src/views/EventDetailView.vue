@@ -51,7 +51,7 @@
     <!-- Actions statut (tous les types) -->
     <div class="mt-3 flex flex-wrap gap-2">
       <PermGuard :allow="['EVENT_UPDATE']">
-        <button v-if="isWedding" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold">Modifier</button>
+        <button v-if="isWedding" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold" @click="$router.push(`/dashboard/events/${eventId}/edit`)">Modifier</button>
       </PermGuard>
       <PermGuard :allow="['WEDDING_PUBLISH']">
         <button v-if="event.status === 'DRAFT'" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold" @click="changeStatus('PUBLISHED')">Publier</button>

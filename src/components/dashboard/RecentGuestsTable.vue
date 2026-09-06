@@ -2,7 +2,7 @@
   <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
     <div class="px-6 py-4 flex items-center justify-between border-b border-slate-100">
       <span class="font-semibold text-slate-800 text-[15px]">Invités Récents</span>
-      <button class="flex items-center gap-1.5 text-slate-400 hover:text-primary transition-colors">
+      <button class="flex items-center gap-1.5 text-slate-400 hover:text-primary transition-colors" title="Voir tous les invités" @click="goGuests">
         <span class="material-symbols-outlined text-[20px]">filter_alt</span>
       </button>
     </div>
@@ -38,7 +38,7 @@
               <StatusBadge :status="r.status ?? 'PENDING'" :dot="true" />
             </td>
             <td class="px-6 py-4 text-right">
-              <button class="text-slate-400 hover:text-primary p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+              <button class="text-slate-400 hover:text-primary p-1.5 rounded-lg hover:bg-slate-100 transition-colors" title="Voir dans la liste des invités" @click="goGuests">
                 <span class="material-symbols-outlined text-[20px]">more_vert</span>
               </button>
             </td>
@@ -50,7 +50,17 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { useWeddingStore } from '../../stores/wedding'
 import StatusBadge from '../common/StatusBadge.vue'
+
+const router = useRouter()
+const weddingStore = useWeddingStore()
+
+function goGuests() {
+  const id = weddingStore.activeId
+  if (id) router.push(`/dashboard/events/${id}/guests`)
+}
 
 interface GuestRow {
   id: number

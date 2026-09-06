@@ -408,7 +408,7 @@ async function submitCreate() {
     if (form.type === 'WEDDING') {
       for (const p of photoFields) {
         const file = photoState[p.kind].file
-        if (file) { try { await uploadEventPhoto(created.id, p.kind, file) } catch { /* ignore */ } }
+        if (file) { try { await uploadEventPhoto(created.id, p.kind as EventPhotoKind, file) } catch { /* ignore */ } }
       }
     }
     // Programme (non bloquant) — date héritée de l'événement, ordre d'affichage
@@ -505,3 +505,4 @@ function validateInfos(): boolean {
 <style scoped>
 .input { @apply block w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-slate-400; }
 </style>
+

@@ -35,10 +35,6 @@
             class="h-11 pl-10 pr-4 rounded-lg border border-slate-200 bg-white text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 w-full transition-all"
           />
         </div>
-        <button class="h-11 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
-          <span class="material-symbols-outlined text-[18px]">search</span>
-          <span class="hidden sm:inline">Rechercher</span>
-        </button>
       </div>
     </div>
 
@@ -78,7 +74,7 @@
             <td class="px-5 py-3.5 text-slate-600 text-[13px]">{{ g.allowedCompanions ?? 0 }}</td>
             <td class="px-5 py-3.5 text-right">
               <div class="inline-flex items-center gap-1">
-                <button class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg" title="Modifier"><span class="material-symbols-outlined text-base">edit</span></button>
+                <button class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg" title="Modifier" @click="$router.push(`/dashboard/events/${id}/guests/${g.id}/edit`)"><span class="material-symbols-outlined text-base">edit</span></button>
                 <PermGuard :allow="['GUEST_DELETE']">
                   <button class="px-2 py-1 text-error hover:bg-error/10 rounded-lg" title="Supprimer" @click="remove(g)"><span class="material-symbols-outlined text-base">delete</span></button>
                 </PermGuard>
@@ -120,7 +116,7 @@
 
         <!-- Actions -->
         <div class="flex flex-wrap gap-2">
-          <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium">
+          <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium" @click="$router.push(`/dashboard/events/${id}/guests/${g.id}/edit`)">
             <span class="material-symbols-outlined text-[18px]">edit</span>
             <span class="hidden sm:inline">Modifier</span>
           </button>

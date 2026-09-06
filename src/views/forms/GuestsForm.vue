@@ -6,13 +6,13 @@
           <span class="material-symbols-outlined text-[20px]">arrow_back</span>
         </button>
         <div>
-          <h1 class="text-[22px] font-bold text-slate-900 tracking-tight">Nouvel invité</h1>
-          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">Ajoutez un invité à votre événement.</p>
+          <h1 class="text-[22px] font-bold text-slate-900 tracking-tight">{{ isEdit ? 'Modifier l’invité' : 'Nouvel invité' }}</h1>
+          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">{{ isEdit ? 'Mettez à jour les informations de l’invité.' : 'Ajoutez un invité à votre événement.' }}</p>
         </div>
       </div>
 
       <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-        <form @submit.prevent="submitCreate" class="space-y-5">
+        <form @submit.prevent="submit" class="space-y-5">
           <div class="grid grid-cols-2 gap-4">
             <label class="block">
               <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Prénom *</span>
@@ -50,7 +50,7 @@
 
           <div class="flex justify-end gap-3 pt-2">
             <button type="button" @click="$router.back()" class="px-4 h-10 text-slate-500 text-[13px] font-medium hover:text-slate-700 transition-colors">Annuler</button>
-            <button type="submit" class="px-5 h-10 rounded-lg bg-primary text-white text-[13px] font-bold shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">Ajouter</button>
+            <button type="submit" class="px-5 h-10 rounded-lg bg-primary text-white text-[13px] font-bold shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">{{ isEdit ? 'Enregistrer' : 'Ajouter' }}</button>
           </div>
         </form>
       </div>
@@ -59,12 +59,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { createGuest, listCategories, type GuestCategory } from '../../api/guests'
+import { createGuest, updateGuest, listGuests, listCategories, type Guest, type GuestCategory } from '../../api/guests'
 
 const route = useRoute()
 const id = Number(route.params.id)
+const guestId = route.params.guestId != null ? Number(route.params.guestId) : null
+const isEdit = computed(() => guestId != null)
 const categories = ref<GuestCategory[]>([])
 const form = reactive({
   firstName: '',
@@ -76,18 +78,36 @@ const form = reactive({
 })
 
 onMounted(async () => {
-  categories.value = await listCategories(id)
+  const [cats, guests] = await Promise.all([
+    listCategories(id),
+    isEdit.value ? listGuests(id) : Promise.resolve<Guest[] | null>(null),
+  ])
+  categories.value = cats
+  const g = guests?.find((x) => x.id === guestId)
+  if (g) {
+    form.firstName = g.firstName
+    form.lastName = g.lastName
+    form.email = g.email ?? ''
+    form.phone = g.phone ?? ''
+    form.categoryId = g.categoryId ?? null
+    form.allowedCompanions = g.allowedCompanions ?? 0
+  }
 })
 
-async function submitCreate() {
-  await createGuest(id, {
+async function submit() {
+  const payload = {
     firstName: form.firstName,
     lastName: form.lastName,
     email: form.email || null,
     phone: form.phone || null,
     categoryId: form.categoryId,
     allowedCompanions: form.allowedCompanions,
-  })
+  }
+  if (isEdit.value && guestId != null) {
+    await updateGuest(id, guestId, payload)
+  } else {
+    await createGuest(id, payload)
+  }
   window.history.length > 1 ? window.history.back() : window.location.href = `/dashboard/events/${id}/guests`
 }
 </script>

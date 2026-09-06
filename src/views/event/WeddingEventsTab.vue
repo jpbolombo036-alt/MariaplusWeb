@@ -27,10 +27,6 @@
           </span>
           <input v-model="query" placeholder="Rechercher un événement..." class="h-11 pl-10 pr-4 rounded-lg border border-slate-200 bg-white text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 w-full transition-all" />
         </div>
-        <button class="h-11 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">
-          <span class="material-symbols-outlined text-[18px]">search</span>
-          <span class="hidden sm:inline">Rechercher</span>
-        </button>
       </div>
     </div>
 

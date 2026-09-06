@@ -38,7 +38,7 @@
           <p>Validation de l'arrivée d'un invité</p>
         </div>
         <div class="ag-header-right">
-          <button class="ag-bell" aria-label="Notifications">
+          <button class="ag-bell" aria-label="Notifications" @click="notifications.push('Aucune nouvelle notification pour le moment.', 'info')">
             <span class="material-symbols-outlined">notifications</span>
             <span class="ag-bell-dot"></span>
           </button>

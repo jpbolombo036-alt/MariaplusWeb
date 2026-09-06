@@ -2,7 +2,7 @@
   <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col">
     <div class="flex items-center justify-between mb-4">
       <span class="font-semibold text-slate-800 text-[15px]">Vue d'ensemble RSVP</span>
-      <button class="flex items-center gap-0.5 text-sm text-primary font-semibold hover:underline">Voir tous
+      <button class="flex items-center gap-0.5 text-sm text-primary font-semibold hover:underline" @click="goRsvp">Voir tous
         <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
       </button>
     </div>
@@ -71,6 +71,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useWeddingStore } from '../../stores/wedding'
+
+const router = useRouter()
+const weddingStore = useWeddingStore()
+
+function goRsvp() {
+  const id = weddingStore.activeId
+  if (id) router.push(`/dashboard/events/${id}/rsvp`)
+}
 
 const props = defineProps<{ accepted: number; pending: number; declined: number; noResponse?: number }>()
 

@@ -81,7 +81,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <tr v-for="ev in paginated" :key="ev.id" class="hover:bg-slate-50/80 transition-colors">
+            <tr v-for="ev in paged" :key="ev.id" class="hover:bg-slate-50/80 transition-colors">
               <!-- Événement -->
               <td class="px-6 py-4">
                 <router-link :to="`/dashboard/events/${ev.id}`" class="flex items-center gap-4 group/ev">
@@ -127,11 +127,11 @@
 
       <!-- Pagination -->
       <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-slate-100">
-        <div class="text-[13px] text-slate-500 font-medium">Affichage 1 - {{ filtered.length }} sur {{ filtered.length }} événements</div>
+        <div class="text-[13px] text-slate-500 font-medium">Affichage {{ filtered.length === 0 ? 0 : (page - 1) * pageSize + 1 }} - {{ Math.min(page * pageSize, filtered.length) }} sur {{ filtered.length }} événements</div>
         <div class="flex items-center gap-2">
-          <button class="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center hover:bg-slate-50 transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+          <button :disabled="page <= 1" @click="page--" class="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
           <button class="w-9 h-9 rounded-lg bg-primary text-white inline-flex items-center justify-center text-sm font-semibold shadow-sm shadow-primary/20">1</button>
-          <button class="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center hover:bg-slate-50 transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+          <button :disabled="page >= pageCount" @click="page++" class="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
         </div>
       </div>
     </div>
@@ -140,7 +140,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { listEvents, loadEventImage, type Event } from '../api/events'
 import PermGuard from '../components/common/PermGuard.vue'
@@ -210,6 +210,15 @@ const paginated = computed(() => {
     return sortDateAsc.value ? da - db : db - da
   })
   return arr
+})
+
+// Pagination client : ‹ › sous la liste, 8 événements par page.
+const page = ref(1)
+const pageSize = 8
+const pageCount = computed(() => Math.max(1, Math.ceil(paginated.value.length / pageSize)))
+const paged = computed(() => paginated.value.slice((page.value - 1) * pageSize, page.value * pageSize))
+watch(filtered, () => {
+  if (page.value > pageCount.value) page.value = pageCount.value
 })
 
 /** Un événement est « passé » si terminé/archivé, ou si sa date est antérieure à aujourd'hui. */
