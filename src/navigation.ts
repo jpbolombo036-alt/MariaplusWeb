@@ -4,6 +4,8 @@ export type NavSection = 'overview' | 'guests' | 'categories' | 'invitations' | 
 
 export interface NavEntry {
   label: string
+  // Libellé abrégé pour la barre de navigation mobile (évite le retour à la ligne).
+  shortLabel?: string
   icon: string // Material Symbols class
   // Chemin relatif de la section à l'intérieur d'un mariage (si gestion d'événement).
   section?: NavSection
@@ -20,6 +22,7 @@ export const navEntries: NavEntry[] = [
   { label: 'Dashboard', icon: 'dashboard', perm: [Perm.dashboardView] },
   {
     label: 'Mes événements',
+    shortLabel: 'Événements',
     icon: 'event',
     perm: [Perm.weddingView, Perm.eventView, Perm.guestView, Perm.invitationView, Perm.rsvpView, Perm.checkinView, Perm.tableView, Perm.drinkView],
   },

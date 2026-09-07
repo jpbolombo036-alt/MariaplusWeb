@@ -8,7 +8,7 @@
       active-class="!text-primary"
     >
       <span class="material-symbols-outlined text-[22px]">{{ entry.icon }}</span>
-      {{ entry.label }}
+      <span class="text-center leading-tight px-0.5">{{ entry.shortLabel ?? entry.label }}</span>
     </router-link>
   </nav>
 </template>
