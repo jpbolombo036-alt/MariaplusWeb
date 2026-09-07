@@ -35,6 +35,8 @@ export const ApiConfig = {
   weddingDashboardPath: (eventId: number) => `/api/events/${eventId}/dashboard`,
   weddingRsvpsPath: (eventId: number) => `/api/events/${eventId}/rsvps`,
   weddingDrinksPath: (eventId: number) => `/api/events/${eventId}/drinks`,
+  // Exports (CSV/PDF) — contrôleur ExportController : /api/events/{id}/export/...
+  weddingExportPath: (eventId: number) => `/api/events/${eventId}/export`,
 
   checkinsPath: '/api/checkins',
   // Réglages plateforme (lecture : tout utilisateur authentifié ; écriture : SUPER_ADMIN)

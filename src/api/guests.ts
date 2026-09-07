@@ -92,6 +92,6 @@ export async function updateGuest(eventId: number, guestId: number, payload: Rec
 }
 
 export async function exportGuestsCsv(eventId: number): Promise<Blob> {
-  const res = await http.get(`${ApiConfig.weddingGuestsPath(eventId)}/export/guests/csv`, { responseType: 'blob' })
+  const res = await http.get(`${ApiConfig.weddingExportPath(eventId)}/guests/csv`, { responseType: 'blob' })
   return res.data
 }
