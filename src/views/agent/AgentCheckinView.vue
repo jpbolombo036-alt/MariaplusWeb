@@ -35,6 +35,10 @@
           <p>Validation de l'arrivée d'un invité</p>
         </div>
         <div class="ag-header-right">
+          <router-link class="ag-exit" :to="`/dashboard/events/${id}/checkin`" title="Quitter le poste — retour au module Check-in">
+            <span class="material-symbols-outlined">logout</span>
+            <span class="ag-exit-label">Quitter</span>
+          </router-link>
           <span class="ag-avatar">AA</span>
           <div class="ag-agent">
             <span class="ag-agent-name">Agent Accueil</span>
@@ -622,6 +626,10 @@ onBeforeUnmount(() => {
 .ag-header-title h1 { font-size: 28px; font-weight: 700; color: #172033; margin: 0; line-height: 1.15; }
 .ag-header-title p { font-size: 14px; color: #667085; margin: 2px 0 0; }
 .ag-header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.ag-exit { display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; padding: 8px 12px; border: 1px solid #e5e1ef; border-radius: 10px; background: #ffffff; color: #667085; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.15s ease; }
+.ag-exit:hover { background: #f4f2fa; color: #5427c7; border-color: #d8d0ea; }
+.ag-exit .material-symbols-outlined { font-size: 18px; }
+@media (max-width: 768px) { .ag-exit-label { display: none; } .ag-exit { padding: 8px; } }
 .ag-avatar {
   width: 40px; height: 40px; border-radius: 50%;
   background: #ede7ff; color: #5427c7;
