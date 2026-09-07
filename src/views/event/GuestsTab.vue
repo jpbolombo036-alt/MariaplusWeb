@@ -7,19 +7,19 @@
           <h2 class="text-[22px] font-bold text-slate-900 tracking-tight">Invités</h2>
           <p class="text-[13px] text-slate-500 mt-0.5 font-medium">{{ guests.length }} invité(s) au total</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <PermGuard :allow="['GUEST_EXPORT']">
-            <button class="h-10 px-5 rounded-lg bg-white border border-slate-200 text-slate-700 text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-slate-50 transition-all" @click="exportExcel">
+            <button class="h-10 px-4 sm:px-5 rounded-lg bg-white border border-slate-200 text-slate-700 text-[13px] font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap flex-1 sm:flex-none hover:bg-slate-50 transition-all" @click="exportExcel">
               <span class="material-symbols-outlined text-[18px]">download</span> Exporter Excel
             </button>
           </PermGuard>
           <PermGuard :allow="['GUEST_IMPORT']">
-            <button class="h-10 px-5 rounded-lg bg-white border border-slate-200 text-slate-700 text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-slate-50 transition-all disabled:opacity-50" :disabled="importing" @click="fileInput?.click()">
+            <button class="h-10 px-4 sm:px-5 rounded-lg bg-white border border-slate-200 text-slate-700 text-[13px] font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap flex-1 sm:flex-none hover:bg-slate-50 transition-all disabled:opacity-50" :disabled="importing" @click="fileInput?.click()">
               <span class="material-symbols-outlined text-[18px]">upload</span> {{ importing ? 'Import…' : 'Importer' }}
             </button>
           </PermGuard>
           <PermGuard :allow="['GUEST_CREATE', 'GUEST_IMPORT']">
-            <button class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all" @click="$router.push(`/dashboard/events/${id}/guests/new`)">
+            <button class="h-10 px-4 sm:px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap flex-1 sm:flex-none shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all" @click="$router.push(`/dashboard/events/${id}/guests/new`)">
               <span class="material-symbols-outlined text-[18px]">person_add</span> Ajouter
             </button>
           </PermGuard>
