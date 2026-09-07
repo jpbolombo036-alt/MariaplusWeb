@@ -10,6 +10,8 @@ export interface TableAssignment {
   assignmentId: number
   guestId: number
   guestName: string
+  /** Accompagnants déclarés (assis à la même table que l'invité). */
+  companions: number
   tableId: number
   tableName: string
   assignedAt?: string | null
@@ -20,6 +22,7 @@ function parseAssignment(json: Record<string, unknown>): TableAssignment {
     assignmentId: Number(json.assignmentId ?? json.id ?? 0),
     guestId: Number(json.guestId ?? 0),
     guestName: String(json.guestName ?? ''),
+    companions: Number(json.companions ?? 0),
     tableId: Number(json.tableId ?? 0),
     tableName: String(json.tableName ?? ''),
     assignedAt: json.assignedAt ? String(json.assignedAt) : null,

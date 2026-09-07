@@ -62,6 +62,7 @@
                 <span v-for="a in guestsFor(t.id)" :key="a.assignmentId" class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-2.5 py-1 text-[12px] font-semibold">
                   <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
                   {{ a.guestName }}
+                  <span v-if="a.companions > 0" class="text-[10px] bg-white text-slate-600 rounded-full px-1.5 py-0.5" :title="a.companions + ' accompagnant(s) à la même table'">+{{ a.companions }}</span>
                 </span>
               </div>
               <span v-else class="text-slate-400 text-[12px]">Aucun invité placé</span>
@@ -96,7 +97,7 @@
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div>
             <h3 class="text-[16px] font-bold text-slate-900">Placements — {{ assignTable?.name }}</h3>
-            <p class="text-[12px] text-slate-500 mt-0.5">{{ assignTable ? assignTable.assignedCount + '/' + assignTable.capacity + ' place(s) utilisée(s)' : '' }}</p>
+            <p class="text-[12px] text-slate-500 mt-0.5">{{ assignTable ? assignTable.assignedCount + '/' + assignTable.capacity + ' place(s) · ' + assignTable.assignedGuests + ' invité(s)' : '' }}</p>
           </div>
           <button @click="closeAssign" class="h-9 w-9 rounded-lg text-slate-400 hover:bg-slate-50 grid place-items-center transition-colors"><span class="material-symbols-outlined">close</span></button>
         </div>
@@ -109,12 +110,16 @@
               <div v-for="a in guestsFor(assignTable?.id)" :key="a.assignmentId" class="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5">
                 <span class="material-symbols-outlined text-slate-400 text-[18px]">person</span>
                 <div class="flex-1 min-w-0">
-                  <p class="text-[13px] font-semibold text-slate-700 truncate">{{ a.guestName }}</p>
-                  <p class="text-[11px] text-slate-400">Arrivé à : {{ a.assignedAt ? new Date(a.assignedAt).toLocaleString('fr-FR') : '—' }}</p>
+                  <p class="text-[13px] font-semibold text-slate-700 truncate">{{ a.guestName }}<span v-if="a.companions > 0" class="ml-1.5 text-[11px] font-bold text-primary">+{{ a.companions }}</span></p>
+                  <p class="text-[11px] text-slate-400">
+                    <span v-if="a.companions > 0" class="font-semibold text-slate-500">{{ a.companions }} accompagnant(s) à la même table</span>
+                    <span v-else>Sans accompagnant</span>
+                    · Affecté le : {{ a.assignedAt ? new Date(a.assignedAt).toLocaleString('fr-FR') : '—' }}
+                  </p>
                 </div>
                 <PermGuard :allow="['TABLE_ASSIGN_GUEST']">
                   <select class="h-8 px-2 rounded-lg border border-slate-200 text-[12px] text-slate-600 outline-none focus:border-primary max-w-[180px]" :value="assignTable?.id" @change="onMove(a, $event)">
-                    <option v-for="tt in tables" :key="tt.id" :value="tt.id" :disabled="tt.id === assignTable?.id || tt.remainingCapacity < 1">{{ tt.name }}</option>
+                    <option v-for="tt in tables" :key="tt.id" :value="tt.id" :disabled="tt.id === assignTable?.id || tt.remainingCapacity < 1 + a.companions" :title="tt.remainingCapacity < 1 + a.companions && tt.id !== assignTable?.id ? 'Places insuffisantes pour ce groupe (' + (1 + a.companions) + ' requis)' : ''">{{ tt.name }} ({{ tt.remainingCapacity }} libre(s))</option>
                   </select>
                   <button @click="unassign(a)" class="h-8 w-8 rounded-lg text-error hover:bg-error/10 grid place-items-center transition-colors" title="Retirer de la table"><span class="material-symbols-outlined text-[18px]">person_remove</span></button>
                 </PermGuard>
@@ -130,6 +135,7 @@
                 <span class="material-symbols-outlined text-slate-400 text-[18px]">person_add</span>
                 <div class="flex-1 min-w-0">
                   <p class="text-[13px] font-medium text-slate-700 truncate">{{ g.firstName }} {{ g.lastName }}</p>
+                  <p v-if="(g.allowedCompanions ?? 0) > 0" class="text-[11px] text-slate-400">+{{ g.allowedCompanions }} accompagnant(s)</p>
                 </div>
                 <PermGuard :allow="['TABLE_ASSIGN_GUEST']">
                   <button @click="assignTo(g.id)" class="h-7 w-7 rounded-lg bg-primary text-white grid place-items-center hover:bg-primary-dark transition-colors" title="Placer sur cette table"><span class="material-symbols-outlined text-[15px]">add</span></button>

@@ -6,6 +6,9 @@ export interface WeddingTable {
   name: string
   description?: string | null
   capacity: number
+  /** Nombre d'invités affectés (1 ligne par invité). */
+  assignedGuests: number
+  /** Places réellement occupées : 1 + accompagnants déclarés par invité affecté. */
   assignedCount: number
   remainingCapacity: number
 }
@@ -16,6 +19,7 @@ function parseTable(json: Record<string, unknown>): WeddingTable {
     name: String(json.name ?? ''),
     description: json.description ? String(json.description) : null,
     capacity: Number(json.capacity ?? 0),
+    assignedGuests: Number(json.assignedGuests ?? 0),
     assignedCount: Number(json.assignedCount ?? 0),
     remainingCapacity: Number(json.remainingCapacity ?? 0),
   }
