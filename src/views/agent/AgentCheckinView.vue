@@ -20,9 +20,6 @@
         <button type="button" class="ag-nav-item" @click="scrollToSec('sec-present')">
           <span class="material-symbols-outlined">history</span>Historique
         </button>
-        <router-link class="ag-nav-item" to="/dashboard/profile">
-          <span class="material-symbols-outlined">settings</span>Paramètres
-        </router-link>
       </nav>
     </aside>
     <div v-if="mobileNav" class="ag-backdrop" @click="mobileNav = false"></div>
@@ -38,10 +35,6 @@
           <p>Validation de l'arrivée d'un invité</p>
         </div>
         <div class="ag-header-right">
-          <button class="ag-bell" aria-label="Notifications" @click="notifications.push('Aucune nouvelle notification pour le moment.', 'info')">
-            <span class="material-symbols-outlined">notifications</span>
-            <span class="ag-bell-dot"></span>
-          </button>
           <span class="ag-avatar">AA</span>
           <div class="ag-agent">
             <span class="ag-agent-name">Agent Accueil</span>
@@ -629,9 +622,6 @@ onBeforeUnmount(() => {
 .ag-header-title h1 { font-size: 28px; font-weight: 700; color: #172033; margin: 0; line-height: 1.15; }
 .ag-header-title p { font-size: 14px; color: #667085; margin: 2px 0 0; }
 .ag-header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-.ag-bell { position: relative; border: 0; background: transparent; color: #667085; cursor: pointer; padding: 6px; border-radius: 10px; }
-.ag-bell:hover { background: #f4f2fa; color: #5427c7; }
-.ag-bell-dot { position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: #e53935; }
 .ag-avatar {
   width: 40px; height: 40px; border-radius: 50%;
   background: #ede7ff; color: #5427c7;
