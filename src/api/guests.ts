@@ -91,7 +91,28 @@ export async function updateGuest(eventId: number, guestId: number, payload: Rec
   return parseGuest(decodeMap(res.data))
 }
 
-export async function exportGuestsCsv(eventId: number): Promise<Blob> {
-  const res = await http.get(`${ApiConfig.weddingExportPath(eventId)}/guests/csv`, { responseType: 'blob' })
+export async function exportGuestsExcel(eventId: number): Promise<Blob> {
+  const res = await http.get(`${ApiConfig.weddingExportPath(eventId)}/guests/xlsx`, { responseType: 'blob' })
   return res.data
+}
+
+export interface GuestImportError {
+  line: number
+  message: string
+}
+
+export interface GuestImportResult {
+  imported: number
+  skipped: number
+  errors: GuestImportError[]
+}
+
+/** Import des invités depuis un fichier Excel (.xlsx/.xls) ou CSV. */
+export async function importGuestsExcel(eventId: number, file: File): Promise<GuestImportResult> {
+  const form = new FormData()
+  form.append('file', file)
+  const res = await http.post(`${ApiConfig.weddingGuestsPath(eventId)}/import`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return res.data as GuestImportResult
 }

@@ -9,8 +9,13 @@
         </div>
         <div class="flex items-center gap-3">
           <PermGuard :allow="['GUEST_EXPORT']">
-            <button class="h-10 px-5 rounded-lg bg-white border border-slate-200 text-slate-700 text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-slate-50 transition-all" @click="exportCsv">
-              <span class="material-symbols-outlined text-[18px]">download</span> Exporter CSV
+            <button class="h-10 px-5 rounded-lg bg-white border border-slate-200 text-slate-700 text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-slate-50 transition-all" @click="exportExcel">
+              <span class="material-symbols-outlined text-[18px]">download</span> Exporter Excel
+            </button>
+          </PermGuard>
+          <PermGuard :allow="['GUEST_IMPORT']">
+            <button class="h-10 px-5 rounded-lg bg-white border border-slate-200 text-slate-700 text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-slate-50 transition-all disabled:opacity-50" :disabled="importing" @click="fileInput?.click()">
+              <span class="material-symbols-outlined text-[18px]">upload</span> {{ importing ? 'Import…' : 'Importer' }}
             </button>
           </PermGuard>
           <PermGuard :allow="['GUEST_CREATE', 'GUEST_IMPORT']">
@@ -129,13 +134,35 @@
         </div>
       </div>
     </div>
+
+    <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" @change="onImportFile" />
+
+    <!-- Résultat d'import -->
+    <div v-if="importResult" class="fixed inset-0 z-50 bg-black/40 grid place-items-center p-4" @click.self="importResult = null">
+      <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <h3 class="text-lg font-bold text-slate-900">Résultat de l'import</h3>
+        <p class="text-sm text-slate-600 mt-2">
+          ✅ <b>{{ importResult.imported }}</b> invité(s) importé(s) · ⏭️ {{ importResult.skipped }} ligne(s) vide(s) ignorée(s) ·
+          <span :class="importResult.errors.length ? 'text-red-600 font-semibold' : 'text-emerald-600 font-semibold'">{{ importResult.errors.length }} erreur(s)</span>
+        </p>
+        <div v-if="importResult.errors.length" class="mt-3 max-h-48 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
+          <p v-for="e in importResult.errors" :key="e.line" class="px-3 py-2 text-[12px] text-red-600">
+            Ligne {{ e.line }} : {{ e.message }}
+          </p>
+        </div>
+        <div class="mt-5 flex items-center justify-between gap-3">
+          <button class="text-[12px] font-semibold text-primary hover:underline" @click="downloadTemplate">Télécharger le modèle</button>
+          <button class="h-9 px-4 rounded-lg bg-primary text-white text-[13px] font-semibold hover:bg-primary-dark transition-all" @click="importResult = null">Fermer</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { listGuests, deleteGuest, listCategories, exportGuestsCsv, type Guest, type GuestCategory } from '../../api/guests'
+import { listGuests, deleteGuest, listCategories, exportGuestsExcel, importGuestsExcel, type Guest, type GuestCategory, type GuestImportResult } from '../../api/guests'
 import PermGuard from '../../components/common/PermGuard.vue'
 
 const route = useRoute()
@@ -172,12 +199,41 @@ async function remove(g: Guest) {
   await deleteGuest(id, g.id)
   guests.value = guests.value.filter((x) => x.id !== g.id)
 }
-async function exportCsv() {
-  const blob = await exportGuestsCsv(id)
+async function exportExcel() {
+  const blob = await exportGuestsExcel(id)
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'guests.csv'
+  a.download = 'guests.xlsx'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+const fileInput = ref<HTMLInputElement | null>(null)
+const importing = ref(false)
+const importResult = ref<GuestImportResult | null>(null)
+
+async function onImportFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  importing.value = true
+  try {
+    importResult.value = await importGuestsExcel(id, file)
+    await load()
+  } finally {
+    importing.value = false
+  }
+}
+
+function downloadTemplate() {
+  const csv = 'firstName,lastName,email,phone,allowedCompanions,categoryName,notes\nJean,Mbolombo,jean@gmail.com,+243965019972,2,Famille,Exemple de note\n'
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'modele-invites.csv'
   a.click()
   URL.revokeObjectURL(url)
 }
