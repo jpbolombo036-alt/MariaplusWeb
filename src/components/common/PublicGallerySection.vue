@@ -6,10 +6,11 @@
         <h2 class="mp-inv-section-title">Galerie</h2>
         <p v-if="gallery.description" class="mp-inv-message">{{ gallery.description }}</p>
       </div>
-      <span class="mp-gallery-count">{{ gallery.photos.length }} photo{{ gallery.photos.length > 1 ? 's' : '' }}</span>
+      <button v-if="!galleryOpen" type="button" class="mp-gallery-open" @click="galleryOpen = true">Ouvrir la galerie</button>
+      <button v-else type="button" class="mp-gallery-open" @click="galleryOpen = false">Fermer la galerie</button>
     </div>
 
-    <div class="mp-gallery-masonry">
+    <div v-if="galleryOpen" class="mp-gallery-masonry">
       <button v-for="(photo, index) in gallery.photos" :key="photo.id" type="button" class="mp-gallery-tile" @click="open(index)">
         <img :src="absolute(photo.imageUrl)" :alt="photo.caption || 'Photo de l’événement'" loading="lazy" />
         <span v-if="photo.caption" class="mp-gallery-caption">{{ photo.caption }}</span>
@@ -39,6 +40,7 @@ import { ApiConfig } from '../../api/config'
 
 const props = defineProps<{ token: string }>()
 const gallery = ref<Gallery | null>(null)
+const galleryOpen = ref(false)
 const selectedIndex = ref<number | null>(null)
 const absolute = (url: string) => url.startsWith('http') ? url : `${ApiConfig.baseUrl}${url}`
 const selectedPhoto = computed(() => selectedIndex.value === null ? null : gallery.value?.photos[selectedIndex.value] ?? null)
@@ -58,6 +60,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); docume
 .mp-gallery-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:18px; }
 .mp-gallery-kicker { margin:0 0 4px; color:#8b5e3c; font-size:11px; letter-spacing:.18em; text-transform:uppercase; font-weight:700; }
 .mp-gallery-count { color:#8d8790; font-size:12px; white-space:nowrap; }
+.mp-gallery-open { border:0; border-radius:22px; padding:10px 17px; color:#fff; background:#6d28d9; font-size:12px; font-weight:700; box-shadow:0 5px 14px rgba(109,40,217,.2); }
 .mp-gallery-masonry { columns:2 150px; column-gap:10px; }
 .mp-gallery-tile { position:relative; display:block; width:100%; margin:0 0 10px; padding:0; border:0; border-radius:14px; overflow:hidden; background:#f1edf0; break-inside:avoid; cursor:zoom-in; }
 .mp-gallery-tile img { display:block; width:100%; height:auto; transition:transform .35s ease; }
