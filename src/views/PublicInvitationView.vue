@@ -239,7 +239,7 @@
                   @click="toggleDrink(d.name)"
                 >
                   <span v-if="drinkChoices.includes(d.name)" class="mp-drink-check">✓</span>
-                  <img v-if="d.imageUrl" :src="d.imageUrl" :alt="d.name" class="mp-drink-img" loading="lazy" />
+                  <img v-if="d.imageUrl" :src="absoluteUrl(d.imageUrl)" :alt="d.name" class="mp-drink-img" loading="lazy" />
                   <span v-else class="mp-drink-img mp-drink-img--empty">🍹</span>
                   <span class="mp-drink-name">{{ d.name }}</span>
                 </button>
