@@ -119,6 +119,8 @@
             </div>
           </section>
 
+          <PublicGallerySection :token="token" />
+
           <!-- Votre invitation -->
           <section class="mp-inv-you">
             <h3 class="mp-inv-you-title">
@@ -358,6 +360,7 @@ import {
   type PublicSessionItem,
 } from '../api/publicInvitation'
 import { useNotificationStore } from '../stores/notifications'
+import PublicGallerySection from '../components/common/PublicGallerySection.vue'
 
 const route = useRoute()
 const token = String(route.params.token ?? '')

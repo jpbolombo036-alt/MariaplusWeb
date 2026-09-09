@@ -15,27 +15,17 @@ let refreshToken: string | null = null
 
 export function setTokens(t: AuthTokens) {
   accessToken = t.accessToken
-  refreshToken = t.refreshToken
-  localStorage.setItem('mp_access', t.accessToken)
-  localStorage.setItem('mp_refresh', t.refreshToken)
-  localStorage.setItem('mp_expires', String(t.expiresIn))
+  // Refresh token is held by the HttpOnly mp_refresh cookie, never web storage.
+  refreshToken = null
 }
 
 export function loadTokens(): AuthTokens | null {
-  const a = localStorage.getItem('mp_access')
-  const r = localStorage.getItem('mp_refresh')
-  if (!a || !r) return null
-  accessToken = a
-  refreshToken = r
-  return { accessToken: a, refreshToken: r, expiresIn: Number(localStorage.getItem('mp_expires') ?? 900) }
+  return null
 }
 
 export function clearTokens() {
   accessToken = null
   refreshToken = null
-  localStorage.removeItem('mp_access')
-  localStorage.removeItem('mp_refresh')
-  localStorage.removeItem('mp_expires')
 }
 
 let refreshPromise: Promise<string> | null = null
@@ -43,6 +33,10 @@ let refreshPromise: Promise<string> | null = null
 export const http: AxiosInstance = axios.create({
   baseURL: `${ApiConfig.baseUrl}/`,
   timeout: 30000,
+  withCredentials: true,
+  headers: {
+    'X-Client-Platform': 'web',
+  },
 })
 
 http.interceptors.request.use((config) => {
@@ -64,10 +58,10 @@ function extractMessage(error: AxiosError): string {
 
 // Le endpoint refresh attend un corps brut = refresh token (rotation).
 async function doRefresh(): Promise<string> {
-  if (!refreshToken) throw new Error('no refresh token')
   const res = await axios.post(
     `${ApiConfig.baseUrl}${ApiConfig.authRefresh}`,
-    { refreshToken },
+    {},
+    { withCredentials: true },
   )
   const data = (typeof res.data === 'string' ? JSON.parse(res.data) : res.data) as Record<string, unknown>
   const nextAuth: AuthTokens = {

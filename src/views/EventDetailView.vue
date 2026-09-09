@@ -199,6 +199,7 @@ const tabs = computed(() => {
   if (auth.can([Perm.checkinView])) list.push({ label: 'Check-in', to: `/dashboard/events/${id}/checkin` })
   if (auth.can([Perm.tableView])) list.push({ label: 'Tables', to: `/dashboard/events/${id}/tables` })
   if (auth.can([Perm.drinkView])) list.push({ label: 'Boissons', to: `/dashboard/events/${id}/drinks` })
+  if (auth.can([Perm.eventView])) list.push({ label: 'Galerie', to: `/dashboard/events/${id}/gallery` })
   if (auth.can([Perm.eventView])) list.push({ label: 'Événements', to: `/dashboard/events/${id}/internal-events` })
   if (auth.can([Perm.statisticsView])) list.push({ label: 'Statistiques', to: `/dashboard/events/${id}/statistics` })
   return list

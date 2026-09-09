@@ -51,6 +51,7 @@ const router = createRouter({
             { path: 'tables/new', name: 'event-tables-new', component: () => import('../views/forms/TablesForm.vue') },
             { path: 'tables/:tableId/edit', name: 'event-tables-edit', component: () => import('../views/forms/TablesForm.vue') },
             { path: 'drinks', name: 'event-drinks', component: () => import('../views/event/DrinksTab.vue') },
+            { path: 'gallery', name: 'event-gallery', component: () => import('../views/event/GalleryTab.vue') },
             { path: 'internal-events', name: 'event-internal-events', component: () => import('../views/event/WeddingEventsTab.vue') },
             { path: 'internal-events/new', name: 'event-internal-events-new', component: () => import('../views/forms/EventForm.vue') },
             { path: 'statistics', name: 'event-statistics', component: () => import('../views/event/StatisticsTab.vue') },

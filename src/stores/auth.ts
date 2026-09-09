@@ -62,12 +62,15 @@ export const useAuthStore = defineStore('auth', {
       this.restored = true
     },
     async restore() {
-      const tokens = loadTokens()
-      if (!tokens) {
-        this.restored = true
-        return
-      }
       try {
+        // The refresh token is an HttpOnly cookie; restore the in-memory access token.
+        const refresh = await http.post(ApiConfig.authRefresh, {})
+        const refreshJson = decodeMap(refresh.data)
+        setTokens({
+          accessToken: String(refreshJson.accessToken ?? ''),
+          refreshToken: '',
+          expiresIn: Number(refreshJson.expiresIn ?? 900),
+        })
         const res = await http.get(ApiConfig.authMe)
         const json = decodeMap(res.data)
         this.user = parseAuthUser(json)
