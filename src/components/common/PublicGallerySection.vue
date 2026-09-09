@@ -66,7 +66,9 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); docume
 .mp-gallery-tile img { display:block; width:100%; height:auto; transition:transform .35s ease; }
 .mp-gallery-tile:hover img { transform:scale(1.035); }
 .mp-gallery-caption { position:absolute; left:0; right:0; bottom:0; padding:22px 10px 9px; color:#fff; text-align:left; font-size:11px; background:linear-gradient(transparent,rgba(0,0,0,.65)); }
-.mp-gallery-lightbox { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:48px 45px 82px; background:rgba(15,12,18,.96); }
+.mp-gallery-lightbox { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:48px 45px 82px; background:transparent; isolation:isolate; }
+.mp-gallery-lightbox::before { content:""; position:absolute; inset:0; z-index:0; background:rgba(15,12,18,.96); }
+.mp-gallery-lightbox > * { position:relative; z-index:1; }
 .mp-gallery-viewer { max-width:92vw; max-height:82vh; margin:0; text-align:center; }
 .mp-gallery-viewer img { max-width:92vw; max-height:76vh; border-radius:10px; object-fit:contain; box-shadow:0 12px 50px rgba(0,0,0,.35); }
 .mp-gallery-viewer figcaption { margin-top:10px; color:#eee; font-size:13px; }
