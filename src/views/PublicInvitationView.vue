@@ -177,12 +177,6 @@
                   </div>
                 </div>
 
-                <div v-if="qrDataUri" class="mp-inv-qr">
-                  <img :src="qrDataUri" alt="Code QR d’entrée à l’événement" />
-                  <button type="button" class="mp-inv-link" @click="downloadQr">
-                    Télécharger le code QR d’entrée
-                  </button>
-                </div>
                 <button type="button" class="mp-inv-link" @click="editAnswer">Modifier ma réponse</button>
               </template>
 
@@ -675,16 +669,6 @@ async function submitDecline() {
   } finally {
     sending.value = false
   }
-}
-
-function downloadQr() {
-  if (!qrDataUri.value) return
-  const link = document.createElement('a')
-  link.href = qrDataUri.value
-  link.download = `qr-invitation-${token}.png`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
 }
 
 /* ---------- Carte d'invitation confirmée (PNG 1080x1350) ---------- */
