@@ -67,7 +67,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 .mp-gallery-tile img { display:block; width:100%; height:auto; transition:transform .35s ease; }
 .mp-gallery-tile:hover img { transform:scale(1.035); }
 .mp-gallery-caption { position:absolute; left:0; right:0; bottom:0; padding:22px 10px 9px; color:#fff; text-align:left; font-size:11px; background:linear-gradient(transparent,rgba(0,0,0,.65)); }
-.mp-gallery-lightbox { position:absolute; inset:0; z-index:10; min-height:420px; display:flex; align-items:center; justify-content:center; padding:48px 45px 82px; background:transparent; isolation:isolate; }
+.mp-gallery-lightbox { position:absolute; top:50%; left:0; right:0; z-index:10; height:min(80vh, 720px); min-height:420px; transform:translateY(-50%); display:flex; align-items:center; justify-content:center; padding:48px 45px 82px; background:transparent; isolation:isolate; }
 .mp-gallery-lightbox::before { content:""; position:absolute; inset:0; z-index:0; border-radius:14px; background:rgba(15,12,18,.96); }
 .mp-gallery-lightbox > * { z-index:1; }
 .mp-gallery-viewer { position:relative; max-width:92vw; max-height:82vh; margin:0; text-align:center; }
