@@ -520,7 +520,12 @@ function editAnswer() {
 const carouselEl = ref<HTMLElement | null>(null)
 const carouselIdx = ref(0)
 const photos = computed<string[]>(() => {
-  const list = [inv.value?.couplePhotoUrl, inv.value?.groomPhotoUrl, inv.value?.bridePhotoUrl]
+  const list = [
+    inv.value?.couplePhotoUrl,
+    inv.value?.groomPhotoUrl,
+    inv.value?.bridePhotoUrl,
+    inv.value?.eventPhotoUrl,
+  ]
   return list.filter((u): u is string => !!u && u.trim() !== '')
 })
 
