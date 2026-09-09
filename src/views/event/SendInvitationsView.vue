@@ -106,10 +106,14 @@
         <div class="h-2.5 rounded-full bg-surface-container-high overflow-hidden">
           <div class="h-full rounded-full bg-primary transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
         </div>
-        <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+        <div class="grid grid-cols-4 gap-2 mt-4 text-center">
           <div class="rounded-xl bg-surface-container p-3">
             <p class="text-lg font-bold text-on-surface">{{ agg.sent }}</p>
             <p class="text-[11px] text-on-surface-variant font-semibold">Envoyées</p>
+          </div>
+          <div class="rounded-xl bg-surface-container p-3">
+            <p class="text-lg font-bold text-emerald-600">{{ deliveredCount }}</p>
+            <p class="text-[11px] text-on-surface-variant font-semibold">Délivrées</p>
           </div>
           <div class="rounded-xl bg-surface-container p-3">
             <p class="text-lg font-bold text-error">{{ agg.failed }}</p>
@@ -284,7 +288,7 @@ function formatPhone(phone: string | null | undefined): string {
 function statusLabel(row: Row): string {
   if (!row.invitation) return 'Pas invité'
   switch (row.invitation.status) {
-    case 'SENT': return 'Envoyée'
+    case 'SENT': return row.invitation.deliveredAt ? 'Délivrée' : 'Envoyée'
     case 'GENERATED': return 'Prête'
     case 'DRAFT': return 'Brouillon'
     case 'CANCELLED': return 'Annulée'
@@ -296,7 +300,7 @@ function statusLabel(row: Row): string {
 function statusChipClass(row: Row): string {
   if (!row.invitation) return 'bg-surface-container-high text-on-surface-variant'
   switch (row.invitation.status) {
-    case 'SENT': return 'bg-primary/10 text-primary'
+    case 'SENT': return row.invitation.deliveredAt ? 'bg-emerald-600/10 text-emerald-700' : 'bg-primary/10 text-primary'
     case 'GENERATED': return 'bg-amber-500/15 text-amber-600'
     case 'CANCELLED':
     case 'EXPIRED': return 'bg-error/10 text-error'
@@ -358,6 +362,9 @@ const progressPct = computed(() => {
 })
 
 const failedLogs = computed(() => logs.value.filter((l) => l.status === 'FAILED'))
+
+/** Confirmations de livraison reçues du webhook Meta (delivered/read). */
+const deliveredCount = computed(() => logs.value.filter((l) => l.status === 'DELIVERED' || l.status === 'READ').length)
 
 function guestNameFor(l: NotificationLog): string {
   const g = guests.value.find((x) => x.id === l.guestId)

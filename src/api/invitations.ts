@@ -11,6 +11,7 @@ export interface Invitation {
   lastSentAt?: string | null
   reminderCount: number
   openedAt?: string | null
+  deliveredAt?: string | null
 }
 
 export interface SendResult {
@@ -34,6 +35,7 @@ function parseInv(json: Record<string, unknown>): Invitation {
     lastSentAt: json.lastSentAt ? String(json.lastSentAt) : null,
     reminderCount: Number(json.reminderCount ?? 0),
     openedAt: json.openedAt ? String(json.openedAt) : null,
+    deliveredAt: json.deliveredAt ? String(json.deliveredAt) : null,
   }
 }
 
