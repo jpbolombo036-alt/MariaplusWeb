@@ -45,18 +45,19 @@ const selectedIndex = ref<number | null>(null)
 const absolute = (url: string) => url.startsWith('http') ? url : `${ApiConfig.baseUrl}${url}`
 const selectedPhoto = computed(() => selectedIndex.value === null ? null : gallery.value?.photos[selectedIndex.value] ?? null)
 
-function open(index: number) { selectedIndex.value = index; document.body.style.overflow = 'hidden' }
-function close() { selectedIndex.value = null; document.body.style.overflow = '' }
+function open(index: number) { selectedIndex.value = index }
+function close() { selectedIndex.value = null }
 function next() { if (gallery.value?.photos.length) selectedIndex.value = ((selectedIndex.value ?? 0) + 1) % gallery.value.photos.length }
 function previous() { if (gallery.value?.photos.length) selectedIndex.value = ((selectedIndex.value ?? 0) - 1 + gallery.value.photos.length) % gallery.value.photos.length }
 function onKeydown(e: KeyboardEvent) { if (selectedIndex.value === null) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowRight') next(); if (e.key === 'ArrowLeft') previous() }
 async function share() { const url = absolute(selectedPhoto.value?.imageUrl || ''); if (navigator.share) await navigator.share({ title: 'Photo de l’événement', url }); else await navigator.clipboard?.writeText(url) }
 function download() { const url = absolute(selectedPhoto.value?.imageUrl || ''); const a = document.createElement('a'); a.href = url; a.download = 'photo-evenement'; a.target = '_blank'; a.click() }
 onMounted(async () => { window.addEventListener('keydown', onKeydown); try { gallery.value = await getPublicGallery(props.token) } catch { gallery.value = null } })
-onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); document.body.style.overflow = '' })
+onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <style scoped>
+.mp-gallery { position:relative; }
 .mp-gallery-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:18px; }
 .mp-gallery-kicker { margin:0 0 4px; color:#8b5e3c; font-size:11px; letter-spacing:.18em; text-transform:uppercase; font-weight:700; }
 .mp-gallery-count { color:#8d8790; font-size:12px; white-space:nowrap; }
@@ -66,10 +67,10 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeydown); docume
 .mp-gallery-tile img { display:block; width:100%; height:auto; transition:transform .35s ease; }
 .mp-gallery-tile:hover img { transform:scale(1.035); }
 .mp-gallery-caption { position:absolute; left:0; right:0; bottom:0; padding:22px 10px 9px; color:#fff; text-align:left; font-size:11px; background:linear-gradient(transparent,rgba(0,0,0,.65)); }
-.mp-gallery-lightbox { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:48px 45px 82px; background:transparent; isolation:isolate; }
-.mp-gallery-lightbox::before { content:""; position:absolute; inset:0; z-index:0; background:rgba(15,12,18,.96); }
-.mp-gallery-lightbox > * { position:relative; z-index:1; }
-.mp-gallery-viewer { max-width:92vw; max-height:82vh; margin:0; text-align:center; }
+.mp-gallery-lightbox { position:absolute; inset:0; z-index:10; min-height:420px; display:flex; align-items:center; justify-content:center; padding:48px 45px 82px; background:transparent; isolation:isolate; }
+.mp-gallery-lightbox::before { content:""; position:absolute; inset:0; z-index:0; border-radius:14px; background:rgba(15,12,18,.96); }
+.mp-gallery-lightbox > * { z-index:1; }
+.mp-gallery-viewer { position:relative; max-width:92vw; max-height:82vh; margin:0; text-align:center; }
 .mp-gallery-viewer img { max-width:92vw; max-height:76vh; border-radius:10px; object-fit:contain; box-shadow:0 12px 50px rgba(0,0,0,.35); }
 .mp-gallery-viewer figcaption { margin-top:10px; color:#eee; font-size:13px; }
 .mp-gallery-close,.mp-gallery-nav { position:absolute; border:0; color:#fff; background:rgba(255,255,255,.12); cursor:pointer; }
