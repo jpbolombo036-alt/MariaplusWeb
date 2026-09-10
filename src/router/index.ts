@@ -75,13 +75,18 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
-  // Restaure la session depuis localStorage AVANT de décider : sans cela,
+  // Pages publiques (invitation d'un invité, landing, login) : aucune session
+  // n'est nécessaire — on ne tente PAS de restore(). Sinon, un organisateur
+  // avec une session expirée dans son navigateur déclenchait un refresh
+  // voué à l'échec (« refresh token expiré ») et une redirection login
+  // AVANT l'affichage de la page publique de l'invité.
+  if (to.meta.public) {
+    return true
+  }
+  // Restaure la session depuis le cookie AVANT de décider : sans cela,
   // un rafraîchissement de page voyait user = null et déconnectait l'utilisateur.
   if (!auth.restored) {
     await auth.restore()
-  }
-  if (to.meta.public) {
-    return true
   }
   if (!auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
