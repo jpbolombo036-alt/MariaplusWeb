@@ -22,11 +22,18 @@
       <div v-if="loading" class="py-16 text-center text-slate-400 text-sm">Chargement…</div>
 
       <div v-else-if="rows.length === 0" class="py-16 text-center">
-        <div class="w-14 h-14 rounded-2xl bg-primary-light mx-auto flex items-center justify-center mb-4">
-          <span class="material-symbols-outlined text-primary text-[28px]">event_busy</span>
+        <div class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4" :class="loadErr ? 'bg-error-light' : 'bg-primary-light'">
+          <span class="material-symbols-outlined text-[28px]" :class="loadErr ? 'text-error' : 'text-primary'">{{ loadErr ? 'cloud_off' : 'event_busy' }}</span>
         </div>
-        <p class="font-semibold text-slate-900">Aucun événement</p>
-        <p class="text-sm text-slate-500 mt-1">{{ orgFilter ? 'Cette organisation n\'a pas encore d\'événement.' : 'Aucun événement sur la plateforme.' }}</p>
+        <p class="font-semibold text-slate-900">{{ loadErr ? 'Erreur de chargement' : 'Aucun événement' }}</p>
+        <p class="text-sm text-slate-500 mt-1">
+          {{ loadErr
+            ? 'Le serveur a répondu une erreur interne. Vérifiez que le backend à jour est déployé, puis réessayez.'
+            : (orgFilter ? 'Cette organisation n\'a pas encore d\'événement.' : 'Aucun événement sur la plateforme.') }}
+        </p>
+        <button v-if="loadErr" class="mt-4 h-9 px-4 rounded-lg bg-primary text-white text-[13px] font-semibold hover:bg-primary-dark transition-colors" @click="load">
+          Réessayer
+        </button>
       </div>
 
       <div v-else class="overflow-x-auto">
@@ -103,14 +110,18 @@ const page = ref(0)
 const total = ref(0)
 const totalPages = ref(1)
 const loading = ref(true)
+const loadErr = ref(false)
 
 async function load() {
   loading.value = true
+  loadErr.value = false
   try {
     const p = await listAllEvents(page.value, 25, orgFilter.value)
     rows.value = p.content
     total.value = p.totalElements
     totalPages.value = Math.max(1, p.totalPages)
+  } catch {
+    loadErr.value = true
   } finally {
     loading.value = false
   }

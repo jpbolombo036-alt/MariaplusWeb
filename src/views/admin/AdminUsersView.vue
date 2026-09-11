@@ -21,11 +21,18 @@
       <div v-if="loading" class="py-16 text-center text-slate-400 text-sm">Chargement…</div>
 
       <div v-else-if="filtered.length === 0" class="py-16 text-center">
-        <div class="w-14 h-14 rounded-2xl bg-primary-light mx-auto flex items-center justify-center mb-4">
-          <span class="material-symbols-outlined text-primary text-[28px]">person_off</span>
+        <div class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4" :class="loadErr ? 'bg-error-light' : 'bg-primary-light'">
+          <span class="material-symbols-outlined text-[28px]" :class="loadErr ? 'text-error' : 'text-primary'">{{ loadErr ? 'cloud_off' : 'person_off' }}</span>
         </div>
-        <p class="font-semibold text-slate-900">Aucun utilisateur</p>
-        <p class="text-sm text-slate-500 mt-1">{{ search ? 'Aucun résultat sur cette page.' : 'Aucun compte enregistré.' }}</p>
+        <p class="font-semibold text-slate-900">{{ loadErr ? 'Erreur de chargement' : 'Aucun utilisateur' }}</p>
+        <p class="text-sm text-slate-500 mt-1">
+          {{ loadErr
+            ? 'Le serveur a répondu une erreur interne. Vérifiez que le backend à jour est déployé, puis réessayez.'
+            : (search ? 'Aucun résultat sur cette page.' : 'Aucun compte enregistré.') }}
+        </p>
+        <button v-if="loadErr" class="mt-4 h-9 px-4 rounded-lg bg-primary text-white text-[13px] font-semibold hover:bg-primary-dark transition-colors" @click="load">
+          Réessayer
+        </button>
       </div>
 
       <div v-else class="overflow-x-auto">
@@ -128,6 +135,7 @@ const page = ref(0)
 const total = ref(0)
 const totalPages = ref(1)
 const loading = ref(true)
+const loadErr = ref(false)
 const busyId = ref<number | null>(null)
 const search = ref('')
 
@@ -139,11 +147,14 @@ const filtered = computed(() => {
 
 async function load() {
   loading.value = true
+  loadErr.value = false
   try {
     const p = await listUsers(page.value, 25)
     rows.value = p.content
     total.value = p.totalElements
     totalPages.value = Math.max(1, p.totalPages)
+  } catch {
+    loadErr.value = true
   } finally {
     loading.value = false
   }

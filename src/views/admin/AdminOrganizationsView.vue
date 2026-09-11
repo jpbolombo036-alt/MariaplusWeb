@@ -71,7 +71,18 @@
       </div>
     </div>
 
-    <div v-if="!loading && orgs.length === 0" class="bg-white border border-slate-200 rounded-xl py-16 text-center shadow-sm">
+    <div v-if="!loading && loadErr" class="bg-white border border-slate-200 rounded-xl py-14 text-center shadow-sm">
+      <div class="w-14 h-14 rounded-2xl bg-error-light mx-auto flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-error text-[28px]">cloud_off</span>
+      </div>
+      <p class="font-semibold text-slate-900">Erreur de chargement</p>
+      <p class="text-sm text-slate-500 mt-1">Le serveur a répondu une erreur interne. Vérifiez que le backend à jour est déployé, puis réessayez.</p>
+      <button class="mt-4 h-9 px-4 rounded-lg bg-primary text-white text-[13px] font-semibold hover:bg-primary-dark transition-colors" @click="load">
+        Réessayer
+      </button>
+    </div>
+
+    <div v-if="!loading && !loadErr && orgs.length === 0" class="bg-white border border-slate-200 rounded-xl py-16 text-center shadow-sm">
       <div class="w-14 h-14 rounded-2xl bg-primary-light mx-auto flex items-center justify-center mb-4">
         <span class="material-symbols-outlined text-primary text-[28px]">domain_off</span>
       </div>
@@ -93,6 +104,7 @@ import { listMembers, type OrgMember } from '../../api/organization'
 const router = useRouter()
 const orgs = ref<AdminOrganization[]>([])
 const loading = ref(true)
+const loadErr = ref(false)
 const busyId = ref<number | null>(null)
 const expandedId = ref<number | null>(null)
 const members = ref<OrgMember[]>([])
@@ -100,8 +112,11 @@ const membersLoading = ref(false)
 
 async function load() {
   loading.value = true
+  loadErr.value = false
   try {
     orgs.value = await listOrganizations()
+  } catch {
+    loadErr.value = true
   } finally {
     loading.value = false
   }
