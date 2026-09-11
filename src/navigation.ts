@@ -35,6 +35,7 @@ export const navEntries: NavEntry[] = [
   { label: 'Événements internes', icon: 'business_center', section: 'internal-events', perm: [Perm.eventView] },
   { label: 'Statistiques', icon: 'analytics', section: 'statistics', perm: [Perm.statisticsView] },
   { label: 'Équipe', icon: 'manage_accounts', path: '/dashboard/members', perm: [Perm.organizationManageMembers] },
+  { label: 'Paramètres', icon: 'settings', path: '/dashboard/settings', perm: [Perm.settingsView] },
 ]
 
 // Route d'application cible pour une entrée donnée, résolue avec l'ID du mariage

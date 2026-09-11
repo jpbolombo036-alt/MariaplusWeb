@@ -151,6 +151,12 @@ const generalItems = computed(() => {
   if (hasAny(auth.permissions, Perm.organizationManageMembers)) {
     items.push({ label: 'Équipe', icon: 'manage_accounts', to: '/dashboard/members', match: '/dashboard/members', perm: Perm.organizationManageMembers })
   }
+  if (hasAny(auth.permissions, Perm.settingsView)) {
+    items.push({ label: 'Paramètres', icon: 'settings', to: '/dashboard/settings', match: '/dashboard/settings', perm: Perm.settingsView })
+  }
+  if (auth.isSuperAdmin) {
+    items.push({ label: 'Administration', icon: 'admin_panel_settings', to: '/dashboard/admin', match: '/dashboard/admin', perm: Perm.userView })
+  }
   return items
 })
 
@@ -179,7 +185,8 @@ function isSectionActive(section: NavSection): boolean {
 
 function isActive(match: string): boolean {
   if (match === '/dashboard') return route.path === '/dashboard'
-  return route.path === match
+  // Actif aussi sur les sous-routes (ex. /dashboard/admin/users surligne Administration).
+  return route.path === match || route.path.startsWith(match + '/')
 }
 
 onMounted(() => {

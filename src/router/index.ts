@@ -61,6 +61,18 @@ const router = createRouter({
         { path: 'profile', name: 'profile', component: () => import('../views/ProfileView.vue') },
         { path: 'members', name: 'members', component: () => import('../views/MembersView.vue') },
         { path: 'members/new', name: 'members-new', component: () => import('../views/forms/MembersForm.vue') },
+        { path: 'settings', name: 'settings', component: () => import('../views/SettingsView.vue') },
+        {
+          // Console SUPER_ADMIN (gardée par beforeEach : redirection si autre rôle).
+          path: 'admin',
+          component: () => import('../views/admin/AdminShell.vue'),
+          children: [
+            { path: '', name: 'admin-overview', component: () => import('../views/admin/AdminOverviewView.vue') },
+            { path: 'users', name: 'admin-users', component: () => import('../views/admin/AdminUsersView.vue') },
+            { path: 'organizations', name: 'admin-organizations', component: () => import('../views/admin/AdminOrganizationsView.vue') },
+            { path: 'events', name: 'admin-events', component: () => import('../views/admin/AdminEventsView.vue') },
+          ],
+        },
       ],
     },
     { path: '/invitations/:token', name: 'public-invitation', component: () => import('../views/PublicInvitationView.vue'), meta: { public: true } },
@@ -90,6 +102,11 @@ router.beforeEach(async (to) => {
   }
   if (!auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  // Console SUPER_ADMIN : réservée au rôle SUPER_ADMIN (la sécurité réelle
+  // est côté backend ; ici on redirige simplement les autres rôles).
+  if (to.path.startsWith('/dashboard/admin') && !auth.isSuperAdmin) {
+    return { path: '/dashboard' }
   }
   return true
 })
