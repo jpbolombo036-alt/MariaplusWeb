@@ -48,4 +48,8 @@ export const ApiConfig = {
   rolesPath: '/api/roles',
   permissionsPath: '/api/permissions',
   organizationsPath: '/api/organizations',
+
+  // Numéro WhatsApp de contact de la plateforme (bouton flottant de la landing).
+  // Format international sans "+" ni espaces, ex. 2250701020304.
+  whatsappContactNumber: (import.meta.env.VITE_WHATSAPP_CONTACT as string | undefined)?.replace(/[^0-9]/g, '') ?? '',
 }
