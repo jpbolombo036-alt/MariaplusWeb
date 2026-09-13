@@ -109,6 +109,10 @@ router.beforeEach(async (to) => {
   if (to.path.startsWith('/dashboard/admin') && !auth.isSuperAdmin) {
     return { path: '/dashboard' }
   }
+  // Réglages plateforme (interrupteurs globaux) : SUPER_ADMIN uniquement.
+  if (to.path.startsWith('/dashboard/settings') && !auth.isSuperAdmin) {
+    return { path: '/dashboard' }
+  }
   return true
 })
 

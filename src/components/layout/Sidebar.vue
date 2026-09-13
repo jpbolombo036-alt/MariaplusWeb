@@ -151,7 +151,8 @@ const generalItems = computed(() => {
   if (hasAny(auth.permissions, Perm.organizationManageMembers)) {
     items.push({ label: 'Équipe', icon: 'manage_accounts', to: '/dashboard/members', match: '/dashboard/members', perm: Perm.organizationManageMembers })
   }
-  if (hasAny(auth.permissions, Perm.settingsView)) {
+  // Réglages plateforme : réservés au SUPER_ADMIN (les organisateurs ne doivent pas les voir).
+  if (auth.isSuperAdmin) {
     items.push({ label: 'Paramètres', icon: 'settings', to: '/dashboard/settings', match: '/dashboard/settings', perm: Perm.settingsView })
   }
   if (auth.isSuperAdmin) {
