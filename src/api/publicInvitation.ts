@@ -106,6 +106,7 @@ export async function listPublicDrinks(token: string): Promise<PublicDrink[]> {
     description: d.description ? String(d.description) : null,
     displayOrder: d.displayOrder != null ? Number(d.displayOrder) : null,
     active: Boolean(d.active ?? true),
+    imageUrl: d.imageUrl ? String(d.imageUrl) : null,
   }))
 }
 
