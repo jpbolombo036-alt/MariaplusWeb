@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { usePlatformStore } from '../stores/platform'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -112,6 +113,15 @@ router.beforeEach(async (to) => {
   // Réglages plateforme (interrupteurs globaux) : SUPER_ADMIN uniquement.
   if (to.path.startsWith('/dashboard/settings') && !auth.isSuperAdmin) {
     return { path: '/dashboard' }
+  }
+  // Création d'événement : si le SUPER_ADMIN l'a désactivée, les utilisateurs
+  // non-superadmin sont redirigés (le backend refuse aussi côté API).
+  if (to.name === 'events-new' && !auth.isSuperAdmin) {
+    const platform = usePlatformStore()
+    await platform.load()
+    if (platform.eventCreationEnabled === false) {
+      return { path: '/dashboard/events' }
+    }
   }
   return true
 })

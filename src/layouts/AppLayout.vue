@@ -17,12 +17,21 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from '../components/layout/Sidebar.vue'
 import Header from '../components/layout/Header.vue'
 import BottomNav from '../components/layout/BottomNav.vue'
+import { usePlatformStore } from '../stores/platform'
 
 const router = useRouter()
+const platform = usePlatformStore()
+
+// Charge une fois par session l'état des réglages publics (ex. création
+// d'événements autorisée ?) pour masquer les boutons concernés.
+onMounted(() => {
+  platform.load()
+})
 
 // Le bouton "Créer un nouvel évenement" de la sidebar ouvre le dialogue sur la
 // page "Mes évenements" via une query. EventsView l'ouvre si ?new=1 est présent.

@@ -9,7 +9,7 @@
         </div>
         <div class="flex items-center gap-3">
           <button
-            v-if="auth.can([Perm.weddingCreate, Perm.eventCreate])"
+            v-if="auth.can([Perm.weddingCreate, Perm.eventCreate]) && canCreateNow"
             @click="$router.push({name:'events-new'})"
             class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all"
           >
@@ -147,12 +147,17 @@ import PermGuard from '../components/common/PermGuard.vue'
 import StatusBadge from '../components/common/StatusBadge.vue'
 import CreateEventDialog from '../components/events/CreateEventDialog.vue'
 import { useAuthStore } from '../stores/auth'
+import { usePlatformStore } from '../stores/platform'
 import { Perm } from '../permissions'
 
 const auth = useAuthStore()
+const platform = usePlatformStore()
 const router = useRouter()
 const route = useRoute()
 const events = ref<Event[]>([])
+
+/** Bouton « Nouvel événement » : masqué si le SUPER_ADMIN a désactivé la création. */
+const canCreateNow = computed(() => auth.isSuperAdmin || platform.canCreateEvent)
 const loading = ref(true)
 const error = ref('')
 const createOpen = ref(false)
@@ -264,7 +269,10 @@ function dateLabel(ev: Event): string {
     : 'Non renseigné'
 }
 
-onMounted(load)
+onMounted(() => {
+  platform.load()
+  load()
+})
 async function load() {
   loading.value = true
   error.value = ''

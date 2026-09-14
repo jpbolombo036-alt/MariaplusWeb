@@ -66,3 +66,19 @@ export function catalogImageUrl(url: string | null | undefined): string {
   if (/^https?:\/\//i.test(url) || url.startsWith('blob:')) return url
   return url.startsWith('/') ? `${ApiConfig.baseUrl}${url}` : url
 }
+
+/* ============================================================
+ * Réglage « création d'événements » (SUPER_ADMIN)
+ * ============================================================ */
+
+/** État de l'interrupteur (SUPER_ADMIN — page Paramètres). */
+export async function getEventCreationSetting(): Promise<boolean> {
+  const res = await http.get('/api/admin/settings/event-creation')
+  return Boolean(decodeMap(res.data).eventCreationEnabled ?? true)
+}
+
+/** Autorise / interdit la création d'événements pour les utilisateurs (SUPER_ADMIN). */
+export async function updateEventCreationSetting(enabled: boolean): Promise<boolean> {
+  const res = await http.put('/api/admin/settings/event-creation', { enabled })
+  return Boolean(decodeMap(res.data).eventCreationEnabled ?? enabled)
+}

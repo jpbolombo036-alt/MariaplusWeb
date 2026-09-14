@@ -126,6 +126,51 @@
         {{ maxMsg }}
       </p>
     </div>
+
+    <!-- Carte Création d'événements -->
+    <div class="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="material-symbols-outlined text-[20px] text-primary">event_available</span>
+        <h2 class="text-[15px] font-bold text-slate-900">Création d'événements</h2>
+      </div>
+
+      <div class="flex items-start justify-between gap-6">
+        <div class="min-w-0">
+          <div class="text-sm font-semibold text-slate-800">Autoriser les utilisateurs à créer des événements</div>
+          <p class="text-[13px] text-slate-500 mt-1 leading-relaxed">
+            Désactivé, le bouton « Nouvel événement » disparaît pour tous les utilisateurs
+            (organisateurs, gestionnaires) et l'API refuse toute nouvelle création.
+            Les événements existants restent entièrement gérables. Vous (SUPER_ADMIN)
+            conservez toujours le droit de créer.
+          </p>
+          <p class="text-[12px] text-slate-400 mt-2">
+            État actuel :
+            <span v-if="evtLoading" class="font-semibold">chargement…</span>
+            <span v-else-if="evtLoadErr" class="font-semibold">inconnu</span>
+            <span v-else class="font-semibold" :class="eventCreation ? 'text-success' : 'text-error'">
+              {{ eventCreation ? 'Autorisée' : 'Désactivée' }}
+            </span>
+          </p>
+        </div>
+
+        <!-- Toggle -->
+        <label class="toggle" :class="{ 'toggle-disabled': evtBusy || evtLoading || evtLoadErr }">
+          <input
+            v-model="eventCreation"
+            type="checkbox"
+            class="toggle-input"
+            :disabled="evtBusy || evtLoading || evtLoadErr"
+            @change="onEventCreationToggle"
+          />
+          <span class="toggle-track"><span class="toggle-thumb" /></span>
+        </label>
+      </div>
+
+      <p v-if="evtMsg" class="mt-4 text-sm inline-flex items-center gap-1" :class="evtErr ? 'text-error' : 'text-success'">
+        <span class="material-symbols-outlined text-[16px]">{{ evtErr ? 'error' : 'check_circle' }}</span>
+        {{ evtMsg }}
+      </p>
+    </div>
   </div>
 </template>
 
@@ -135,6 +180,10 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { Perm } from '../permissions'
 import { getWhatsappSettings, updateWhatsappSettings } from '../api/admin'
+import {
+  getEventCreationSetting,
+  updateEventCreationSetting,
+} from '../api/drinkCatalog'
 
 const auth = useAuthStore()
 
@@ -232,7 +281,50 @@ async function inheritMax() {
   }
 }
 
-onMounted(load)
+/* --- Création d'événements (interrupteur global) --- */
+const eventCreation = ref(true)
+const evtLoading = ref(false)
+const evtLoadErr = ref(false)
+const evtBusy = ref(false)
+const evtMsg = ref('')
+const evtErr = ref(false)
+
+async function loadEventCreation() {
+  evtLoading.value = true
+  evtLoadErr.value = false
+  try {
+    eventCreation.value = await getEventCreationSetting()
+  } catch {
+    evtLoadErr.value = true
+  } finally {
+    evtLoading.value = false
+  }
+}
+
+async function onEventCreationToggle() {
+  evtBusy.value = true
+  evtMsg.value = ''
+  evtErr.value = false
+  const target = eventCreation.value
+  try {
+    const updated = await updateEventCreationSetting(target)
+    eventCreation.value = updated
+    evtMsg.value = updated
+      ? 'Création d\'événements autorisée pour tous les utilisateurs.'
+      : 'Création d\'événements désactivée : le bouton disparaît pour les utilisateurs.'
+  } catch {
+    eventCreation.value = !target
+    evtErr.value = true
+    evtMsg.value = 'Erreur : modification refusée (serveur injoignable).'
+  } finally {
+    evtBusy.value = false
+  }
+}
+
+onMounted(() => {
+  load()
+  loadEventCreation()
+})
 </script>
 
 <!DOCTYPE style>
