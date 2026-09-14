@@ -24,6 +24,8 @@
           <p class="text-[13px] text-slate-500 mt-1 leading-relaxed">
             Active ou désactive l'envoi des relances d'invitations par WhatsApp pour toute la plateforme.
             Désactivé, aucune relance ne parte (les invitations restent envoyables manuellement).
+            Ce réglage sert de valeur par défaut : chaque organisation peut avoir son propre
+            réglage (Console → Organisations → Réglages de l'organisation).
           </p>
           <p class="text-[12px] text-slate-400 mt-2">
             État actuel :
@@ -142,6 +144,10 @@
             (organisateurs, gestionnaires) et l'API refuse toute nouvelle création.
             Les événements existants restent entièrement gérables. Vous (SUPER_ADMIN)
             conservez toujours le droit de créer.
+          </p>
+          <p class="text-[12px] text-slate-400 mt-2">
+            Ce réglage sert de valeur par défaut : chaque organisation peut avoir son propre
+            réglage (Console → Organisations → Réglages de l'organisation).
           </p>
           <p class="text-[12px] text-slate-400 mt-2">
             État actuel :
@@ -327,7 +333,6 @@ onMounted(() => {
 })
 </script>
 
-<!DOCTYPE style>
 <style scoped>
 .toggle {
   @apply relative inline-block w-[52px] h-[28px] shrink-0 cursor-pointer select-none;

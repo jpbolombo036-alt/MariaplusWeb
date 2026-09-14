@@ -67,6 +67,83 @@
             <span class="material-symbols-outlined text-[16px]">event</span>
             Voir les événements de cette organisation
           </button>
+
+          <!-- Réglages de l'organisation (override du réglage global) -->
+          <div class="mt-5 pt-4 border-t border-slate-200">
+            <p class="text-[12px] font-bold uppercase tracking-wide text-slate-500 mb-3">Réglages de l'organisation</p>
+            <div v-if="st(o).loading" class="text-sm text-slate-400 py-1">Chargement des réglages…</div>
+            <div v-else class="grid sm:grid-cols-2 gap-3">
+              <!-- Création d'événements -->
+              <div class="bg-white border border-slate-200 rounded-lg p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-[13px] font-semibold text-slate-900">Création d'événements</p>
+                    <p class="text-[11.5px] mt-0.5" :class="st(o).eventEffective ? 'text-success' : 'text-error'">
+                      {{ st(o).eventEffective ? 'Autorisée' : 'Interdite' }}
+                      <span class="text-slate-400">· {{ st(o).eventOverride === null ? 'hérité du global' : 'réglage spécifique' }}</span>
+                    </p>
+                    <p v-if="st(o).error" class="text-[11.5px] text-error mt-1">{{ st(o).error }}</p>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <button
+                      v-if="st(o).eventOverride !== null"
+                      :disabled="st(o).busy"
+                      title="Rétablir l'héritage du réglage global"
+                      class="w-8 h-8 rounded-lg grid place-items-center text-slate-400 hover:text-primary hover:bg-primary-light transition-colors disabled:opacity-40"
+                      @click="applyOrgSetting(o, 'event', 'inherit')"
+                    >
+                      <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                    </button>
+                    <label class="toggle" :class="{ 'toggle-disabled': st(o).busy }">
+                      <input
+                        type="checkbox"
+                        class="toggle-input"
+                        :checked="st(o).eventEffective"
+                        :disabled="st(o).busy"
+                        @change="toggleOrgEventCreation(o)"
+                      />
+                      <span class="toggle-track"><span class="toggle-thumb" /></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Envoi WhatsApp -->
+              <div class="bg-white border border-slate-200 rounded-lg p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-[13px] font-semibold text-slate-900">Envoi WhatsApp</p>
+                    <p class="text-[11.5px] mt-0.5" :class="st(o).whatsappEffective ? 'text-success' : 'text-error'">
+                      {{ st(o).whatsappEffective ? 'Autorisé' : 'Interdit' }}
+                      <span class="text-slate-400">· {{ st(o).whatsappOverride === null ? 'hérité du global' : 'réglage spécifique' }}</span>
+                    </p>
+                    <p v-if="st(o).error" class="text-[11.5px] text-error mt-1">{{ st(o).error }}</p>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <button
+                      v-if="st(o).whatsappOverride !== null"
+                      :disabled="st(o).busy"
+                      title="Rétablir l'héritage du réglage global"
+                      class="w-8 h-8 rounded-lg grid place-items-center text-slate-400 hover:text-primary hover:bg-primary-light transition-colors disabled:opacity-40"
+                      @click="applyOrgSetting(o, 'whatsapp', 'inherit')"
+                    >
+                      <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                    </button>
+                    <label class="toggle" :class="{ 'toggle-disabled': st(o).busy }">
+                      <input
+                        type="checkbox"
+                        class="toggle-input"
+                        :checked="st(o).whatsappEffective"
+                        :disabled="st(o).busy"
+                        @change="toggleOrgWhatsapp(o)"
+                      />
+                      <span class="toggle-track"><span class="toggle-thumb" /></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </template>
       </div>
     </div>
@@ -100,6 +177,7 @@ import {
   type AdminOrganization,
 } from '../../api/admin'
 import { listMembers, type OrgMember } from '../../api/organization'
+import { getOrgSettings, updateOrgSettings } from '../../api/organizationSettings'
 
 const router = useRouter()
 const orgs = ref<AdminOrganization[]>([])
@@ -109,6 +187,32 @@ const busyId = ref<number | null>(null)
 const expandedId = ref<number | null>(null)
 const members = ref<OrgMember[]>([])
 const membersLoading = ref(false)
+
+/** Réglages (création événements / WhatsApp) par organisation, avec héritage du global. */
+interface OrgSettingsState {
+  loading: boolean
+  busy: boolean
+  error: string
+  whatsappOverride: boolean | null
+  whatsappEffective: boolean
+  eventOverride: boolean | null
+  eventEffective: boolean
+}
+const settingsState = ref<Record<number, OrgSettingsState>>({})
+
+function st(o: AdminOrganization): OrgSettingsState {
+  return (
+    settingsState.value[o.id] ?? {
+      loading: true,
+      busy: false,
+      error: '',
+      whatsappOverride: null,
+      whatsappEffective: true,
+      eventOverride: null,
+      eventEffective: true,
+    }
+  )
+}
 
 async function load() {
   loading.value = true
@@ -140,6 +244,38 @@ async function toggleExpand(o: AdminOrganization) {
   expandedId.value = o.id
   members.value = []
   membersLoading.value = true
+  // Réglages : état de chargement immédiat, puis valeur réelle.
+  settingsState.value[o.id] = {
+    loading: true,
+    busy: false,
+    error: '',
+    whatsappOverride: null,
+    whatsappEffective: true,
+    eventOverride: null,
+    eventEffective: true,
+  }
+  try {
+    const s = await getOrgSettings(o.id)
+    settingsState.value[o.id] = {
+      loading: false,
+      busy: false,
+      error: '',
+      whatsappOverride: s.whatsappEnabled,
+      whatsappEffective: s.effectiveWhatsapp,
+      eventOverride: s.eventCreationEnabled,
+      eventEffective: s.effectiveEventCreation,
+    }
+  } catch {
+    settingsState.value[o.id] = {
+      loading: false,
+      busy: false,
+      error: 'Réglages indisponibles',
+      whatsappOverride: null,
+      whatsappEffective: true,
+      eventOverride: null,
+      eventEffective: true,
+    }
+  }
   try {
     members.value = await listMembers(o.id)
   } catch {
@@ -147,6 +283,40 @@ async function toggleExpand(o: AdminOrganization) {
   } finally {
     membersLoading.value = false
   }
+}
+
+/** Applique un réglage d'organisation : true/false = override, 'inherit' = global. */
+async function applyOrgSetting(
+  o: AdminOrganization,
+  key: 'event' | 'whatsapp',
+  value: boolean | 'inherit',
+) {
+  const s = settingsState.value[o.id]
+  if (!s) return
+  s.busy = true
+  s.error = ''
+  try {
+    const res = await updateOrgSettings(
+      o.id,
+      key === 'event' ? { eventCreationEnabled: value } : { whatsappEnabled: value },
+    )
+    s.eventOverride = res.eventCreationEnabled
+    s.eventEffective = res.effectiveEventCreation
+    s.whatsappOverride = res.whatsappEnabled
+    s.whatsappEffective = res.effectiveWhatsapp
+  } catch {
+    s.error = 'Modification refusée par le serveur'
+  } finally {
+    s.busy = false
+  }
+}
+
+function toggleOrgEventCreation(o: AdminOrganization) {
+  applyOrgSetting(o, 'event', !st(o).eventEffective)
+}
+
+function toggleOrgWhatsapp(o: AdminOrganization) {
+  applyOrgSetting(o, 'whatsapp', !st(o).whatsappEffective)
 }
 
 function seeEvents(o: AdminOrganization) {
@@ -171,3 +341,28 @@ function roleLabel(code: string): string {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.toggle {
+  @apply relative inline-block w-[52px] h-[28px] shrink-0 cursor-pointer select-none;
+}
+.toggle-disabled {
+  @apply cursor-not-allowed opacity-60;
+}
+.toggle-input {
+  @apply hidden;
+}
+.toggle-track {
+  @apply absolute inset-0 rounded-full bg-slate-200 transition-colors peer-checked:bg-success block;
+  background: rgb(226 232 240);
+}
+.toggle-input:checked + .toggle-track {
+  background: rgb(16 185 129);
+}
+.toggle-thumb {
+  @apply absolute top-[3px] left-[3px] w-[22px] h-[22px] rounded-full bg-white shadow transition-transform;
+}
+.toggle-input:checked ~ .toggle-track .toggle-thumb {
+  transform: translateX(24px);
+}
+</style>
