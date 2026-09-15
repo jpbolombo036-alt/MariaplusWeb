@@ -126,4 +126,30 @@ router.beforeEach(async (to) => {
   return true
 })
 
+/**
+ * Reprise automatique après un déploiement : si un module chargé à la volée
+ * (chunk Vite hashé) ne peut plus être téléchargé, c'est que le navigateur a
+ * un ancien index.html en cache alors qu'un nouveau build a remplacé les
+ * fichiers sur le serveur. On force alors un rechargement complet pour
+ * récupérer le nouvel index.html et ses chunks à jour — au lieu de laisser
+ * l'utilisateur bloqué sur « Failed to fetch dynamically imported module ».
+ * Un drapeau sessionStorage évite toute boucle de rechargement ; il est
+ * retiré dès qu'une navigation réussit (afterEach).
+ */
+const CHUNK_RELOAD_FLAG = 'app:chunk-reload'
+router.onError((error, to) => {
+  const message = String(error?.message ?? '')
+  const staleChunk =
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('Importing a module script failed') ||
+    message.includes('error loading dynamically imported module')
+  if (staleChunk && !sessionStorage.getItem(CHUNK_RELOAD_FLAG)) {
+    sessionStorage.setItem(CHUNK_RELOAD_FLAG, '1')
+    window.location.assign(to?.fullPath || window.location.href)
+  }
+})
+router.afterEach(() => {
+  sessionStorage.removeItem(CHUNK_RELOAD_FLAG)
+})
+
 export default router
