@@ -5,7 +5,10 @@
       <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 class="text-[22px] font-bold text-slate-900 tracking-tight">Invités</h2>
-          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">{{ guests.length }} invité(s) au total</p>
+          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">
+            {{ totalElements }} invité(s) au total
+            <span v-if="totalPages > 1" class="text-slate-400">· page {{ currentPage + 1 }}/{{ totalPages }}</span>
+          </p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
           <PermGuard :allow="['GUEST_EXPORT']">
@@ -46,12 +49,12 @@
     <p v-if="loading" class="text-slate-400 py-6 text-center text-sm">Chargement…</p>
 
     <!-- État vide -->
-    <div v-else-if="filtered.length === 0" class="bg-white border border-slate-200 rounded-xl py-14 text-center">
+    <div v-else-if="guests.length === 0" class="bg-white border border-slate-200 rounded-xl py-14 text-center">
       <div class="w-14 h-14 mx-auto rounded-lg bg-slate-50 grid place-items-center mb-4 ring-1 ring-slate-100">
         <span class="material-symbols-outlined text-3xl text-slate-300">group</span>
       </div>
-      <h3 class="font-bold text-slate-700 text-[15px]">Aucun invité</h3>
-      <p class="text-[13px] text-slate-400 mt-1">Ajoutez votre premier invité ou importez une liste.</p>
+      <h3 class="font-bold text-slate-700 text-[15px]">{{ query.trim() ? 'Aucun résultat' : 'Aucun invité' }}</h3>
+      <p class="text-[13px] text-slate-400 mt-1">{{ query.trim() ? 'Essayez un autre nom, email ou téléphone.' : 'Ajoutez votre premier invité ou importez une liste.' }}</p>
     </div>
 
     <!-- Desktop : tableau -->
@@ -67,7 +70,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-          <tr v-for="g in filtered" :key="g.id" class="hover:bg-slate-50/80 transition-colors">
+          <tr v-for="g in guests" :key="g.id" class="hover:bg-slate-50/80 transition-colors">
             <td class="px-5 py-3.5">
               <div class="flex items-center gap-3">
                 <span class="w-8 h-8 rounded-lg bg-primary-light text-primary grid place-items-center text-xs font-bold shrink-0">{{ initials(g) }}</span>
@@ -91,9 +94,9 @@
     </div>
 
     <!-- Mobile : cartes -->
-    <div v-if="!loading && filtered.length > 0" class="md:hidden space-y-3">
+    <div v-if="!loading && guests.length > 0" class="md:hidden space-y-3">
       <div
-        v-for="g in filtered"
+        v-for="g in guests"
         :key="g.id"
         class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
       >
@@ -135,6 +138,25 @@
       </div>
     </div>
 
+    <!-- Pagination serveur (indispensable au-delà de quelques centaines d'invités) -->
+    <div v-if="!loading && totalPages > 1" class="flex items-center justify-between gap-3 mt-5 bg-white border border-slate-200 rounded-xl px-5 py-3.5 shadow-sm">
+      <button
+        :disabled="currentPage === 0"
+        class="h-9 px-4 rounded-lg border border-slate-200 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        @click="goTo(currentPage - 1)"
+      >
+        <span class="material-symbols-outlined text-[16px] align-middle">chevron_left</span> Précédent
+      </button>
+      <span class="text-[13px] text-slate-500 font-medium">Page {{ currentPage + 1 }} / {{ totalPages }}</span>
+      <button
+        :disabled="currentPage >= totalPages - 1"
+        class="h-9 px-4 rounded-lg border border-slate-200 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        @click="goTo(currentPage + 1)"
+      >
+        Suivant <span class="material-symbols-outlined text-[16px] align-middle">chevron_right</span>
+      </button>
+    </div>
+
     <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" @change="onImportFile" />
 
     <!-- Résultat d'import -->
@@ -160,9 +182,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { listGuests, deleteGuest, listCategories, exportGuestsExcel, importGuestsExcel, type Guest, type GuestCategory, type GuestImportResult } from '../../api/guests'
+import { listGuestsPage, deleteGuest, listCategories, exportGuestsExcel, importGuestsExcel, type Guest, type GuestCategory, type GuestImportResult } from '../../api/guests'
 import PermGuard from '../../components/common/PermGuard.vue'
 
 const route = useRoute()
@@ -172,12 +194,20 @@ const categories = ref<GuestCategory[]>([])
 const loading = ref(true)
 const query = ref('')
 
-const filtered = computed(() => {
-  const q = query.value.trim().toLowerCase()
-  if (!q) return guests.value
-  return guests.value.filter(
-    (g) => `${g.firstName} ${g.lastName}`.toLowerCase().includes(q) || (g.email ?? '').toLowerCase().includes(q),
-  )
+// Pagination serveur : à 10k invités on ne charge jamais la table entière.
+const PAGE_SIZE = 50
+const currentPage = ref(0)
+const totalPages = ref(1)
+const totalElements = ref(0)
+let searchTimer: number | undefined
+
+// Recherche serveur debouncée (350 ms) — le backend filtre en SQL.
+watch(query, () => {
+  window.clearTimeout(searchTimer)
+  searchTimer = window.setTimeout(() => {
+    currentPage.value = 0
+    load()
+  }, 350)
 })
 
 const initials = (g: Guest) => `${g.firstName.charAt(0)}${g.lastName.charAt(0)}`.toUpperCase()
@@ -187,17 +217,31 @@ const categoryLabel = (cid?: number | null) => categories.value.find((c) => c.id
 onMounted(load)
 async function load() {
   try {
-    const [g, c] = await Promise.all([listGuests(id), listCategories(id)])
-    guests.value = g
+    const [p, c] = await Promise.all([
+      listGuestsPage(id, { page: currentPage.value, size: PAGE_SIZE, search: query.value }),
+      categories.value.length ? Promise.resolve(categories.value) : listCategories(id),
+    ])
+    guests.value = p.content
+    currentPage.value = p.currentPage
+    totalPages.value = p.totalPages
+    totalElements.value = p.totalElements
     categories.value = c
   } finally {
     loading.value = false
   }
 }
+
+function goTo(p: number) {
+  if (p < 0 || p >= totalPages.value || p === currentPage.value) return
+  currentPage.value = p
+  load()
+}
+
 async function remove(g: Guest) {
   if (!confirm(`Supprimer l'invité ${g.firstName} ${g.lastName} ?`)) return
   await deleteGuest(id, g.id)
-  guests.value = guests.value.filter((x) => x.id !== g.id)
+  // Recharge la page courante (l'invité supprimé disparaît, la page suivante glisse).
+  await load()
 }
 async function exportExcel() {
   const blob = await exportGuestsExcel(id)
@@ -221,6 +265,7 @@ async function onImportFile(e: Event) {
   importing.value = true
   try {
     importResult.value = await importGuestsExcel(id, file)
+    currentPage.value = 0
     await load()
   } finally {
     importing.value = false

@@ -53,6 +53,39 @@ export async function listGuests(eventId: number): Promise<Guest[]> {
   return decodeList(json.content).map((e) => parseGuest(e as Record<string, unknown>))
 }
 
+/** Page paginée renvoyée par le backend (PageResponse). */
+export interface GuestPage {
+  content: Guest[]
+  currentPage: number
+  pageSize: number
+  totalElements: number
+  totalPages: number
+}
+
+/**
+ * Liste PAGINÉE avec recherche serveur — utilisée par l'onglet Invités.
+ * Indispensable à l'échelle : l'ancien listGuests() ne renvoyait que la
+ * première page (200) et le filtrage se faisait en mémoire, rendant
+ * invisibles tous les invités au-delà de la première page.
+ */
+export async function listGuestsPage(
+  eventId: number,
+  opts: { page?: number; size?: number; search?: string } = {},
+): Promise<GuestPage> {
+  const params: Record<string, unknown> = { page: opts.page ?? 0, size: opts.size ?? 50 }
+  const q = (opts.search ?? '').trim()
+  if (q) params.search = q
+  const res = await http.get(ApiConfig.weddingGuestsPath(eventId), { params })
+  const json = decodeMap(res.data)
+  return {
+    content: decodeList(json.content).map((e) => parseGuest(e as Record<string, unknown>)),
+    currentPage: Number(json.currentPage ?? 0),
+    pageSize: Number(json.pageSize ?? 50),
+    totalElements: Number(json.totalElements ?? 0),
+    totalPages: Math.max(1, Number(json.totalPages ?? 1)),
+  }
+}
+
 export async function createGuest(eventId: number, payload: Record<string, unknown>): Promise<Guest> {
   const res = await http.post(ApiConfig.weddingGuestsPath(eventId), payload)
   return parseGuest(decodeMap(res.data))
