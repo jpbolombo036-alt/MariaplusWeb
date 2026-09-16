@@ -308,7 +308,7 @@
       <div class="nx">
         <!-- Bandeau haut -->
         <header class="nx-header">
-          <svg class="nx-header-deco" width="852" height="192" viewBox="0 0 852 192" aria-hidden="true">
+          <svg class="nx-header-deco" xmlns="http://www.w3.org/2000/svg" width="852" height="192" viewBox="0 0 852 192" aria-hidden="true">
             <path d="M0,0 L430,0 C300,58 160,88 0,96 Z" fill="rgba(139,110,255,0.20)"></path>
             <path d="M852,26 C690,10 585,86 540,192 L852,192 Z" fill="rgba(124,92,255,0.16)"></path>
             <circle cx="770" cy="30" r="90" fill="rgba(169,139,255,0.12)"></circle>
@@ -363,19 +363,19 @@
         <!-- Date / Heure / Lieu -->
         <div class="nx-infos">
           <div v-if="dateValue" class="nx-info">
-            <span class="nx-info-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg></span>
+            <span class="nx-info-ico"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#5427c7" aria-hidden="true"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg></span>
             <span class="nx-info-label">Date</span>
             <span class="nx-info-value">{{ dateValue }}</span>
             <span v-if="dayOfWeekText" class="nx-info-sub">{{ dayOfWeekText }}</span>
           </div>
           <div v-if="timeValue" class="nx-info">
-            <span class="nx-info-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></span>
+            <span class="nx-info-ico"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#5427c7" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></span>
             <span class="nx-info-label">Heure</span>
             <span class="nx-info-value">{{ timeValue }}</span>
             <span class="nx-info-sub">Heure locale</span>
           </div>
           <div v-if="venueValue || venueSub" class="nx-info">
-            <span class="nx-info-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span>
+            <span class="nx-info-ico"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#5427c7" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span>
             <span class="nx-info-label">Lieu</span>
             <span v-if="venueValue" class="nx-info-value">{{ venueValue }}</span>
             <span v-if="venueSub" class="nx-info-sub">{{ venueSub }}</span>
@@ -399,7 +399,7 @@
         <!-- Atouts (selon le type d'événement) -->
         <div class="nx-feats">
           <div v-for="(f, i) in cardFeats" :key="i" class="nx-feat">
-            <svg class="nx-feat-ico" width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <svg class="nx-feat-ico" xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="#5427c7" aria-hidden="true">
               <path v-if="f.icon === 'groups'" d="M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm16 0c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-8-9c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z" />
               <path v-else-if="f.icon === 'bulb'" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z" />
               <path v-else-if="f.icon === 'share'" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
