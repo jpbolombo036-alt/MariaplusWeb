@@ -301,43 +301,136 @@
       </template>
     </div>
 
-    <!-- Carte 1080x1350 générée hors écran → export PNG + sauvegarde serveur
-         (design « pass invité » : logo, INVITATION, QR, nom, validité, infos) -->
+    <!-- Carte 1080x1720 générée hors écran → export PNG + sauvegarde serveur
+         (nouveau modèle « invitation officielle » : bandeau EventiaEasy, visuel
+         événement, invité + présence confirmée, infos, ticket QR, atouts) -->
     <div v-if="success === 'ACCEPTED' && inv" ref="cardRenderEl" class="mp-inv-render" aria-hidden="true">
-      <div class="mcq">
-        <div v-if="cardBgUrl" class="mcq-bg" :style="{ backgroundImage: 'url(' + cardBgUrl + ')' }"></div>
-        <div class="mcq-bg-overlay"></div>
-        <div class="mcq-content">
-          <img src="/logo.png" class="mcq-logo" alt="" />
-          <div class="mcq-title">INVITATION</div>
-          <div class="mcq-event">{{ title }}</div>
-          <div v-if="qrDataUri" class="mcq-qr"><img :src="qrDataUri" alt="QR" /></div>
-          <div class="mcq-guest">{{ guestFullName }}</div>
-          <div class="mcq-badge"><span class="mcq-badge-check">✓</span><span>Invitation valide</span></div>
-          <div class="mcq-infos">
-            <div v-if="cardDateShort" class="mcq-info">
-              <svg class="mcq-ico" width="42" height="42" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
-              <span>{{ cardDateShort }}</span>
-            </div>
-            <div v-if="venueValue || venueSub" class="mcq-info">
-              <svg class="mcq-ico" width="42" height="42" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-              <span class="mcq-info-col">
-                <span v-if="venueValue" class="mcq-info-main">{{ venueValue }}</span>
-                <span v-if="venueSub" class="mcq-info-sub">{{ venueSub }}</span>
-              </span>
-            </div>
-            <div v-if="cardTimeShort" class="mcq-info">
-              <svg class="mcq-ico" width="42" height="42" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-              <span>{{ cardTimeShort }}</span>
+      <div class="nx">
+        <!-- Bandeau haut -->
+        <div class="nx-header">
+          <div class="nx-swirl nx-swirl--l"></div>
+          <div class="nx-swirl nx-swirl--r"></div>
+          <div class="nx-official">
+            <span>Invitation</span>
+            <span>Officielle</span>
+            <i class="nx-bar nx-bar--sm"></i>
+          </div>
+          <div class="nx-brand">
+            <img src="/logo.png" class="nx-brand-logo" alt="" />
+            <div class="nx-brand-name">Eventia<span>Easy</span></div>
+            <div class="nx-brand-tag">Des événements, plus simplement</div>
+          </div>
+          <div class="nx-script">
+            <span>Vivez</span>
+            <span>Partagez</span>
+            <span>Célébrez</span>
+            <i class="nx-bar nx-bar--sm"></i>
+          </div>
+        </div>
+
+        <!-- Visuel événement + avatar invité -->
+        <div class="nx-bannerwrap">
+          <div class="nx-banner">
+            <div v-if="cardBgUrl" class="nx-banner-bg" :style="{ backgroundImage: 'url(' + cardBgUrl + ')' }"></div>
+            <div class="nx-banner-shade"></div>
+            <div class="nx-banner-inner">
+              <div class="nx-banner-left">
+                <div class="nx-event">{{ cardTitle }}</div>
+                <i class="nx-bar"></i>
+                <div class="nx-event-sub">{{ cardEventSub }}</div>
+              </div>
+              <div class="nx-banner-tags">
+                <div v-for="t in cardTags" :key="t" class="nx-tag">{{ t }}</div>
+                <i class="nx-bar nx-bar--sm nx-bar--right"></i>
+              </div>
             </div>
           </div>
-          <div class="mcq-note">Présentez ce QR Code à l'entrée</div>
-          <div class="mcq-footer">Propulsé par <strong>EventiaEasy</strong></div>
+          <div class="nx-avatar">{{ guestInitials }}</div>
+        </div>
+
+        <!-- Invité + présence confirmée -->
+        <div class="nx-head">
+          <div class="nx-inviteof">Invitation de</div>
+          <div class="nx-guest">{{ guestFullName }}</div>
+          <div class="nx-pill"><span class="nx-pill-check">✓</span><span>Présence confirmée</span></div>
+          <div class="nx-thanks">Merci de faire partie de cet événement !</div>
+        </div>
+
+        <!-- Date / Heure / Lieu -->
+        <div class="nx-infos">
+          <div v-if="dateValue" class="nx-info">
+            <span class="nx-info-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg></span>
+            <span class="nx-info-label">Date</span>
+            <span class="nx-info-value">{{ dateValue }}</span>
+            <span v-if="dayOfWeekText" class="nx-info-sub">{{ dayOfWeekText }}</span>
+          </div>
+          <div v-if="timeValue" class="nx-info">
+            <span class="nx-info-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></span>
+            <span class="nx-info-label">Heure</span>
+            <span class="nx-info-value">{{ timeValue }}</span>
+            <span class="nx-info-sub">Heure locale</span>
+          </div>
+          <div v-if="venueValue || venueSub" class="nx-info">
+            <span class="nx-info-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span>
+            <span class="nx-info-label">Lieu</span>
+            <span v-if="venueValue" class="nx-info-value">{{ venueValue }}</span>
+            <span v-if="venueSub" class="nx-info-sub">{{ venueSub }}</span>
+          </div>
+        </div>
+
+        <div class="nx-sep"></div>
+
+        <!-- Ticket QR -->
+        <div class="nx-ticket">
+          <i class="nx-hole nx-hole--l"></i>
+          <i class="nx-hole nx-hole--r"></i>
+          <div v-if="qrDataUri" class="nx-ticket-qr"><img :src="qrDataUri" alt="QR" /></div>
+          <i class="nx-ticket-div"></i>
+          <div class="nx-ticket-text">
+            <div class="nx-ticket-title">Présentez ce QR code à l'accueil</div>
+            <div class="nx-ticket-sub">Ce QR code permet de confirmer rapidement votre présence.</div>
+          </div>
+        </div>
+
+        <!-- Atouts (selon le type d'événement) -->
+        <div class="nx-feats">
+          <div v-for="(f, i) in cardFeats" :key="i" class="nx-feat">
+            <svg class="nx-feat-ico" width="38" height="38" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path v-if="f.icon === 'groups'" d="M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm16 0c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-8-9c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z" />
+              <path v-else-if="f.icon === 'bulb'" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z" />
+              <path v-else-if="f.icon === 'share'" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
+              <path v-else d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z" />
+            </svg>
+            <div class="nx-feat-title">{{ f.title }}</div>
+            <div class="nx-feat-sub">{{ f.sub }}</div>
+          </div>
+        </div>
+
+        <!-- Pied de carte -->
+        <div class="nx-footer">
+          <div class="nx-footer-script">Merci de confirmer votre présence !</div>
+          <div class="nx-footer-band">
+            <div class="nx-footer-blob"></div>
+            <div class="nx-footer-heart">♥</div>
+            <div class="nx-footer-brand">
+              <img src="/logo.png" class="nx-footer-logo" alt="" />
+              <div>
+                <div class="nx-footer-name">Eventia<span>Easy</span></div>
+                <div class="nx-footer-tag">Des événements, plus simplement</div>
+              </div>
+            </div>
+            <div class="nx-footer-caps">
+              <span>Simple</span>
+              <span>Rapide</span>
+              <span>Efficace</span>
+              <i class="nx-bar nx-bar--sm nx-bar--right"></i>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</template>
+  </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -678,7 +771,7 @@ async function submitDecline() {
   }
 }
 
-/* ---------- Carte d'invitation confirmée (PNG 1080x1350) ---------- */
+/* ---------- Carte d'invitation confirmée (PNG 1080x1720) ---------- */
 const cardRenderEl = ref<HTMLElement | null>(null)
 const cardDataUrl = ref('')
 const cardSaved = ref(false)
@@ -691,11 +784,63 @@ const guestFullName = computed(() => {
   return `${fn} ${ln}`.trim() || 'Cher invité'
 })
 
-/* Photo du couple en fond de carte, floutée : l'image est réduite à une
-   miniature (36 px) puis étirée en fond — l'upscaling lissé produit un flou
-   fiable à l'export html2canvas (qui ne supporte pas CSS filter). */
+/* ---------- Données du modèle « invitation officielle » ---------- */
+const guestInitials = computed(() => {
+  const a = inv.value?.guestFirstName?.trim()?.charAt(0) ?? ''
+  const b = inv.value?.guestLastName?.trim()?.charAt(0) ?? ''
+  return `${a}${b}`.toUpperCase() || '♥'
+})
+
+/* Titre raccourci : le visuel du bandeau ne doit jamais déborder */
+const cardTitle = computed(() => {
+  const t = title.value
+  return t.length > 90 ? `${t.slice(0, 87).trimEnd()}…` : t
+})
+
+/* Sous-titre du visuel : message de l'organisateur, sinon accroche par défaut */
+const cardEventSub = computed(() => {
+  const m = inv.value?.message?.trim()
+  if (m) return m.length > 110 ? `${m.slice(0, 107).trimEnd()}…` : m
+  return 'Vivez un moment inoubliable avec nous !'
+})
+
+/* Mots-clés du bandeau + atouts en bas de carte, selon le type d'événement */
+const CARD_TAGS: Record<string, string[]> = {
+  WEDDING: ['Mariage', 'Amour', 'Famille', 'Célébration'],
+  COLLATION: ['Collation', 'Partage', 'Amitié', 'Célébration'],
+  BIRTHDAY: ['Anniversaire', 'Joie', 'Amitié', 'Célébration'],
+  GRADUATION: ['Diplôme', 'Réussite', 'Avenir', 'Célébration'],
+  PARTY: ['Fête', 'Musique', 'Danse', 'Célébration'],
+  CONFERENCE: ['Événements', 'Formation', 'Réseautage', 'Opportunités'],
+  OTHER: ['Événements', 'Partage', 'Rencontre', 'Opportunités'],
+}
+const CARD_FEATS: Record<string, string[]> = {
+  WEDDING: ['Célébrer|votre union', 'Partager|votre bonheur', 'Rencontrer|vos proches', 'Garder|des souvenirs'],
+  COLLATION: ['Célébrer|cette belle étape', 'Partager|un moment convivial', 'Rencontrer|vos proches', 'Garder|des souvenirs'],
+  BIRTHDAY: ['Fêter|cette nouvelle année', 'Souffler|vos bougies', 'Danser|avec vos proches', 'Garder|des souvenirs'],
+  GRADUATION: ['Célébrer|votre diplôme', 'Partager|votre réussite', 'Rêver|votre avenir', 'Saisir|de nouvelles opportunités'],
+  PARTY: ["Danser|jusqu'au bout de la nuit", 'Chanter|vos titres préférés', 'Rencontrer|de nouvelles têtes', 'Garder|des souvenirs'],
+  CONFERENCE: ['Échanger|avec des professionnels', 'Apprendre|de nouvelles compétences', 'Élargir|votre réseau', 'Saisir|de nouvelles opportunités'],
+  OTHER: ['Vivre|un moment unique', 'Partager|votre joie', 'Rencontrer|vos proches', 'Garder|des souvenirs'],
+}
+const eventType = computed(() => (inv.value as unknown as { eventType?: string })?.eventType ?? '')
+const cardTags = computed<string[]>(() => CARD_TAGS[eventType.value] ?? CARD_TAGS.OTHER ?? [])
+const cardFeats = computed(() => {
+  const list = CARD_FEATS[eventType.value] ?? CARD_FEATS.OTHER ?? []
+  const icons = ['groups', 'bulb', 'share', 'bars'] as const
+  return list.map((f, i) => {
+    const [t, s] = f.split('|')
+    return { title: t ?? '', sub: s ?? '', icon: icons[i] ?? 'bars' }
+  })
+})
+
 const cardBgUrl = ref('')
 
+/* Photo (couple/mariés) du visuel du bandeau : pré-chargée avec CORS puis
+   convertie en data URL JPEG 720px — html2canvas ne sait pas dessiner les
+   images cross-origin ni object-fit:cover sur <img> ; le fond du bandeau
+   utilise donc background-image + background-size: cover avec cette version
+   haute résolution (nette, contrairement à l'ancien fond flouté). */
 async function prepareCardBackground(): Promise<void> {
   if (cardBgUrl.value || !photos.value.length) return
   try {
@@ -706,7 +851,7 @@ async function prepareCardBackground(): Promise<void> {
       img.onerror = () => reject(new Error('load'))
       img.src = absoluteUrl(photos.value[0])
     })
-    const w = 36
+    const w = 720
     const h = Math.max(1, Math.round((img.naturalHeight / img.naturalWidth) * w))
     const c = document.createElement('canvas')
     c.width = w
@@ -714,9 +859,9 @@ async function prepareCardBackground(): Promise<void> {
     const ctx = c.getContext('2d')
     if (!ctx) return
     ctx.drawImage(img, 0, 0, w, h)
-    cardBgUrl.value = c.toDataURL('image/jpeg', 0.6)
+    cardBgUrl.value = c.toDataURL('image/jpeg', 0.82)
   } catch {
-    /* image non chargeable (CORS/absente) : la carte reste blanche */
+    /* image non chargeable (CORS/absente) : le bandeau garde son dégradé */
   }
 }
 
@@ -725,9 +870,20 @@ async function generateCard(): Promise<void> {
   if (!cardRenderEl.value) return
   try {
     await prepareCardBackground()
+    // Polices du modèle chargées avant le rendu (sinon html2canvas dessine
+    // les textes avec les polices de repli)
+    try {
+      await Promise.allSettled([
+        document.fonts.load('700 47px "Playfair Display"'),
+        document.fonts.load('400 42px "Great Vibes"'),
+        document.fonts.ready,
+      ])
+    } catch {
+      /* polices indisponibles : repli silencieux sur les polices système */
+    }
     const canvas = await html2canvas(cardRenderEl.value, {
       width: 1080,
-      height: 1350,
+      height: 1720,
       scale: 1,
       useCORS: true,
       backgroundColor: '#ffffff',
@@ -1639,113 +1795,13 @@ html.dark .mp-inv-btn--ghost:hover:not(:disabled) { background: #211b2d; }
 html.dark .mp-inv-cardframe { border-color: #342d45; }
 html.dark .mp-inv-cardimg--loading { color: #b8b2c7; }
 
-/* ---------- Carte 1080x1350 (rendu hors écran → PNG) ---------- */
+/* ---------- Carte « invitation officielle » (rendu hors écran → PNG) ---------- */
 .mp-inv-render {
   position: fixed;
   left: -20000px;
   top: 0;
   width: 1080px;
 }
-.mpc {
-  width: 1080px;
-  height: 1350px;
-  background: #ffffff;
-  display: flex;
-  flex-direction: column;
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  color: #1d1733;
-  overflow: hidden;
-}
-.mpc-cover { position: relative; height: 360px; flex-shrink: 0; background: #14082f; }
-/* Fond en background-image CSS : html2canvas ne supporte pas object-fit sur <img>
-   (il étirait la photo) — background-size: cover est lui parfaitement rendu.
-   Ancrage légèrement au-dessus du centre (~18%) : les visages restent bien
-   placés dans le cadrage, sans coller au tout-haut qui coupait souvent. */
-.mpc-cover-bg {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center 18%;
-  background-repeat: no-repeat;
-}
-.mpc-cover-shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(20, 8, 48, 0.45) 0%, rgba(20, 8, 48, 0.15) 45%, rgba(63, 29, 154, 0.82) 100%);
-}
-.mpc-logo {
-  position: absolute;
-  top: 38px;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: #ffffff;
-  font-size: 30px;
-  font-weight: 700;
-}
-.mpc-logo-img { width: 34px; height: 34px; object-fit: contain; }
-.mpc-confirm {
-  position: absolute;
-  bottom: 40px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  color: #ffffff;
-  letter-spacing: 6px;
-  font-size: 21px;
-  font-weight: 600;
-}
-.mpc-body {
-  flex: 1;
-  padding: 34px 60px 0;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: hidden;
-}
-.mpc-event { font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 700; color: #1d1733; line-height: 1.15; margin: 0; }
-.mpc-divider { color: #5427c7; font-size: 20px; margin: 12px 0 18px; display: flex; align-items: center; gap: 14px; }
-.mpc-divider span { width: 64px; height: 2px; background: #e6dfff; display: inline-block; border-radius: 2px; }
-.mpc-label { font-size: 17px; letter-spacing: 4px; font-weight: 700; color: #8f6fe0; }
-.mpc-guest { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; color: #5427c7; margin: 6px 0 16px; }
-.mpc-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: #ecf8f0;
-  color: #23864d;
-  font-size: 20px;
-  font-weight: 700;
-  padding: 12px 28px;
-  border-radius: 999px;
-  letter-spacing: 1px;
-}
-.mpc-badge-check { width: 34px; height: 34px; border-radius: 50%; background: #23864d; color: #ffffff; display: grid; place-items: center; font-size: 18px; }
-.mpc-infos { display: flex; gap: 32px; justify-content: center; margin: 26px 0 4px; width: 100%; }
-.mpc-info { flex: 1; max-width: 280px; }
-.mpc-info-label { font-size: 16px; letter-spacing: 3px; font-weight: 700; color: #8f6fe0; margin-bottom: 8px; }
-.mpc-info-value { font-size: 25px; font-weight: 600; color: #1d1733; line-height: 1.3; }
-.mpc-info-sub { font-size: 19px; color: #667085; margin-top: 4px; }
-.mpc-people { margin-top: 16px; background: #f0ebff; border-radius: 18px; padding: 14px 40px; }
-.mpc-people .mpc-label { color: #5427c7; }
-.mpc-people-count { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #5427c7; margin-top: 4px; }
-.mpc-qr { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; flex-shrink: 0; }
-.mpc-qr-img { width: 150px; height: 150px; }
-.mpc-qr-note { font-size: 18px; color: #667085; }
-.mpc-footer {
-  flex-shrink: 0;
-  padding: 20px 0 30px;
-  text-align: center;
-  background: #f8f7fc;
-  border-top: 1px solid #e7e3f0;
-}
-.mpc-footer-line { font-size: 17px; color: #667085; }
-.mpc-footer-brand { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 25px; font-weight: 700; color: #5427c7; margin-top: 8px; }
-.mpc-footer-heart { color: #e53935; font-size: 17px; margin-top: 6px; }
 
 /* ---------- Animations ---------- */
 @keyframes mp-fade-in {
@@ -1866,69 +1922,293 @@ html.dark .mp-inv-qr img { background: #ffffff; }
 }
 
 /* ============================================================
-   CARTE TÉLÉCHARGEABLE « PASS INVITÉ » (1080×1350, style maquette)
+   CARTE TÉLÉCHARGEABLE « INVITATION OFFICIELLE » (1080×1720)
    Rendue hors écran puis exportée en PNG via html2canvas.
-   Icônes en emoji : fiables dans html2canvas (pas de police à ligatures).
+   Contraintes html2canvas : pas de CSS filter / object-fit /
+   radial-gradient ; icônes en SVG inline ; couleurs fixes
+   (insensibles au mode sombre) ; photos via background-image.
    ============================================================ */
-.mcq {
+.nx {
   position: relative;
   width: 1080px;
-  height: 1350px;
+  height: 1720px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   background: #ffffff;
   overflow: hidden;
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  color: #1d1733;
 }
-.mcq-bg { position: absolute; inset: 0; background-size: cover; background-position: center 22%; }
-.mcq-bg-overlay { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.86); }
-.mcq-content {
+.nx-bar { display: block; width: 56px; height: 5px; border-radius: 3px; background: #7c5cff; }
+.nx-bar--sm { width: 46px; height: 4px; margin-top: 12px; }
+.nx-bar--right { margin-left: auto; }
+
+/* ---------- Bandeau haut ---------- */
+.nx-header {
   position: relative;
-  height: 100%;
-  box-sizing: border-box;
+  height: 220px;
+  flex-shrink: 0;
+  background: linear-gradient(118deg, #150838 0%, #2a1358 46%, #4c22a8 100%);
+  overflow: hidden;
+}
+.nx-swirl { position: absolute; border-radius: 50%; }
+.nx-swirl--l { width: 420px; height: 420px; left: -160px; top: -215px; background: rgba(124, 92, 255, 0.32); }
+.nx-swirl--r { width: 520px; height: 520px; right: -190px; bottom: -310px; background: rgba(124, 92, 255, 0.20); }
+.nx-official {
+  position: absolute;
+  left: 46px;
+  top: 44px;
+  display: flex;
+  flex-direction: column;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.88);
+}
+.nx-brand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 58px 80px 40px;
 }
-.mcq-event { margin-top: 10px; font-size: 34px; font-weight: 700; color: #5b2ecc; }
-.mcq-logo { width: 170px; height: auto; object-fit: contain; }
-.mcq-title { margin-top: 14px; font-size: 56px; font-weight: 900; letter-spacing: 10px; color: #172554; }
-.mcq-qr { margin-top: 24px; }
-.mcq-qr img { width: 410px; height: 410px; display: block; }
-.mcq-guest { margin-top: 16px; font-size: 48px; font-weight: 800; color: #0f172a; }
-.mcq-badge {
-  margin-top: 20px;
+.nx-brand-logo { width: 80px; height: auto; display: block; }
+.nx-brand-name { margin-top: 4px; font-size: 42px; font-weight: 900; letter-spacing: 0.5px; color: #ffffff; }
+.nx-brand-name span { color: #a98bff; }
+.nx-brand-tag { margin-top: 2px; font-size: 17px; color: rgba(255, 255, 255, 0.78); }
+.nx-script {
+  position: absolute;
+  right: 46px;
+  top: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: 'Great Vibes', 'Brush Script MT', 'Segoe Script', cursive;
+  font-size: 40px;
+  line-height: 1.15;
+  color: #ffffff;
+}
+.nx-script .nx-bar--sm { margin-top: 8px; }
+
+/* ---------- Visuel événement + avatar ---------- */
+.nx-bannerwrap { position: relative; margin: 20px 42px 0; flex-shrink: 0; }
+.nx-banner {
+  position: relative;
+  height: 325px;
+  border-radius: 26px;
+  overflow: hidden;
+  background: linear-gradient(120deg, #1c0f45 0%, #341a75 55%, #4c22a8 100%);
+}
+.nx-banner-bg { position: absolute; inset: 0; background-size: cover; background-position: center 30%; }
+.nx-banner-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(92deg, rgba(16, 8, 44, 0.88) 0%, rgba(16, 8, 44, 0.55) 52%, rgba(43, 20, 96, 0.38) 100%);
+}
+.nx-banner-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 40px 44px;
+  box-sizing: border-box;
+}
+.nx-banner-left { max-width: 640px; }
+.nx-event { font-family: 'Playfair Display', serif; font-size: 47px; font-weight: 700; line-height: 1.16; color: #ffffff; }
+.nx-banner-left .nx-bar { margin-top: 20px; }
+.nx-event-sub { margin-top: 18px; max-width: 560px; font-size: 22px; line-height: 1.5; color: rgba(255, 255, 255, 0.92); }
+.nx-banner-tags { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; padding-top: 6px; }
+.nx-tag {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  line-height: 2.1;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+.nx-banner-tags .nx-bar--sm { margin-top: 10px; }
+.nx-avatar {
+  position: absolute;
+  left: 50%;
+  bottom: -75px;
+  margin-left: -75px;
+  width: 150px;
+  height: 150px;
+  box-sizing: border-box;
+  border: 9px solid #ffffff;
+  border-radius: 50%;
+  background: #f3efff;
+  box-shadow: 0 10px 26px rgba(23, 15, 58, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 50px;
+  font-weight: 700;
+  color: #5427c7;
+}
+
+/* ---------- Invité + présence confirmée ---------- */
+.nx-head { margin-top: 96px; text-align: center; flex-shrink: 0; }
+.nx-inviteof { font-size: 20px; color: #8a93a6; }
+.nx-guest { margin-top: 6px; font-family: 'Playfair Display', serif; font-size: 47px; font-weight: 700; color: #17123a; }
+.nx-pill {
   display: inline-flex;
   align-items: center;
-  gap: 16px;
-  background: #e9f9ef;
-  border: 2px solid #bfe9cf;
-  color: #15803d;
-  font-size: 32px;
-  font-weight: 800;
-  padding: 16px 38px;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 13px 34px;
   border-radius: 999px;
+  background: #e7f8ee;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #178a4c;
 }
-.mcq-badge-check {
-  width: 46px;
-  height: 46px;
+.nx-pill-check {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: #22a45d;
+  background: #1f9d55;
   color: #ffffff;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 900;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
-.mcq-infos { margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
-.mcq-info { display: flex; align-items: center; gap: 18px; font-size: 36px; font-weight: 600; color: #1f2937; }
-.mcq-info-col { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 6px; }
-.mcq-info-main { font-size: 36px; font-weight: 600; color: #1f2937; }
-.mcq-info-sub { font-size: 28px; font-weight: 500; color: #4b5563; line-height: 1.25; }
-.mcq-ico { display: block; width: 42px; height: 42px; color: #5b2ecc; flex-shrink: 0; }
-.mcq-note { margin-top: auto; font-size: 26px; color: #98a2b3; }
-.mcq-footer { margin-top: 12px; font-size: 22px; color: #cbd2dc; }
-.mcq-footer strong { color: #5b2ecc; }
+.nx-thanks { margin-top: 14px; font-size: 21px; color: #667085; }
+/* ---------- Date / Heure / Lieu ---------- */
+.nx-infos { display: flex; margin: 30px 56px 0; flex-shrink: 0; }
+.nx-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2px 14px;
+  box-sizing: border-box;
+}
+.nx-info + .nx-info { border-left: 2px dashed #e2dcf4; }
+.nx-info-ico {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #f0ebff;
+  color: #5427c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nx-info-label {
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #8f6fe0;
+}
+.nx-info-value { margin-top: 5px; font-size: 27px; font-weight: 700; line-height: 1.25; color: #1d1733; }
+.nx-info-sub { margin-top: 3px; font-size: 19px; color: #667085; }
+
+/* ---------- Séparateur + ticket QR ---------- */
+.nx-sep { margin: 24px 64px 0; border-top: 2px dashed #e2dcf4; flex-shrink: 0; }
+.nx-ticket {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  margin: 24px 56px 0;
+  padding: 22px 38px;
+  box-sizing: border-box;
+  border-radius: 24px;
+  background: #efe9fc;
+  flex-shrink: 0;
+}
+.nx-hole {
+  position: absolute;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin-top: -17px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+.nx-hole--l { left: -17px; }
+.nx-hole--r { right: -17px; }
+.nx-ticket-qr { padding: 14px; border-radius: 16px; background: #ffffff; flex-shrink: 0; box-sizing: border-box; }
+.nx-ticket-qr img { display: block; width: 216px; height: 216px; }
+.nx-ticket-div { width: 2px; align-self: stretch; background: rgba(84, 39, 199, 0.18); flex-shrink: 0; }
+.nx-ticket-title { font-size: 26px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #5427c7; }
+.nx-ticket-sub { margin-top: 12px; font-size: 22px; line-height: 1.5; color: #5a6478; }
+
+/* ---------- Atouts (selon le type d'événement) ---------- */
+.nx-feats { display: flex; margin: 26px 34px 0; flex-shrink: 0; }
+.nx-feat { flex: 1; text-align: center; padding: 2px 14px; box-sizing: border-box; }
+.nx-feat + .nx-feat { border-left: 2px solid #efeaf8; }
+.nx-feat-ico { width: 38px; height: 38px; color: #5427c7; }
+.nx-feat-title { margin-top: 8px; font-size: 23px; font-weight: 800; color: #1d1733; }
+.nx-feat-sub { margin-top: 3px; font-size: 18px; line-height: 1.35; color: #667085; }
+
+/* ---------- Pied de carte ---------- */
+.nx-footer { margin-top: auto; flex-shrink: 0; }
+.nx-footer-script {
+  padding-bottom: 12px;
+  text-align: center;
+  font-family: 'Great Vibes', 'Brush Script MT', 'Segoe Script', cursive;
+  font-size: 42px;
+  color: #3d2a75;
+}
+.nx-footer-band {
+  position: relative;
+  height: 148px;
+  background: linear-gradient(115deg, #43208f 0%, #2a1358 55%, #1d0d44 100%);
+  overflow: hidden;
+}
+.nx-footer-blob {
+  position: absolute;
+  left: -70px;
+  bottom: -150px;
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+.nx-footer-heart { position: absolute; left: 26px; bottom: 16px; font-size: 40px; color: #7c5cff; }
+.nx-footer-brand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin-top: -34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.nx-footer-logo { width: 52px; height: auto; display: block; }
+.nx-footer-name { font-size: 30px; font-weight: 900; text-align: left; color: #ffffff; }
+.nx-footer-name span { color: #a98bff; }
+.nx-footer-tag { margin-top: 2px; font-size: 15px; text-align: left; color: rgba(255, 255, 255, 0.78); }
+.nx-footer-caps {
+  position: absolute;
+  right: 42px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  line-height: 1.75;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
 </style>
