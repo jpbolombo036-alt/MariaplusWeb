@@ -144,10 +144,15 @@
             <!-- État succès -->
             <div v-if="success" class="mp-inv-success" :class="success">
               <template v-if="success === 'ACCEPTED'">
-                <span class="mp-inv-success-icon">✓</span>
-                <h3 class="mp-inv-success-hero">Présence<br />confirmée</h3>
-                <p class="mp-inv-success-thanks">Merci {{ firstNameText }} !</p>
-                <p class="mp-inv-success-text">Nous sommes heureux de vous compter parmi nos invités.</p>
+                <p class="mp-inv-success-kicker">Invitation de</p>
+                <h3 class="mp-inv-success-name">{{ guestFullName }}</h3>
+                <div class="mp-inv-success-pillrow">
+                  <span class="mp-inv-pill">
+                    <span class="mp-inv-pill-check">✓</span>
+                    <span class="mp-inv-pill-text">Présence confirmée</span>
+                  </span>
+                </div>
+                <p class="mp-inv-success-text">Merci de faire partie de cet événement !</p>
 
                 <!-- Carte visuelle (PNG) + actions -->
                 <div v-if="!finished" class="mp-inv-cardzone">
@@ -354,9 +359,9 @@
 
         <!-- Invité + présence confirmée -->
         <div class="nx-inviteof">Invitation de</div>
-        <div class="nx-guest">{{ guestFullName }}</div>
+        <div :class="guestNameClass">{{ guestFullName }}</div>
         <div class="nx-pillrow">
-          <div class="nx-pill"><span class="nx-pill-check">✓</span><span class="nx-pill-text">Présence confirmée</span></div>
+          <div class="nx-pill"><span class="nx-pill-check"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span class="nx-pill-text">Présence confirmée</span></div>
         </div>
         <div class="nx-thanks">Merci de faire partie de cet événement !</div>
 
@@ -785,6 +790,14 @@ const guestFullName = computed(() => {
   const fn = inv.value?.guestFirstName?.trim() ?? ''
   const ln = inv.value?.guestLastName?.trim() ?? ''
   return `${fn} ${ln}`.trim() || 'Cher invité'
+})
+
+/* Nom affiché : taille réduite automatiquement si trop long (jamais de débordement) */
+const guestNameClass = computed(() => {
+  const n = guestFullName.value
+  if (n.length > 34) return 'nx-guest nx-guest--xs'
+  if (n.length > 24) return 'nx-guest nx-guest--sm'
+  return 'nx-guest'
 })
 
 /* ---------- Données du modèle « invitation officielle » ---------- */
@@ -1738,23 +1751,45 @@ textarea.mp-inv-input {
   margin: 6px 0 0;
 }
 
-/* ---------- Confirmation ACCEPTED : héros + carte ---------- */
-.mp-inv-success-hero {
+/* ---------- Confirmation ACCEPTED : nom + pastille verte (comme la maquette) ---------- */
+.mp-inv-success-kicker { font-size: 15px; color: #8a93a6; margin: 0 0 4px; }
+.mp-inv-success-name {
   font-family: 'Playfair Display', serif;
   font-size: 30px;
   font-weight: 700;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: #23864d;
+  color: #17123a;
   line-height: 1.2;
-  margin: 0 0 8px;
+  margin: 0 0 14px;
+  overflow-wrap: anywhere;
 }
-.mp-inv-success-thanks {
-  font-family: 'Playfair Display', serif;
-  font-size: 20px;
-  font-weight: 600;
-  color: #1d1733;
-  margin: 0 0 4px;
+.mp-inv-success-pillrow { display: flex; justify-content: center; margin: 0 0 12px; }
+.mp-inv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  background: #e9f7ef;
+}
+.mp-inv-pill-check {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #22a45d;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mp-inv-pill-text {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #178a4c;
 }
 .mp-inv-cardzone { margin-top: 26px; }
 .mp-inv-cardframe {
@@ -1798,7 +1833,8 @@ textarea.mp-inv-input {
 }
 .mp-inv-btn--ghost { background: #ffffff; color: #5427c7; border: 1px solid #e6dfff; }
 .mp-inv-btn--ghost:hover:not(:disabled) { background: #f0ebff; }
-html.dark .mp-inv-success-thanks { color: #f7f5ff; }
+html.dark .mp-inv-success-kicker { color: #b3aec9; }
+html.dark .mp-inv-success-name { color: #f7f5ff; }
 html.dark .mp-inv-btn--ghost { background: #191522; color: #b39dff; border-color: #342d45; }
 html.dark .mp-inv-btn--ghost:hover:not(:disabled) { background: #211b2d; }
 html.dark .mp-inv-cardframe { border-color: #342d45; }
@@ -2102,8 +2138,11 @@ html.dark .mp-inv-qr img { background: #ffffff; }
   font-size: 30px;
   font-weight: 700;
   color: #17123a;
+  white-space: nowrap;
   z-index: 4;
 }
+.nx-guest--sm { font-size: 24px; }
+.nx-guest--xs { font-size: 20px; }
 .nx-pillrow {
   position: absolute;
   left: 0;
