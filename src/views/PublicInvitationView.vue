@@ -301,15 +301,18 @@
       </template>
     </div>
 
-    <!-- Carte 1080x1720 générée hors écran → export PNG + sauvegarde serveur
-         (nouveau modèle « invitation officielle » : bandeau EventiaEasy, visuel
-         événement, invité + présence confirmée, infos, ticket QR, atouts) -->
+    <!-- Carte 852x1280 (export @1.5x) générée hors écran → export PNG + sauvegarde serveur
+         (modèle « invitation officielle » reproduisant fidèlement la maquette :
+         bandeau EventiaEasy, visuel événement en arche, invité, ticket QR, pied violet) -->
     <div v-if="success === 'ACCEPTED' && inv" ref="cardRenderEl" class="mp-inv-render" aria-hidden="true">
       <div class="nx">
         <!-- Bandeau haut -->
-        <div class="nx-header">
-          <div class="nx-swirl nx-swirl--l"></div>
-          <div class="nx-swirl nx-swirl--r"></div>
+        <header class="nx-header">
+          <svg class="nx-header-deco" width="852" height="192" viewBox="0 0 852 192" aria-hidden="true">
+            <path d="M0,0 L430,0 C300,58 160,88 0,96 Z" fill="rgba(139,110,255,0.20)"></path>
+            <path d="M852,26 C690,10 585,86 540,192 L852,192 Z" fill="rgba(124,92,255,0.16)"></path>
+            <circle cx="770" cy="30" r="90" fill="rgba(169,139,255,0.12)"></circle>
+          </svg>
           <div class="nx-official">
             <span>Invitation</span>
             <span>Officielle</span>
@@ -326,52 +329,53 @@
             <span>Célébrez</span>
             <i class="nx-bar nx-bar--sm"></i>
           </div>
-        </div>
+        </header>
 
-        <!-- Visuel événement + avatar invité -->
-        <div class="nx-bannerwrap">
-          <div class="nx-banner">
-            <div v-if="cardBgUrl" class="nx-banner-bg" :style="{ backgroundImage: 'url(' + cardBgUrl + ')' }"></div>
-            <div class="nx-banner-shade"></div>
-            <div class="nx-banner-inner">
-              <div class="nx-banner-left">
-                <div class="nx-event">{{ cardTitle }}</div>
-                <i class="nx-bar"></i>
-                <div class="nx-event-sub">{{ cardEventSub }}</div>
-              </div>
-              <div class="nx-banner-tags">
-                <div v-for="t in cardTags" :key="t" class="nx-tag">{{ t }}</div>
-                <i class="nx-bar nx-bar--sm nx-bar--right"></i>
-              </div>
+        <!-- Visuel événement -->
+        <div class="nx-banner">
+          <div v-if="cardBgUrl" class="nx-banner-bg" :style="{ backgroundImage: 'url(' + cardBgUrl + ')' }"></div>
+          <div class="nx-banner-shade"></div>
+          <div class="nx-banner-inner">
+            <div class="nx-banner-left">
+              <div class="nx-event"><template v-for="(w, wi) in cardTitleWords" :key="wi"><span :class="{ 'nx-event-accent': w.accent }">{{ w.text }}</span>{{ wi < cardTitleWords.length - 1 ? ' ' : '' }}</template></div>
+              <i class="nx-bar"></i>
+              <div class="nx-event-sub">{{ cardEventSub }}</div>
+            </div>
+            <div class="nx-banner-tags">
+              <div v-for="t in cardTags" :key="t" class="nx-tag">{{ t }}</div>
+              <i class="nx-bar nx-bar--sm nx-bar--right"></i>
             </div>
           </div>
-          <div class="nx-avatar">{{ guestInitials }}</div>
         </div>
 
+        <!-- Arche blanche + avatar -->
+        <div class="nx-arc"></div>
+        <div class="nx-avatar">{{ guestInitials }}</div>
+
         <!-- Invité + présence confirmée -->
-        <div class="nx-head">
-          <div class="nx-inviteof">Invitation de</div>
-          <div class="nx-guest">{{ guestFullName }}</div>
-          <div class="nx-pill"><span class="nx-pill-check">✓</span><span>Présence confirmée</span></div>
-          <div class="nx-thanks">Merci de faire partie de cet événement !</div>
+        <div class="nx-inviteof">Invitation de</div>
+        <div class="nx-guest">{{ guestFullName }}</div>
+        <div class="nx-pillrow">
+          <div class="nx-pill"><span class="nx-pill-check">✓</span><span class="nx-pill-text">Présence confirmée</span></div>
         </div>
+        <div class="nx-thanks">Merci de faire partie de cet événement !</div>
 
         <!-- Date / Heure / Lieu -->
         <div class="nx-infos">
           <div v-if="dateValue" class="nx-info">
-            <span class="nx-info-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg></span>
+            <span class="nx-info-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg></span>
             <span class="nx-info-label">Date</span>
             <span class="nx-info-value">{{ dateValue }}</span>
             <span v-if="dayOfWeekText" class="nx-info-sub">{{ dayOfWeekText }}</span>
           </div>
           <div v-if="timeValue" class="nx-info">
-            <span class="nx-info-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></span>
+            <span class="nx-info-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg></span>
             <span class="nx-info-label">Heure</span>
             <span class="nx-info-value">{{ timeValue }}</span>
             <span class="nx-info-sub">Heure locale</span>
           </div>
           <div v-if="venueValue || venueSub" class="nx-info">
-            <span class="nx-info-ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span>
+            <span class="nx-info-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span>
             <span class="nx-info-label">Lieu</span>
             <span v-if="venueValue" class="nx-info-value">{{ venueValue }}</span>
             <span v-if="venueSub" class="nx-info-sub">{{ venueSub }}</span>
@@ -395,7 +399,7 @@
         <!-- Atouts (selon le type d'événement) -->
         <div class="nx-feats">
           <div v-for="(f, i) in cardFeats" :key="i" class="nx-feat">
-            <svg class="nx-feat-ico" width="38" height="38" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <svg class="nx-feat-ico" width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path v-if="f.icon === 'groups'" d="M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm16 0c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-8-9c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z" />
               <path v-else-if="f.icon === 'bulb'" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z" />
               <path v-else-if="f.icon === 'share'" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
@@ -407,30 +411,29 @@
         </div>
 
         <!-- Pied de carte -->
-        <div class="nx-footer">
+        <footer class="nx-footer">
+          <div class="nx-footer-band"></div>
+          <div class="nx-footer-blob"></div>
+          <div class="nx-footer-heart">♥</div>
           <div class="nx-footer-script">Merci de confirmer votre présence !</div>
-          <div class="nx-footer-band">
-            <div class="nx-footer-blob"></div>
-            <div class="nx-footer-heart">♥</div>
-            <div class="nx-footer-brand">
-              <img src="/logo.png" class="nx-footer-logo" alt="" />
-              <div>
-                <div class="nx-footer-name">Eventia<span>Easy</span></div>
-                <div class="nx-footer-tag">Des événements, plus simplement</div>
-              </div>
-            </div>
-            <div class="nx-footer-caps">
-              <span>Simple</span>
-              <span>Rapide</span>
-              <span>Efficace</span>
-              <i class="nx-bar nx-bar--sm nx-bar--right"></i>
+          <div class="nx-footer-brand">
+            <img src="/logo.png" class="nx-footer-logo" alt="" />
+            <div>
+              <div class="nx-footer-name">Eventia<span>Easy</span></div>
+              <div class="nx-footer-tag">Des événements, plus simplement</div>
             </div>
           </div>
-        </div>
+          <div class="nx-footer-caps">
+            <span>Simple</span>
+            <span>Rapide</span>
+            <span>Efficace</span>
+            <i class="nx-bar nx-bar--sm nx-bar--right"></i>
+          </div>
+        </footer>
       </div>
     </div>
   </div>
-  </template>
+</template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -771,7 +774,7 @@ async function submitDecline() {
   }
 }
 
-/* ---------- Carte d'invitation confirmée (PNG 1080x1720) ---------- */
+/* ---------- Carte d'invitation confirmée (PNG 852x1280 @1.5x) ---------- */
 const cardRenderEl = ref<HTMLElement | null>(null)
 const cardDataUrl = ref('')
 const cardSaved = ref(false)
@@ -795,6 +798,12 @@ const guestInitials = computed(() => {
 const cardTitle = computed(() => {
   const t = title.value
   return t.length > 90 ? `${t.slice(0, 87).trimEnd()}…` : t
+})
+
+/* Titre découpé en mots : le dernier mot passe en violet clair, comme la maquette */
+const cardTitleWords = computed(() => {
+  const words = cardTitle.value.split(/\s+/).filter(Boolean)
+  return words.map((w, idx) => ({ text: w, accent: words.length > 1 && idx === words.length - 1 }))
 })
 
 /* Sous-titre du visuel : message de l'organisateur, sinon accroche par défaut */
@@ -851,7 +860,7 @@ async function prepareCardBackground(): Promise<void> {
       img.onerror = () => reject(new Error('load'))
       img.src = absoluteUrl(photos.value[0])
     })
-    const w = 720
+    const w = 1200
     const h = Math.max(1, Math.round((img.naturalHeight / img.naturalWidth) * w))
     const c = document.createElement('canvas')
     c.width = w
@@ -859,7 +868,7 @@ async function prepareCardBackground(): Promise<void> {
     const ctx = c.getContext('2d')
     if (!ctx) return
     ctx.drawImage(img, 0, 0, w, h)
-    cardBgUrl.value = c.toDataURL('image/jpeg', 0.82)
+    cardBgUrl.value = c.toDataURL('image/jpeg', 0.85)
   } catch {
     /* image non chargeable (CORS/absente) : le bandeau garde son dégradé */
   }
@@ -882,9 +891,9 @@ async function generateCard(): Promise<void> {
       /* polices indisponibles : repli silencieux sur les polices système */
     }
     const canvas = await html2canvas(cardRenderEl.value, {
-      width: 1080,
-      height: 1720,
-      scale: 1,
+      width: 852,
+      height: 1280,
+      scale: 1.5,
       useCORS: true,
       backgroundColor: '#ffffff',
     })
@@ -1800,7 +1809,7 @@ html.dark .mp-inv-cardimg--loading { color: #b8b2c7; }
   position: fixed;
   left: -20000px;
   top: 0;
-  width: 1080px;
+  width: 852px;
 }
 
 /* ---------- Animations ---------- */
@@ -1922,184 +1931,248 @@ html.dark .mp-inv-qr img { background: #ffffff; }
 }
 
 /* ============================================================
-   CARTE TÉLÉCHARGEABLE « INVITATION OFFICIELLE » (1080×1720)
-   Rendue hors écran puis exportée en PNG via html2canvas.
+   CARTE TÉLÉCHARGEABLE « INVITATION OFFICIELLE » (852×1280, @1.5x)
+   Reproduction fidèle de la maquette. Rendue hors écran puis
+   exportée en PNG via html2canvas (scale 1.5 → 1278×1920).
    Contraintes html2canvas : pas de CSS filter / object-fit /
-   radial-gradient ; icônes en SVG inline ; couleurs fixes
-   (insensibles au mode sombre) ; photos via background-image.
+   radial-gradient ; icônes en SVG inline ; couleurs fixes ;
+   photos via background-image ; formes courbes via ellipses.
    ============================================================ */
 .nx {
   position: relative;
-  width: 1080px;
-  height: 1720px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  width: 852px;
+  height: 1280px;
   background: #ffffff;
   overflow: hidden;
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   color: #1d1733;
+  text-align: left;
 }
-.nx-bar { display: block; width: 56px; height: 5px; border-radius: 3px; background: #7c5cff; }
-.nx-bar--sm { width: 46px; height: 4px; margin-top: 12px; }
+.nx-bar { display: block; width: 30px; height: 3px; border-radius: 2px; background: #a98bff; }
+.nx-bar--sm { width: 26px; height: 2.5px; margin-top: 9px; }
 .nx-bar--right { margin-left: auto; }
 
-/* ---------- Bandeau haut ---------- */
+/* ---------- Bandeau haut (0 → 192) ---------- */
 .nx-header {
-  position: relative;
-  height: 220px;
-  flex-shrink: 0;
-  background: linear-gradient(118deg, #150838 0%, #2a1358 46%, #4c22a8 100%);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 852px;
+  height: 192px;
+  background: linear-gradient(108deg, #150838 0%, #2b1358 42%, #4a22a0 78%, #5b2ecc 100%);
   overflow: hidden;
 }
-.nx-swirl { position: absolute; border-radius: 50%; }
-.nx-swirl--l { width: 420px; height: 420px; left: -160px; top: -215px; background: rgba(124, 92, 255, 0.32); }
-.nx-swirl--r { width: 520px; height: 520px; right: -190px; bottom: -310px; background: rgba(124, 92, 255, 0.20); }
+.nx-header-deco { position: absolute; left: 0; top: 0; }
 .nx-official {
   position: absolute;
-  left: 46px;
-  top: 44px;
+  left: 58px;
+  top: 50px;
   display: flex;
   flex-direction: column;
-  font-size: 21px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 5px;
+  letter-spacing: 2.6px;
   text-transform: uppercase;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.85);
 }
+.nx-official .nx-bar { margin-top: 10px; }
 .nx-brand {
   position: absolute;
   left: 0;
   right: 0;
-  top: 32px;
+  top: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
-.nx-brand-logo { width: 80px; height: auto; display: block; }
-.nx-brand-name { margin-top: 4px; font-size: 42px; font-weight: 900; letter-spacing: 0.5px; color: #ffffff; }
-.nx-brand-name span { color: #a98bff; }
-.nx-brand-tag { margin-top: 2px; font-size: 17px; color: rgba(255, 255, 255, 0.78); }
+.nx-brand-logo { width: 72px; height: auto; display: block; }
+.nx-brand-name { margin-top: 3px; font-size: 30px; font-weight: 900; letter-spacing: 0.3px; color: #ffffff; }
+.nx-brand-name span { color: #b9a8f5; }
+.nx-brand-tag { margin-top: 2px; font-size: 12.5px; color: rgba(255, 255, 255, 0.75); }
 .nx-script {
   position: absolute;
-  right: 46px;
-  top: 30px;
+  right: 58px;
+  top: 28px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   font-family: 'Great Vibes', 'Brush Script MT', 'Segoe Script', cursive;
-  font-size: 40px;
-  line-height: 1.15;
+  font-size: 25px;
+  line-height: 1.22;
   color: #ffffff;
 }
-.nx-script .nx-bar--sm { margin-top: 8px; }
+.nx-script .nx-bar { margin-top: 7px; }
 
-/* ---------- Visuel événement + avatar ---------- */
-.nx-bannerwrap { position: relative; margin: 20px 42px 0; flex-shrink: 0; }
+/* ---------- Visuel événement (190 → 448) ---------- */
 .nx-banner {
-  position: relative;
-  height: 325px;
-  border-radius: 26px;
+  position: absolute;
+  left: 38px;
+  top: 190px;
+  width: 776px;
+  height: 258px;
+  box-sizing: border-box;
+  border: 9px solid #ffffff;
+  border-radius: 22px;
   overflow: hidden;
   background: linear-gradient(120deg, #1c0f45 0%, #341a75 55%, #4c22a8 100%);
+  z-index: 2;
 }
-.nx-banner-bg { position: absolute; inset: 0; background-size: cover; background-position: center 30%; }
+.nx-banner-bg { position: absolute; inset: 0; background-size: cover; background-position: center 35%; }
 .nx-banner-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(92deg, rgba(16, 8, 44, 0.88) 0%, rgba(16, 8, 44, 0.55) 52%, rgba(43, 20, 96, 0.38) 100%);
+  background: linear-gradient(90deg, rgba(15, 8, 40, 0.92) 0%, rgba(15, 8, 40, 0.60) 50%, rgba(30, 14, 70, 0.28) 100%);
 }
 .nx-banner-inner {
   position: absolute;
   inset: 0;
   display: flex;
   justify-content: space-between;
-  padding: 40px 44px;
+  padding: 30px 40px 30px 40px;
   box-sizing: border-box;
 }
-.nx-banner-left { max-width: 640px; }
-.nx-event { font-family: 'Playfair Display', serif; font-size: 47px; font-weight: 700; line-height: 1.16; color: #ffffff; }
-.nx-banner-left .nx-bar { margin-top: 20px; }
-.nx-event-sub { margin-top: 18px; max-width: 560px; font-size: 22px; line-height: 1.5; color: rgba(255, 255, 255, 0.92); }
-.nx-banner-tags { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; padding-top: 6px; }
+.nx-banner-left { max-width: 470px; }
+.nx-event { font-family: 'Playfair Display', serif; font-size: 33px; font-weight: 700; line-height: 1.18; color: #ffffff; }
+.nx-event-accent { color: #b9a8f5; }
+.nx-banner-left .nx-bar { margin-top: 13px; width: 38px; height: 4px; background: #7c5cff; }
+.nx-event-sub { margin-top: 13px; max-width: 290px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.94); }
+.nx-banner-tags { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; padding-top: 8px; }
 .nx-tag {
-  font-size: 18px;
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 3px;
-  line-height: 2.1;
+  letter-spacing: 2.2px;
+  line-height: 2.05;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.88);
 }
-.nx-banner-tags .nx-bar--sm { margin-top: 10px; }
-.nx-avatar {
+.nx-banner-tags .nx-bar { margin-top: 7px; }
+
+/* ---------- Arche blanche + avatar ---------- */
+.nx-arc {
   position: absolute;
   left: 50%;
-  bottom: -75px;
-  margin-left: -75px;
-  width: 150px;
-  height: 150px;
-  box-sizing: border-box;
-  border: 9px solid #ffffff;
+  top: 415px;
+  margin-left: -600px;
+  width: 1200px;
+  height: 180px;
   border-radius: 50%;
-  background: #f3efff;
-  box-shadow: 0 10px 26px rgba(23, 15, 58, 0.22);
+  background: #ffffff;
+  z-index: 3;
+}
+.nx-avatar {
+  position: absolute;
+  left: 362px;
+  top: 314px;
+  width: 128px;
+  height: 128px;
+  box-sizing: border-box;
+  border: 8px solid #ffffff;
+  border-radius: 50%;
+  background: #f2edfc;
+  box-shadow: 0 8px 22px rgba(20, 10, 50, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Playfair Display', serif;
-  font-size: 50px;
-  font-weight: 700;
+  font-size: 44px;
+  font-weight: 800;
   color: #5427c7;
+  z-index: 4;
 }
 
 /* ---------- Invité + présence confirmée ---------- */
-.nx-head { margin-top: 96px; text-align: center; flex-shrink: 0; }
-.nx-inviteof { font-size: 20px; color: #8a93a6; }
-.nx-guest { margin-top: 6px; font-family: 'Playfair Display', serif; font-size: 47px; font-weight: 700; color: #17123a; }
+.nx-inviteof {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 464px;
+  text-align: center;
+  font-size: 15px;
+  color: #8a93a6;
+  z-index: 4;
+}
+.nx-guest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 486px;
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #17123a;
+  z-index: 4;
+}
+.nx-pillrow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 532px;
+  display: flex;
+  justify-content: center;
+  z-index: 4;
+}
 .nx-pill {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-  margin-top: 18px;
-  padding: 13px 34px;
+  gap: 11px;
+  padding: 10px 26px;
   border-radius: 999px;
-  background: #e7f8ee;
-  font-size: 26px;
+  background: #e9f7ef;
+  white-space: nowrap;
+}
+.nx-pill-text {
+  font-size: 15.5px;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   color: #178a4c;
 }
 .nx-pill-check {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: #1f9d55;
+  background: #22a45d;
   color: #ffffff;
-  font-size: 22px;
+  font-size: 15px;
   font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.nx-thanks { margin-top: 14px; font-size: 21px; color: #667085; }
-/* ---------- Date / Heure / Lieu ---------- */
-.nx-infos { display: flex; margin: 30px 56px 0; flex-shrink: 0; }
+.nx-thanks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 586px;
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  z-index: 4;
+}
+/* ---------- Date / Heure / Lieu (618 → 780) ---------- */
+.nx-infos {
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  top: 618px;
+  display: flex;
+  z-index: 4;
+}
 .nx-info {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 2px 14px;
+  padding: 0 10px;
   box-sizing: border-box;
 }
-.nx-info + .nx-info { border-left: 2px dashed #e2dcf4; }
+.nx-info + .nx-info { border-left: 1.5px dashed #e3ddf3; }
 .nx-info-ico {
-  width: 54px;
-  height: 54px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: #f0ebff;
   color: #5427c7;
@@ -2108,107 +2181,146 @@ html.dark .mp-inv-qr img { background: #ffffff; }
   justify-content: center;
 }
 .nx-info-label {
-  margin-top: 10px;
-  font-size: 16px;
+  margin-top: 11px;
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 2.5px;
+  letter-spacing: 2.2px;
   text-transform: uppercase;
   color: #8f6fe0;
 }
-.nx-info-value { margin-top: 5px; font-size: 27px; font-weight: 700; line-height: 1.25; color: #1d1733; }
-.nx-info-sub { margin-top: 3px; font-size: 19px; color: #667085; }
+.nx-info-value { margin-top: 5px; font-size: 17px; font-weight: 700; line-height: 1.25; color: #1d1733; }
+.nx-info-sub { margin-top: 3px; font-size: 13.5px; color: #667085; }
 
-/* ---------- Séparateur + ticket QR ---------- */
-.nx-sep { margin: 24px 64px 0; border-top: 2px dashed #e2dcf4; flex-shrink: 0; }
+/* ---------- Séparateur + ticket QR (826 → 976) ---------- */
+.nx-sep {
+  position: absolute;
+  left: 100px;
+  right: 100px;
+  top: 800px;
+  border-top: 1.5px dashed #e2dcf4;
+  z-index: 4;
+}
 .nx-ticket {
-  position: relative;
+  position: absolute;
+  left: 98px;
+  right: 98px;
+  top: 826px;
+  height: 150px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 34px;
-  margin: 24px 56px 0;
-  padding: 22px 38px;
-  box-sizing: border-box;
-  border-radius: 24px;
-  background: #efe9fc;
-  flex-shrink: 0;
+  gap: 22px;
+  padding: 0 26px 0 24px;
+  border-radius: 18px;
+  background: #ece5fb;
+  z-index: 4;
 }
 .nx-hole {
   position: absolute;
   top: 50%;
-  width: 34px;
-  height: 34px;
-  margin-top: -17px;
+  width: 26px;
+  height: 26px;
+  margin-top: -13px;
   border-radius: 50%;
   background: #ffffff;
 }
-.nx-hole--l { left: -17px; }
-.nx-hole--r { right: -17px; }
-.nx-ticket-qr { padding: 14px; border-radius: 16px; background: #ffffff; flex-shrink: 0; box-sizing: border-box; }
-.nx-ticket-qr img { display: block; width: 216px; height: 216px; }
-.nx-ticket-div { width: 2px; align-self: stretch; background: rgba(84, 39, 199, 0.18); flex-shrink: 0; }
-.nx-ticket-title { font-size: 26px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #5427c7; }
-.nx-ticket-sub { margin-top: 12px; font-size: 22px; line-height: 1.5; color: #5a6478; }
+.nx-hole--l { left: -13px; }
+.nx-hole--r { right: -13px; }
+.nx-ticket-qr { padding: 10px; border-radius: 12px; background: #ffffff; flex-shrink: 0; box-sizing: border-box; }
+.nx-ticket-qr img { display: block; width: 106px; height: 106px; }
+.nx-ticket-div {
+  width: 1.5px;
+  align-self: stretch;
+  margin: 18px 0;
+  background: rgba(84, 39, 199, 0.16);
+  flex-shrink: 0;
+}
+.nx-ticket-text { min-width: 0; }
+.nx-ticket-title { font-size: 13.5px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; color: #5427c7; }
+.nx-ticket-sub { margin-top: 8px; font-size: 13px; line-height: 1.5; color: #5a6478; max-width: 320px; }
 
-/* ---------- Atouts (selon le type d'événement) ---------- */
-.nx-feats { display: flex; margin: 26px 34px 0; flex-shrink: 0; }
-.nx-feat { flex: 1; text-align: center; padding: 2px 14px; box-sizing: border-box; }
-.nx-feat + .nx-feat { border-left: 2px solid #efeaf8; }
-.nx-feat-ico { width: 38px; height: 38px; color: #5427c7; }
-.nx-feat-title { margin-top: 8px; font-size: 23px; font-weight: 800; color: #1d1733; }
-.nx-feat-sub { margin-top: 3px; font-size: 18px; line-height: 1.35; color: #667085; }
+/* ---------- Atouts (1004 → 1085) ---------- */
+.nx-feats {
+  position: absolute;
+  left: 34px;
+  right: 34px;
+  top: 1004px;
+  display: flex;
+  z-index: 4;
+}
+.nx-feat { flex: 1; text-align: center; padding: 0 10px; box-sizing: border-box; }
+.nx-feat + .nx-feat { border-left: 1.5px solid #efeaf8; }
+.nx-feat-ico { width: 21px; height: 21px; color: #5427c7; }
+.nx-feat-title { margin-top: 7px; font-size: 13px; font-weight: 800; color: #1d1733; }
+.nx-feat-sub { margin-top: 2px; font-size: 11px; line-height: 1.35; color: #667085; }
 
-/* ---------- Pied de carte ---------- */
-.nx-footer { margin-top: auto; flex-shrink: 0; }
-.nx-footer-script {
-  padding-bottom: 12px;
-  text-align: center;
-  font-family: 'Great Vibes', 'Brush Script MT', 'Segoe Script', cursive;
-  font-size: 42px;
-  color: #3d2a75;
+/* ---------- Pied de carte (colline violette, 1085 → 1280) ---------- */
+.nx-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 195px;
+  background: #ffffff;
+  overflow: hidden;
+  z-index: 5;
 }
 .nx-footer-band {
-  position: relative;
-  height: 148px;
-  background: linear-gradient(115deg, #43208f 0%, #2a1358 55%, #1d0d44 100%);
-  overflow: hidden;
-}
-.nx-footer-blob {
   position: absolute;
-  left: -70px;
-  bottom: -150px;
-  width: 230px;
-  height: 230px;
+  left: 50%;
+  top: 0;
+  margin-left: -700px;
+  width: 1400px;
+  height: 300px;
   border-radius: 50%;
-  background: #ffffff;
+  background: linear-gradient(115deg, #43208f 0%, #2a1358 55%, #1d0d44 100%);
 }
-.nx-footer-heart { position: absolute; left: 26px; bottom: 16px; font-size: 40px; color: #7c5cff; }
+.nx-footer-script {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 36px;
+  text-align: center;
+  font-family: 'Great Vibes', 'Brush Script MT', 'Segoe Script', cursive;
+  font-size: 28px;
+  color: #ffffff;
+}
 .nx-footer-brand {
   position: absolute;
   left: 0;
   right: 0;
-  top: 50%;
-  margin-top: -34px;
+  top: 102px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 10px;
 }
-.nx-footer-logo { width: 52px; height: auto; display: block; }
-.nx-footer-name { font-size: 30px; font-weight: 900; text-align: left; color: #ffffff; }
-.nx-footer-name span { color: #a98bff; }
-.nx-footer-tag { margin-top: 2px; font-size: 15px; text-align: left; color: rgba(255, 255, 255, 0.78); }
+.nx-footer-logo { width: 34px; height: auto; display: block; }
+.nx-footer-name { font-size: 21px; font-weight: 900; text-align: left; color: #ffffff; }
+.nx-footer-name span { color: #b9a8f5; }
+.nx-footer-tag { margin-top: 1px; font-size: 11px; text-align: left; color: rgba(255, 255, 255, 0.75); }
 .nx-footer-caps {
   position: absolute;
-  right: 42px;
-  bottom: 20px;
+  right: 40px;
+  bottom: 16px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  font-size: 14px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 3px;
-  line-height: 1.75;
+  letter-spacing: 2.2px;
+  line-height: 1.8;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.8);
 }
+.nx-footer-blob {
+  position: absolute;
+  left: -60px;
+  bottom: -110px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+.nx-footer-heart { position: absolute; left: 28px; bottom: 14px; font-size: 34px; color: #8b5cf6; }
 </style>
