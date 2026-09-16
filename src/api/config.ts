@@ -5,6 +5,14 @@
 //   ex. `VITE_API_BASE_URL=http://localhost:8000 npm run dev`
 const DEFAULT_BASE_URL = 'https://mariageplus-production.up.railway.app'
 
+// Numéro WhatsApp de contact PAR DÉFAUT de la plateforme (bouton flottant de
+// la landing). Public par nature : c'est un lien wa.me affiché sur la page
+// d'accueil, pas un secret. Défini ici en dur pour que le bouton s'affiche
+// aussi en production (Vercel), où `.env.local` n'est pas déployé.
+// Surchargable via VITE_WHATSAPP_CONTACT (format international sans "+"
+// ni espaces).
+const DEFAULT_WHATSAPP_CONTACT = '243847381745'
+
 function baseUrl(): string {
   const fromEnv = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
   const raw = fromEnv.trim() || DEFAULT_BASE_URL
@@ -50,6 +58,9 @@ export const ApiConfig = {
   organizationsPath: '/api/organizations',
 
   // Numéro WhatsApp de contact de la plateforme (bouton flottant de la landing).
-  // Format international sans "+" ni espaces, ex. 2250701020304.
-  whatsappContactNumber: (import.meta.env.VITE_WHATSAPP_CONTACT as string | undefined)?.replace(/[^0-9]/g, '') ?? '',
+  // Priorité : VITE_WHATSAPP_CONTACT si défini, sinon DEFAULT_WHATSAPP_CONTACT
+  // (défini plus haut) pour que le bouton soit visible en production.
+  whatsappContactNumber:
+    (import.meta.env.VITE_WHATSAPP_CONTACT as string | undefined)?.replace(/[^0-9]/g, '') ||
+    DEFAULT_WHATSAPP_CONTACT,
 }
