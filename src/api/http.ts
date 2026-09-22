@@ -95,7 +95,10 @@ http.interceptors.response.use(
       }
     }
 
-    if (status && status !== 401) {
+    if (status && status !== 401 && !isAuthEndpoint) {
+      // Les endpoints d'authentification (login/register/refresh) gèrent
+      // eux-mêmes leurs erreurs à l'écran : pas de toast global, sinon un
+      // simple refresh raté au chargement affiche « Refresh token invalide ».
       const notify = useNotificationStore()
       notify.push(extractMessage(error), 'error')
     }
