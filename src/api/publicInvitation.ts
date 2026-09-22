@@ -100,7 +100,7 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
 export async function listPublicDrinks(token: string): Promise<PublicDrink[]> {
   const res = await http.get(`${ApiConfig.publicInvitationsPath}/${token}/drinks`)
   const j = decodeList(res.data)
-  return (decodeList(res.data) as Record<string, unknown>[]).map((d) => ({
+  return (j as Record<string, unknown>[]).map((d) => ({
     id: Number(d.id ?? 0),
     name: String(d.name ?? ''),
     description: d.description ? String(d.description) : null,
@@ -110,11 +110,19 @@ export async function listPublicDrinks(token: string): Promise<PublicDrink[]> {
   }))
 }
 
-export async function submitPublicRsvp(token: string, status: string, attendees: number, drinkChoices?: string[]): Promise<PublicRsvp> {
+export async function submitPublicRsvp(
+  token: string,
+  status: string,
+  attendees: number,
+  drinkChoices?: string[],
+  note?: string,
+): Promise<PublicRsvp> {
   const res = await http.post(`${ApiConfig.publicInvitationsPath}/${token}/rsvp`, {
     status,
     numberOfAttendees: attendees,
     drinkChoices: drinkChoices && drinkChoices.length ? drinkChoices : undefined,
+    // Message libre de l'invité (« petit mot ») — envoyé seulement s'il est non vide.
+    note: note && note.trim() ? note.trim() : undefined,
   })
   const j = decodeMap(res.data)
   return {

@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import {
   http,
   setTokens,
-  loadTokens,
   clearTokens,
   decodeMap,
   type AuthTokens,

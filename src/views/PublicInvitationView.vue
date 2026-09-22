@@ -720,6 +720,9 @@ async function load() {
       success.value = ''
     }
     drinkChoices.value = inv.value?.rsvpDrinkChoices?.length ? [...inv.value.rsvpDrinkChoices] : []
+    // Boissons pour le sélecteur du formulaire : seulement si l'invitation est
+    // consultable (inutile si annulée, expirée ou en erreur).
+    if (!unavailable.value) loadDrinks()
     startAutoplay()
   } catch (e: any) {
     unavailable.value = true
@@ -745,11 +748,12 @@ async function submitAccepted() {
   }
   sending.value = true
   try {
-    await submitPublicRsvp(token, 'ACCEPTED', attendees.value, drinkChoices.value)
+    await submitPublicRsvp(token, 'ACCEPTED', attendees.value, drinkChoices.value, note.value)
     inv.value = await getPublicInvitation(token)
     success.value = 'ACCEPTED'
     qrDataUri.value = await genQr()
     notifications.push('Votre présence a bien été confirmée.', 'success')
+    note.value = ''
   } catch (e: any) {
     const msg = String(e?.response?.data?.error || '')
     if (/limit|capacit|maximum|dépass|dépasse|places/i.test(msg)) {

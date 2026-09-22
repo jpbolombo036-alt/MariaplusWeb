@@ -4,28 +4,23 @@ import { useNotificationStore } from '../stores/notifications'
 
 export interface AuthTokens {
   accessToken: string
+  /** Présent pour compatibilité d'appel, mais ignoré côté web : le refresh
+   * token vit uniquement dans le cookie HttpOnly mp_refresh (jamais en
+   * storage JS, ni en mémoire). */
   refreshToken: string
   expiresIn: number
 }
 
-// Stockage des jetons en localStorage (web). NB : le refresh token n'étant pas
-// aussi sensible que sur mobile, mais reste propre à la session.
+// Seul l'access token est conservé, en mémoire vive (jamais persisté) : à
+// chaque rechargement de page, restore() le régénère via le cookie de refresh.
 let accessToken: string | null = null
-let refreshToken: string | null = null
 
 export function setTokens(t: AuthTokens) {
   accessToken = t.accessToken
-  // Refresh token is held by the HttpOnly mp_refresh cookie, never web storage.
-  refreshToken = null
-}
-
-export function loadTokens(): AuthTokens | null {
-  return null
 }
 
 export function clearTokens() {
   accessToken = null
-  refreshToken = null
 }
 
 let refreshPromise: Promise<string> | null = null
@@ -66,7 +61,7 @@ async function doRefresh(): Promise<string> {
   const data = (typeof res.data === 'string' ? JSON.parse(res.data) : res.data) as Record<string, unknown>
   const nextAuth: AuthTokens = {
     accessToken: String(data.accessToken ?? ''),
-    refreshToken: String(data.refreshToken ?? ''),
+    refreshToken: '',
     expiresIn: Number(data.expiresIn ?? 900),
   }
   setTokens(nextAuth)
