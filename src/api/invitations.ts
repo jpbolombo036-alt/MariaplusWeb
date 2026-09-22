@@ -77,8 +77,19 @@ export async function resendInvitation(eventId: number, invitationId: number): P
 /**
  * Si le backend n'a pas encore FRONTEND_URL configuré (ou ancien déploiement),
  * il peut renvoyer un lien "localhost" inutilisable par l'invité. On reconstruit
- * alors le lien à partir du domaine sur lequel l'organisateur se trouve.
+ * alors le lien à partir d'une origine partageable :
+ * - VITE_PUBLIC_BASE_URL si défini (ex. https://eventiaeasy.vercel.app)
+ * - sinon l'origine courante (window.location.origin)
+ *
+ * NB : en développement local (localhost:3000), l'origine courante ne peut pas
+ * être ouverte par l'invité sur son téléphone — définissez VITE_PUBLIC_BASE_URL
+ * dans .env.local pour que les liens copiés/partagés soient réellement vivants.
  */
+function shareableOrigin(): string {
+  const fromEnv = (import.meta.env.VITE_PUBLIC_BASE_URL as string | undefined)?.trim()
+  return fromEnv || window.location.origin
+}
+
 function normalizeSendResult(r: SendResult): SendResult {
   const url = r.publicInviteUrl
   if (!url) return r
@@ -87,7 +98,7 @@ function normalizeSendResult(r: SendResult): SendResult {
   const marker = '/invitations/'
   const idx = url.indexOf(marker)
   const token = idx >= 0 ? url.slice(idx + marker.length).split('?')[0] : ''
-  r.publicInviteUrl = `${window.location.origin}/invitations/${token}`
+  r.publicInviteUrl = `${shareableOrigin()}/invitations/${token}`
   return r
 }
 
