@@ -1,9 +1,12 @@
 // URL de base de l'API.
 //
-// - Par défaut : production (Railway) — https://mariageplus-production.up.railway.app
+// - Par défaut : production (Railway) — https://mariageplus-production-a657.up.railway.app
 // - Développement local : surcharger au build/run via VITE_API_BASE_URL,
 //   ex. `VITE_API_BASE_URL=http://localhost:8000 npm run dev`
-const DEFAULT_BASE_URL = 'https://mariageplus-production.up.railway.app'
+// NB : le protocole https:// est OBLIGATOIRE — sans schéma, axios traiterait
+// la valeur comme un chemin relatif et les requêtes partiraient vers le
+// serveur frontend (localhost:3000 en dev) au lieu du backend → 404.
+const DEFAULT_BASE_URL = 'https://mariageplus-production-a657.up.railway.app'
 
 // Numéro WhatsApp de contact PAR DÉFAUT de la plateforme (bouton flottant de
 // la landing). Public par nature : c'est un lien wa.me affiché sur la page
@@ -15,7 +18,11 @@ const DEFAULT_WHATSAPP_CONTACT = '243847381745'
 
 function baseUrl(): string {
   const fromEnv = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
-  const raw = fromEnv.trim() || DEFAULT_BASE_URL
+  let raw = fromEnv.trim() || DEFAULT_BASE_URL
+  // Sécurité : si l'URL est saisie sans protocole (ex. "mon-api.up.railway.app"),
+  // axios la traiterait comme un chemin relatif → requêtes envoyées au serveur
+  // frontend (localhost:3000 en dev) au lieu du backend → 404.
+  if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`
   return raw.endsWith('/') ? raw.slice(0, -1) : raw
 }
 

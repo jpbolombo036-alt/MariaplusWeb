@@ -720,6 +720,8 @@ async function load() {
       success.value = ''
     }
     drinkChoices.value = inv.value?.rsvpDrinkChoices?.length ? [...inv.value.rsvpDrinkChoices] : []
+    // Pré-remplissage du « petit mot » avec la note déjà enregistrée (édition).
+    note.value = inv.value?.rsvpNote ?? ''
     // Boissons pour le sélecteur du formulaire : seulement si l'invitation est
     // consultable (inutile si annulée, expirée ou en erreur).
     if (!unavailable.value) loadDrinks()

@@ -20,6 +20,8 @@ export interface PublicInvitation {
   rsvpNumberOfAttendees?: number | null
   rsvpDrinkChoice?: string | null
   rsvpDrinkChoices?: string[] | null
+  /** Message libre laissé par l'invité au moment du RSVP (pré-remplissage). */
+  rsvpNote?: string | null
   publicToken?: string | null
   /** Programme de la journée (sessions actives de l'événement) — additif. */
   sessions?: PublicSessionItem[] | null
