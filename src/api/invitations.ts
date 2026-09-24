@@ -39,10 +39,25 @@ function parseInv(json: Record<string, unknown>): Invitation {
   }
 }
 
-export async function listInvitations(eventId: number): Promise<Invitation[]> {
-  const res = await http.get(ApiConfig.weddingInvitationsPath(eventId), { params: { size: 200 } })
+export async function listInvitations(eventId: number, opts?: { page?: number; size?: number }): Promise<Invitation[]> {
+  const size = opts?.size ?? 500
+  const page = opts?.page ?? 0
+  const res = await http.get(ApiConfig.weddingInvitationsPath(eventId), { params: { page, size } })
   const json = decodeMap(res.data)
-  return decodeList(json.content).map((e) => parseInv(e as Record<string, unknown>))
+  const items = decodeList(json.content).map((e) => parseInv(e as Record<string, unknown>))
+  const totalPages = Number(json.totalPages ?? 1)
+  if (opts?.page === undefined && totalPages > 1) {
+    const promises: Promise<Invitation[]>[] = []
+    for (let p = 1; p < totalPages; p++) {
+      promises.push(
+        http.get(ApiConfig.weddingInvitationsPath(eventId), { params: { page: p, size } })
+          .then((r) => decodeList(decodeMap(r.data).content).map((e) => parseInv(e as Record<string, unknown>)))
+      )
+    }
+    const rest = await Promise.all(promises)
+    return items.concat(...rest)
+  }
+  return items
 }
 
 export async function listNonResponders(eventId: number): Promise<Invitation[]> {

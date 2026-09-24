@@ -173,7 +173,14 @@
         <p class="text-sm text-on-surface-variant mb-4">Copiez ce lien et envoyez-le à l'invité :</p>
         <div class="flex items-center gap-2">
           <input :value="shareUrl" readonly class="flex-1 px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-sm text-on-surface" />
-          <button class="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold" @click="copyShare">Copier</button>
+          <button
+            class="px-4 py-2 rounded-lg text-sm font-semibold transition-all inline-flex items-center gap-1.5 shrink-0"
+            :class="shareCopied ? 'bg-emerald-600 text-white shadow-sm' : 'bg-primary text-on-primary hover:bg-primary-dark'"
+            @click="copyShare"
+          >
+            <span class="material-symbols-outlined text-[18px]">{{ shareCopied ? 'check' : 'content_copy' }}</span>
+            {{ shareCopied ? 'Copié !' : 'Copier' }}
+          </button>
         </div>
         <p class="mt-3 text-xs text-on-surface-variant">Email envoyé : <strong>{{ shareEmailSent ? 'Oui' : 'Non' }}</strong></p>
         <div class="mt-5 flex justify-end">
@@ -216,6 +223,7 @@ const qrInv = ref<Invitation | null>(null)
 const shareOpen = ref(false)
 const shareUrl = ref('')
 const shareEmailSent = ref(false)
+const shareCopied = ref(false)
 const bulkOpen = ref(false)
 const auth = useAuthStore()
 const waEnabled = ref(true)
@@ -278,6 +286,7 @@ async function send(i: Invitation) {
   if (result.publicInviteUrl) {
     shareUrl.value = result.publicInviteUrl
     shareEmailSent.value = result.emailSent || false
+    shareCopied.value = false
     shareOpen.value = true
   }
 }
@@ -287,6 +296,7 @@ async function resend(i: Invitation) {
   if (result.publicInviteUrl) {
     shareUrl.value = result.publicInviteUrl
     shareEmailSent.value = result.emailSent || false
+    shareCopied.value = false
     shareOpen.value = true
   }
 }
@@ -315,7 +325,9 @@ async function rotate() {
 async function copyShare() {
   try {
     await navigator.clipboard.writeText(shareUrl.value)
+    shareCopied.value = true
     notifications.push('Lien copié !', 'success')
+    setTimeout(() => { shareCopied.value = false }, 2000)
   } catch {
     notifications.push('Impossible de copier le lien.', 'error')
   }

@@ -81,6 +81,7 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
     rsvpDrinkChoices: Array.isArray(j.rsvpDrinkChoices)
       ? (j.rsvpDrinkChoices as unknown[]).map((x) => String(x))
       : null,
+    rsvpNote: j.rsvpNote ? String(j.rsvpNote) : null,
     publicToken: j.publicToken ? String(j.publicToken) : null,
     sessions: Array.isArray(j.sessions)
       ? (j.sessions as Record<string, unknown>[]).map((s) => ({
