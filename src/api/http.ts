@@ -2,6 +2,16 @@ import axios, { AxiosInstance, AxiosError } from 'axios'
 import { ApiConfig } from './config'
 import { useNotificationStore } from '../stores/notifications'
 
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    /**
+     * Requête de « sondage » : si elle échoue, aucun toast global n'est affiché
+     * (l'appelant décide de la suite — ex. vérifier qu'un lien public est ouvrable).
+     */
+    skipNotification?: boolean
+  }
+}
+
 export interface AuthTokens {
   accessToken: string
   /** Présent pour compatibilité d'appel, mais ignoré côté web : le refresh
@@ -95,7 +105,9 @@ http.interceptors.response.use(
       }
     }
 
-    if (status && status !== 401 && !isAuthEndpoint) {
+    // `skipNotification` : requête de sondage (ex. vérification qu'un lien public
+    // est réellement ouvrable) → pas de toast global, l'appelant gère l'échec.
+    if (status && status !== 401 && !isAuthEndpoint && !error.config?.skipNotification) {
       // Les endpoints d'authentification (login/register/refresh) gèrent
       // eux-mêmes leurs erreurs à l'écran : pas de toast global, sinon un
       // simple refresh raté au chargement affiche « Refresh token invalide ».
@@ -106,6 +118,19 @@ http.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+/**
+ * Message lisible d'une erreur d'API — y compris pour un échec **réseau** ou CORS
+ * (aucune réponse HTTP), cas où l'intercepteur ne notifie rien : l'appelant peut
+ * ainsi afficher une raison explicite au lieu de laisser l'utilisateur sans retour.
+ */
+export function apiErrorMessage(error: unknown): string {
+  const err = error as AxiosError | undefined
+  if (!err?.response) {
+    return 'Impossible de contacter le serveur (connexion perdue, ou requête bloquée par le navigateur/CORS).'
+  }
+  return extractMessage(err)
+}
 
 // Helpers génériques pour décoder les réponses.
 export function decodeMap(data: unknown): Record<string, unknown> {

@@ -1,51 +1,12 @@
 <template>
   <div>
-    <div class="relative w-full h-[320px] rounded-b-2xl overflow-hidden mb-6 flex items-end">
-      <div
-        class="absolute inset-0 bg-cover bg-center"
-        :style="heroBg ? { backgroundImage: `url(${heroBg})` } : undefined"
-      ></div>
-      <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-
-      <div class="relative z-10 w-full p-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
-        <div class="flex flex-col gap-3">
-          <div class="flex items-center gap-3">
-            <span class="px-3 py-1 rounded-full bg-primary-container text-white text-[10px] uppercase tracking-wider font-bold">{{ eventType }}</span>
-            <span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[10px] uppercase tracking-wider font-bold flex items-center gap-1">
-              <span class="material-symbols-outlined text-xs">check_circle</span> {{ statusLabel }}
-            </span>
-          </div>
-          <h2 class="text-2xl md:text-3xl font-bold text-white">{{ eventDisplayName || 'Événement' }}</h2>
-          <div v-if="stats" class="flex flex-wrap items-center gap-5 text-sm text-white/90">
-            <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">group</span> {{ stats.guests.total }} invités</span>
-            <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">how_to_reg</span> {{ stats.invitations.total }} invitations</span>
-            <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">person_check</span> {{ stats.attendance.checkedIn }} présents</span>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <PermGuard :allow="['WEDDING_UPDATE']">
-            <button class="h-11 px-6 rounded-lg bg-white text-on-surface text-sm font-semibold flex items-center gap-2 hover:bg-white/90 shadow-sm">
-              <span class="material-symbols-outlined text-base">edit</span> Modifier
-            </button>
-          </PermGuard>
-          <PermGuard :allow="['WEDDING_PUBLISH']">
-            <button class="h-11 px-6 rounded-lg bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 shadow-sm" @click="publish">
-              <span class="material-symbols-outlined text-base">publish</span> Publier
-            </button>
-          </PermGuard>
-        </div>
-      </div>
-    </div>
-
-
     <div v-if="stats" class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
       <div class="flex items-center justify-between mb-5">
         <div>
           <h3 class="text-[15px] font-bold text-slate-800">Aperçu de l'événement</h3>
           <p class="text-[13px] text-slate-500 mt-0.5">Statistiques et progression</p>
         </div>
-        <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+        <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors" @click="loadOverview">
           <span class="material-symbols-outlined text-[16px]">refresh</span> Actualiser
         </button>
       </div>
@@ -100,10 +61,30 @@
       </div>
 
       <div class="col-span-12 lg:col-span-4 bg-slate-50 border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden h-[320px]">
-        <div class="px-5 py-4 border-b border-slate-200 bg-white"><h3 class="font-semibold text-slate-800">Événements programmés</h3></div>
-        <div class="flex-1 flex flex-col justify-center items-center p-5">
+        <div class="px-5 py-4 border-b border-slate-200 bg-white flex justify-between items-center">
+          <h3 class="font-semibold text-slate-800">Événements programmés</h3>
+          <router-link to="internal-events" class="text-primary text-sm hover:underline">Voir tout</router-link>
+        </div>
+        <div v-if="eventsLoading" class="flex-1 grid place-items-center text-sm text-slate-400">Chargement…</div>
+        <div v-else-if="scheduledEvents.length" class="flex-1 overflow-y-auto p-3 space-y-2">
+          <div v-for="item in scheduledEvents" :key="item.id" class="bg-white rounded-lg border border-slate-200 px-3 py-2.5">
+            <div class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-primary text-[19px] mt-0.5">event</span>
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-800 text-[13px] truncate">{{ item.name }}</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">
+                  {{ eventTypeLabel(item.type) }}
+                  <template v-if="item.eventDate"> · {{ formatDate(item.eventDate) }}</template>
+                  <template v-if="item.startTime"> · {{ item.startTime }}</template>
+                </p>
+                <p v-if="item.venueName || item.city" class="text-[11px] text-slate-400 truncate">{{ [item.venueName, item.city].filter(Boolean).join(', ') }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="flex-1 flex flex-col justify-center items-center p-5">
           <div class="w-16 h-16 rounded-lg bg-slate-100 flex items-center justify-center mb-4 border border-slate-200"><span class="material-symbols-outlined text-slate-400 text-3xl">event</span></div>
-          <p class="text-slate-500 text-center text-sm max-w-[200px]">Les cérémonies / événements programmés seront listés ici.</p>
+          <p class="text-slate-500 text-center text-sm max-w-[200px]">Aucun événement programmé pour le moment.</p>
         </div>
       </div>
     </div>
@@ -116,29 +97,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getEvent, updateEventStatus, loadEventImage, absolutePhotoUrl, type Event } from '../../api/events'
 import { getDashboard, type Dashboard } from '../../api/dashboard'
-import PermGuard from '../../components/common/PermGuard.vue'
+import { listWeddingEvents, type WeddingEventItem } from '../../api/weddingEvents'
 
 const route = useRoute()
 const id = Number(route.params.id)
 
 const stats = ref<Dashboard | null>(null)
-const event = ref<Event | null>(null)
 const loading = ref(true)
-
-const eventDisplayName = computed(() => event.value?.weddingDetails?.displayName || event.value?.name || '')
-const eventType = computed(() => event.value?.type || 'ÉVÉNEMENT')
-const statusLabel = computed(() => (event.value?.status || 'DRAFT').toUpperCase())
-
-/** Fond de la carte héros : photo du couple (mariage) sinon photo de couverture
- * (chargée via l'API authentifiée). Un seul carte photo pour tous les types. */
-const coverUrl = ref<string | null>(null)
-const heroBg = computed(() => {
-  const couple = event.value?.weddingDetails?.couplePhotoUrl
-  if (couple) return absolutePhotoUrl(couple)
-  return coverUrl.value
-})
+const scheduledEvents = ref<WeddingEventItem[]>([])
+const eventsLoading = ref(true)
 
 const pctParticipation = computed(() => {
   const e = stats.value?.attendance.expected ?? 0
@@ -151,32 +119,36 @@ const tableFillRate = computed(() => {
   return c > 0 ? Math.round(((stats.value?.tables.assignedGuests ?? 0) / c) * 100) : 0
 })
 
-onMounted(async () => {
+function eventTypeLabel(type: string): string {
+  return ({
+    CIVIL_CEREMONY: 'Cérémonie civile',
+    RELIGIOUS_CEREMONY: 'Cérémonie religieuse',
+    RECEPTION: 'Réception',
+    AFTER_PARTY: 'After party',
+    OTHER: 'Autre',
+  } as Record<string, string>)[type] ?? type
+}
+
+function formatDate(value: string): string {
+  const date = new Date(`${value}T00:00:00`)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+}
+
+async function loadOverview() {
+  eventsLoading.value = true
   try {
-    const [w, d] = await Promise.all([getEvent(id), getDashboard(id)])
-    event.value = w
-    stats.value = d
-    // Couverture (fallback du héros quand il n'y a pas de photo du couple)
-    if (w?.hasImage && !w?.weddingDetails?.couplePhotoUrl) {
-      try {
-        coverUrl.value = await loadEventImage(id)
-      } catch {
-        /* ignore */
-      }
-    }
+    const [dashboard, events] = await Promise.all([getDashboard(id), listWeddingEvents(id)])
+    stats.value = dashboard
+    scheduledEvents.value = events.filter((item) => item.active !== false).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
   } catch {
-    /* valeurs par défaut */
+    scheduledEvents.value = []
   } finally {
     loading.value = false
-  }
-})
-
-async function publish() {
-  try {
-    event.value = await updateEventStatus(id, 'PUBLISHED')
-  } catch {
-    /* ignoré */
+    eventsLoading.value = false
   }
 }
+
+onMounted(loadOverview)
+
 </script>
 

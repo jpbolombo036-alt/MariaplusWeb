@@ -27,6 +27,10 @@
           <label class="block">
             <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Email</span>
             <input v-model="form.email" type="email" placeholder="email@exemple.com" class="input" />
+            <!-- Le backend n'envoie/relance par email que si l'invité en a un ;
+                 sans email, l'invitation peut tout de même être envoyée en masse
+                 par WhatsApp, puis le lien copié depuis l'onglet Invitations. -->
+            <span class="block text-[11px] text-slate-400 mt-1">Requis pour envoyer ou relancer l’invitation par email.</span>
           </label>
 
           <label class="block">

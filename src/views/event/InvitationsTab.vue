@@ -87,13 +87,16 @@
               <td class="px-5 py-3.5 text-right">
                 <div class="inline-flex items-center gap-1">
                   <PermGuard :allow="['INVITATION_SEND']">
-                    <button v-if="i.status==='GENERATED' || i.status==='DRAFT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1" title="Envoyer" @click="send(i)"><span class="material-symbols-outlined text-base">send</span></button>
+                    <button v-if="i.status==='GENERATED' || i.status==='DRAFT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg disabled:opacity-50" :disabled="busyId === i.id" title="Envoyer" @click="send(i)"><span class="material-symbols-outlined text-base" :class="{ 'animate-spin': busyId === i.id }">{{ busyId === i.id ? 'progress_activity' : 'send' }}</span></button>
                   </PermGuard>
                   <PermGuard :allow="['INVITATION_RESEND']">
-                    <button v-if="i.status==='SENT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1" title="Relancer" @click="resend(i)"><span class="material-symbols-outlined text-base">refresh</span></button>
+                    <button v-if="i.status==='SENT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg inline-flex items-center gap-1 disabled:opacity-50" :disabled="busyId === i.id" title="Relancer" @click="resend(i)"><span class="material-symbols-outlined text-base" :class="{ 'animate-spin': busyId === i.id }">{{ busyId === i.id ? 'progress_activity' : 'refresh' }}</span></button>
                   </PermGuard>
                   <PermGuard :allow="['INVITATION_SEND']">
                     <button v-if="i.status==='SENT' || i.status==='GENERATED' || i.status==='DRAFT'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg" title="QR" @click="showQr(i)"><span class="material-symbols-outlined text-base">qr_code</span></button>
+                  </PermGuard>
+                  <PermGuard :allow="['INVITATION_SEND']">
+                    <button v-if="i.status!=='CANCELLED'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg disabled:opacity-50" :disabled="linkBusy === i.id" :title="links[i.id] ? 'Copier le lien de l’invitation' : 'Récupérer le lien de l’invitation'" @click="openLink(i)"><span class="material-symbols-outlined text-base">{{ linkBusy === i.id ? 'progress_activity' : 'link' }}</span></button>
                   </PermGuard>
                   <PermGuard :allow="['INVITATION_CANCEL']">
                     <button v-if="i.status!=='CANCELLED'" class="px-2 py-1 text-amber-500 hover:bg-amber-50 rounded-lg" title="Annuler" @click="cancel(i)"><span class="material-symbols-outlined text-base">block</span></button>
@@ -142,9 +145,13 @@
           <!-- Actions -->
           <InvitationActions
             :i="i"
+            :link="links[i.id] || ''"
+            :link-busy="linkBusy === i.id"
+            :busy="busyId === i.id"
             @send="send"
             @resend="resend"
             @qr="showQr"
+            @link="openLink"
             @cancel="cancel"
             @delete="remove"
           />
@@ -182,7 +189,17 @@
             {{ shareCopied ? 'Copié !' : 'Copier' }}
           </button>
         </div>
-        <p class="mt-3 text-xs text-on-surface-variant">Email envoyé : <strong>{{ shareEmailSent ? 'Oui' : 'Non' }}</strong></p>
+        <div class="mt-3 flex items-center justify-between gap-3">
+          <p class="text-xs text-on-surface-variant">Email envoyé : <strong>{{ shareEmailSent ? 'Oui' : 'Non' }}</strong></p>
+          <a
+            :href="shareUrl"
+            target="_blank"
+            rel="noopener"
+            class="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+          >
+            <span class="material-symbols-outlined text-[16px]">open_in_new</span> Ouvrir le lien
+          </a>
+        </div>
         <div class="mt-5 flex justify-end">
           <button class="px-4 py-2 rounded-lg border border-outline-variant text-sm" @click="shareOpen=false">Fermer</button>
         </div>
@@ -198,16 +215,21 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   listInvitations, createInvitation, sendInvitation, resendInvitation, cancelInvitation, deleteInvitation,
-  getQr, rotateQr, type Invitation,
+  getQr, rotateQr, inviteUrlFromPayload, extractPublicToken, type Invitation,
 } from '../../api/invitations'
 import { listGuests, type Guest } from '../../api/guests'
+import { publicInvitationExists } from '../../api/publicInvitation'
+import { apiErrorMessage } from '../../api/http'
+import { decodeQrPayload } from '../../utils/qr'
+import { withTimeout } from '../../utils/withTimeout'
 import PermGuard from '../../components/common/PermGuard.vue'
 import StatusBadge from '../../components/common/StatusBadge.vue'
 import InvitationActions from '../../components/invitations/InvitationActions.vue'
 import BulkSendPanel from '../../components/invitations/BulkSendPanel.vue'
 import { useNotificationStore } from '../../stores/notifications'
 import { useAuthStore } from '../../stores/auth'
-import { getWhatsappSettings, updateWhatsappSettings } from '../../api/admin'
+import { usePlatformStore } from '../../stores/platform'
+import { updateWhatsappSettings } from '../../api/admin'
 
 const route = useRoute()
 const id = Number(route.params.id)
@@ -227,6 +249,13 @@ const shareCopied = ref(false)
 const bulkOpen = ref(false)
 const auth = useAuthStore()
 const waEnabled = ref(true)
+// Liens publics déjà obtenus, par invitation : permet de recopier un lien sans
+// relancer l'envoi. `linkBusy` = recherche du lien en cours (décodage du QR).
+const links = ref<Record<number, string>>({})
+const linkBusy = ref<number | null>(null)
+// Envoi / relance en cours (id de l'invitation) : désactive les boutons et
+// affiche un indicateur, pour qu'un appel lent ne ressemble pas à un bouton mort.
+const busyId = ref<number | null>(null)
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -250,14 +279,12 @@ const initialsFor = (i: Invitation) => {
 const avatarPalette = ['#5b2ecc', '#176b5b', '#f4a340', '#1f2937', '#7c3aed', '#0e7490']
 const avatarColor = (n: number) => avatarPalette[n % avatarPalette.length]
 
-onMounted(() => { load(); loadWaEnabled() })
-async function loadWaEnabled() {
-  try {
-    waEnabled.value = (await getWhatsappSettings()).whatsappSendingEnabled
-  } catch {
-    // en cas d'erreur : l'envoi reste actif (comportement par défaut)
-  }
-}
+const platform = usePlatformStore()
+onMounted(async () => {
+  load()
+  await platform.load()
+  waEnabled.value = platform.canSendWhatsapp
+})
 async function toggleWhatsapp() {
   const next = !waEnabled.value
   try {
@@ -280,26 +307,127 @@ async function load() {
     loading.value = false
   }
 }
-async function send(i: Invitation) {
-  const result = await sendInvitation(id, i.id)
-  await load()
-  if (result.publicInviteUrl) {
-    shareUrl.value = result.publicInviteUrl
-    shareEmailSent.value = result.emailSent || false
-    shareCopied.value = false
-    shareOpen.value = true
+/** Ouvre la modale « Partager l'invitation » avec le lien fourni. */
+function openShare(url: string, emailSent: boolean) {
+  shareUrl.value = url
+  shareEmailSent.value = emailSent
+  shareCopied.value = false
+  shareOpen.value = true
+}
+
+/**
+ * Retrouve le lien public d'une invitation SANS la renvoyer : le backend ne
+ * l'expose que dans la réponse de /send ou /resend. En dernier recours on lit le
+ * QR de l'invitation (endpoint de lecture seule) et on reconstruit le lien à
+ * partir du jeton qu'il contient — après vérification auprès de l'API publique,
+ * afin de ne jamais proposer un lien cassé.
+ */
+async function linkFromQr(i: Invitation): Promise<string> {
+  const qr = await getQr(id, i.id)
+  if (!qr.dataUri) return ''
+  // Décodage et vérification bornés dans le temps : le décodeur QR (image) et le
+  // sondage réseau ne doivent jamais laisser le bouton sans réaction.
+  const payload = await withTimeout(decodeQrPayload(qr.dataUri), 5000, '')
+  if (!payload) return ''
+  const url = inviteUrlFromPayload(payload)
+  const token = extractPublicToken(url)
+  if (!url || !token) return ''
+  const exists = await withTimeout(publicInvitationExists(token), 5000, false)
+  return exists ? url : ''
+}
+
+/** Action « Lien » : recopie un lien déjà connu, sinon tente de le retrouver. */
+async function openLink(i: Invitation) {
+  const known = links.value[i.id]
+  if (known) {
+    openShare(known, false)
+    return
+  }
+  linkBusy.value = i.id
+  try {
+    const url = await withTimeout(linkFromQr(i), 12000, '')
+    if (url) {
+      links.value[i.id] = url
+      openShare(url, false)
+      return
+    }
+    notifications.push(
+      "Lien introuvable pour cette invitation : le serveur n'a renvoyé aucune URL publique. " +
+        'Vérifiez la configuration du backend (URL publique du front) puis réessayez.',
+      'error',
+      8000,
+    )
+  } finally {
+    linkBusy.value = null
   }
 }
-async function resend(i: Invitation) {
-  const result = await resendInvitation(id, i.id)
-  await load()
-  if (result.publicInviteUrl) {
-    shareUrl.value = result.publicInviteUrl
-    shareEmailSent.value = result.emailSent || false
-    shareCopied.value = false
-    shareOpen.value = true
+
+/** Envoi / relance d'une invitation, puis affichage du lien à partager. */
+async function submit(i: Invitation, mode: 'send' | 'resend') {
+  const isSend = mode === 'send'
+  busyId.value = i.id
+  try {
+    const result = isSend ? await sendInvitation(id, i.id) : await resendInvitation(id, i.id)
+    const url = result.publicInviteUrl || ''
+    if (url) {
+      links.value[i.id] = url
+      openShare(url, result.emailSent || false)
+      notifications.push(isSend ? 'Invitation envoyée.' : 'Invitation relancée.', 'success')
+      return
+    }
+    // Aucun lien dans la réponse : on tente de le reconstruire (QR) au lieu de ne
+    // rien afficher — c'était le comportement silencieux qui « perdait » le lien.
+    const fallback = await withTimeout(linkFromQr(i), 12000, '')
+    if (fallback) {
+      links.value[i.id] = fallback
+      openShare(fallback, result.emailSent || false)
+      notifications.push(isSend ? 'Invitation envoyée.' : 'Invitation relancée.', 'success')
+      return
+    }
+    // Le traitement a bien abouti, mais le backend n'expose pas le lien : on le dit
+    // clairement (au lieu de paraître « inactif ») et la liste est rafraîchie.
+    notifications.push(
+      isSend
+        ? "Invitation envoyée, mais le serveur n'a renvoyé aucun lien public à copier."
+        : "Invitation relancée, mais le serveur n'a renvoyé aucun lien public à copier.",
+      'info',
+      9000,
+    )
+  } catch (e) {
+    // `skipNotification` est posé sur /send et /resend : on affiche ici un message
+    // unique qui couvre AUSSI les échecs réseau (que l'intercepteur ne notifie pas).
+    const reason = apiErrorMessage(e)
+    // Le backend refuse parfois l'envoi pour une raison métier (ex. invité sans
+    // email alors que l'invitation a été envoyée via WhatsApp en masse). Dans ce
+    // cas on récupère le lien public (QR, lecture seule) pour ne pas laisser
+    // l'organisateur sans solution, puis on explique le refus.
+    const fallback = await withTimeout(linkFromQr(i), 12000, '')
+    if (fallback) {
+      links.value[i.id] = fallback
+      openShare(fallback, false)
+    }
+    let hint = ''
+    if (/adresse email/i.test(reason)) {
+      hint = ' Ajoutez un email à l’invité (onglet Invités), ou copiez le lien pour l’envoyer par WhatsApp.'
+    } else if (/limite de relances/i.test(reason)) {
+      hint = ' Plafond de relances défini côté serveur : transmettez le lien manuellement.'
+    }
+    notifications.push(
+      `${isSend ? "Échec de l'envoi" : 'Échec de la relance'} : ${reason}${hint}` +
+        (fallback ? ' Le lien de l’invitation est affiché ci-dessus.' : ''),
+      'error',
+      10000,
+    )
+  } finally {
+    busyId.value = null
+    // Rafraîchit la liste APRÈS l'affichage du lien : un échec de rafraîchissement
+    // ne doit plus empêcher la modale de s'ouvrir.
+    load().catch(() => {})
   }
 }
+
+const send = (i: Invitation) => submit(i, 'send')
+const resend = (i: Invitation) => submit(i, 'resend')
 async function cancel(i: Invitation) {
   if (!confirm(`Annuler l'invitation ?`)) return
   await cancelInvitation(id, i.id)

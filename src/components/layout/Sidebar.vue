@@ -61,17 +61,6 @@
       </div>
     </template>
 
-    <template>
-      <p class="px-3.5 pt-7 pb-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">Bientôt</p>
-      <div
-        v-for="item in soonItems"
-        :key="item.label"
-        class="flex items-center gap-3.5 px-3.5 h-11 rounded-lg text-[15px] font-medium text-slate-500 cursor-not-allowed"
-      >
-        <span class="material-symbols-outlined text-[26px]">{{ item.icon }}</span>
-        {{ item.label }}
-      </div>
-    </template>
     </nav>
 
     <!-- Profil -->

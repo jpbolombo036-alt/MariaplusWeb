@@ -30,12 +30,45 @@
           @click="scrollTo(idx)"
         />
       </div>
-      <div class="absolute bottom-10 left-4 right-4 text-white">
-        <div class="flex items-center gap-2 text-xs font-semibold">
-          <span class="px-2 py-0.5 rounded-full bg-white/20">{{ event.type }}</span>
-          <StatusBadge :status="event.status" />
+      <div class="absolute bottom-0 left-0 right-0 p-5 md:p-6 text-white">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+              <span class="px-3 py-1 rounded-full bg-primary-container text-white text-[10px] uppercase tracking-wider font-bold">{{ event.type }}</span>
+              <span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[10px] uppercase tracking-wider font-bold inline-flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">check_circle</span>{{ event.status }}
+              </span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-bold">{{ event.weddingDetails?.displayName || event.name || 'Événement' }}</h1>
+            <div v-if="stats" class="flex flex-wrap items-center gap-5 text-sm text-white/90">
+              <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">group</span>{{ stats.guests.total }} invités</span>
+              <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">how_to_reg</span>{{ stats.invitations.total }} invitations</span>
+              <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm">person_check</span>{{ stats.attendance.checkedIn }} présents</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <PermGuard :allow="['WEDDING_UPDATE']">
+              <button class="h-10 px-5 rounded-lg bg-white text-slate-800 text-sm font-semibold inline-flex items-center gap-2 shadow-sm" @click="$router.push(`/dashboard/events/${eventId}/edit`)">
+                <span class="material-symbols-outlined text-base">edit</span>Modifier
+              </button>
+            </PermGuard>
+            <PermGuard :allow="['WEDDING_PUBLISH']">
+              <button v-if="event.status === 'DRAFT'" class="h-10 px-5 rounded-lg bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm" @click="changeStatus('PUBLISHED')">
+                <span class="material-symbols-outlined text-base">publish</span>Publier
+              </button>
+            </PermGuard>
+            <PermGuard :allow="['WEDDING_UPDATE']">
+              <button v-if="event.status === 'ACTIVE'" class="h-10 px-5 rounded-lg bg-green-600 text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm" @click="changeStatus('COMPLETED')">
+                <span class="material-symbols-outlined text-base">task_alt</span>Terminer
+              </button>
+            </PermGuard>
+            <PermGuard :allow="['WEDDING_ARCHIVE']">
+              <button v-if="event.status === 'COMPLETED'" class="h-10 px-5 rounded-lg bg-slate-200 text-slate-700 text-sm font-semibold inline-flex items-center gap-2 shadow-sm" @click="changeStatus('ARCHIVED')">
+                <span class="material-symbols-outlined text-base">archive</span>Archiver
+              </button>
+            </PermGuard>
+          </div>
         </div>
-        <h1 class="mt-2 text-2xl md:text-3xl font-bold">{{ event.weddingDetails?.displayName || event.name || 'Événement' }}</h1>
       </div>
     </div>
 
@@ -46,22 +79,6 @@
     >
       <span class="material-symbols-outlined text-[18px]">event_busy</span>
       Cet événement est passé — passez-le en « Terminé » puis « Archivé » pour le clôturer.
-    </div>
-
-    <!-- Actions statut (tous les types) -->
-    <div class="mt-3 flex flex-wrap gap-2">
-      <PermGuard :allow="['EVENT_UPDATE']">
-        <button v-if="isWedding" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold" @click="$router.push(`/dashboard/events/${eventId}/edit`)">Modifier</button>
-      </PermGuard>
-      <PermGuard :allow="['WEDDING_PUBLISH']">
-        <button v-if="event.status === 'DRAFT'" class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-sm font-semibold" @click="changeStatus('PUBLISHED')">Publier</button>
-      </PermGuard>
-      <PermGuard :allow="['WEDDING_UPDATE']">
-        <button v-if="event.status === 'ACTIVE'" class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-sm font-semibold" @click="changeStatus('COMPLETED')">Terminer</button>
-      </PermGuard>
-      <PermGuard :allow="['WEDDING_ARCHIVE']">
-        <button v-if="event.status === 'COMPLETED'" class="px-3 py-1.5 rounded-lg bg-surface-variant text-on-surface-variant text-sm font-semibold" @click="changeStatus('ARCHIVED')">Archiver</button>
-      </PermGuard>
     </div>
 
     <!-- Tabs (selon permission) -->
@@ -87,7 +104,7 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { getEvent, updateEventStatus, loadEventImage, absolutePhotoUrl, type Event } from '../api/events'
-import StatusBadge from '../components/common/StatusBadge.vue'
+import { getDashboard, type Dashboard } from '../api/dashboard'
 import PermGuard from '../components/common/PermGuard.vue'
 import { useAuthStore } from '../stores/auth'
 import { Perm } from '../permissions'
@@ -95,6 +112,7 @@ import { Perm } from '../permissions'
 const route = useRoute()
 const auth = useAuthStore()
 const event = ref<Event | null>(null)
+const stats = ref<Dashboard | null>(null)
 const loading = ref(true)
 
 const eventId = Number(route.params.id)
@@ -153,7 +171,9 @@ function stopAutoplay() {
 onMounted(load)
 async function load() {
   try {
-    event.value = await getEvent(eventId)
+    const [loadedEvent, dashboard] = await Promise.all([getEvent(eventId), getDashboard(eventId)])
+    event.value = loadedEvent
+    stats.value = dashboard
     if (event.value?.hasImage) {
       coverUrl.value = await loadEventImage(eventId)
     }

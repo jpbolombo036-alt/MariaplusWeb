@@ -80,12 +80,22 @@ export async function deleteInvitation(eventId: number, invitationId: number): P
 }
 
 export async function sendInvitation(eventId: number, invitationId: number): Promise<SendResult> {
-  const res = await http.post(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/send`)
+  // `skipNotification` : l'écran Invitations affiche lui-même un message détaillé
+  // (et couvre aussi les échecs réseau, que l'intercepteur ne notifie pas).
+  const res = await http.post(
+    `${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/send`,
+    undefined,
+    { skipNotification: true },
+  )
   return normalizeSendResult(decodeMap(res.data) as unknown as SendResult)
 }
 
 export async function resendInvitation(eventId: number, invitationId: number): Promise<SendResult> {
-  const res = await http.post(`${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/resend`)
+  const res = await http.post(
+    `${ApiConfig.weddingInvitationsPath(eventId)}/${invitationId}/resend`,
+    undefined,
+    { skipNotification: true },
+  )
   return normalizeSendResult(decodeMap(res.data) as unknown as SendResult)
 }
 
@@ -105,15 +115,66 @@ function shareableOrigin(): string {
   return fromEnv || window.location.origin
 }
 
+/**
+ * Extrait le jeton public d'un lien d'invitation, quel que soit le format
+ * renvoyé par le backend :
+ * - `https://domaine/invitations/{token}` (format attendu)
+ * - `/invitations/{token}` (chemin relatif)
+ * - `https://domaine/invitation?token={token}` (variante en query)
+ * Renvoie '' si aucun jeton n'est identifiable (le lien est alors inexploitable).
+ */
+export function extractPublicToken(value: string): string {
+  const raw = (value || '').trim()
+  if (!raw) return ''
+  const byQuery = raw.match(/[?&](?:token|publicToken)=([^&#]+)/i)
+  if (byQuery?.[1]) return decodeURIComponent(byQuery[1])
+  const byPath = raw.match(/\/invitations?\/([^/?#]+)/i)
+  if (byPath?.[1]) return decodeURIComponent(byPath[1])
+  return ''
+}
+
+/**
+ * Construit un lien d'invitation **absolu et partageable**, à partir de ce que
+ * renvoie le backend :
+ * 1. lien absolu sur un domaine distant → conservé tel quel (le backend connaît
+ *    son URL publique) ;
+ * 2. lien « localhost » ou relatif → reconstruit sur une origine accessible à
+ *    l'invité (`VITE_PUBLIC_BASE_URL`, sinon l'origine courante).
+ */
+export function absoluteInviteUrl(value: string): string {
+  const raw = (value || '').trim()
+  if (!raw) return ''
+  const isAbsolute = /^https?:\/\//i.test(raw)
+  const isLocalHost = /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?/i.test(raw)
+  if (isAbsolute && !isLocalHost) return raw
+  const token = extractPublicToken(raw)
+  if (token) return `${shareableOrigin()}/invitations/${token}`
+  if (!isAbsolute) return `${shareableOrigin()}${raw.startsWith('/') ? raw : `/${raw}`}`
+  return raw
+}
+
+/**
+ * Construit un lien d'invitation à partir du contenu brut d'un QR code :
+ * - URL complète (`https://…/invitations/{token}`) → `absoluteInviteUrl` ;
+ * - chemin ou query portant un jeton → reconstruit sur l'origine partageable ;
+ * - jeton opaque seul (le QR n'encode que le jeton public) → lien direct.
+ * Renvoie '' si rien d'exploitable — l'appelant vérifie ensuite le jeton auprès
+ * de l'API publique avant de proposer le lien à l'organisateur.
+ */
+export function inviteUrlFromPayload(payload: string): string {
+  const raw = (payload || '').trim()
+  if (!raw || /\s/.test(raw)) return ''
+  const token = extractPublicToken(raw)
+  if (token) return `${shareableOrigin()}/invitations/${token}`
+  if (/^https?:\/\//i.test(raw)) return absoluteInviteUrl(raw)
+  // Jeton opaque (URL-safe, assez long) : on suppose /invitations/{jeton}.
+  return /^[A-Za-z0-9._~-]{8,}$/.test(raw) ? `${shareableOrigin()}/invitations/${raw}` : ''
+}
+
 function normalizeSendResult(r: SendResult): SendResult {
   const url = r.publicInviteUrl
   if (!url) return r
-  const isLocal = url.includes('localhost') || url.includes('127.0.0.1')
-  if (!isLocal) return r
-  const marker = '/invitations/'
-  const idx = url.indexOf(marker)
-  const token = idx >= 0 ? url.slice(idx + marker.length).split('?')[0] : ''
-  r.publicInviteUrl = `${shareableOrigin()}/invitations/${token}`
+  r.publicInviteUrl = absoluteInviteUrl(url)
   return r
 }
 

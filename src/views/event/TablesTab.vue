@@ -31,7 +31,7 @@
 
     <div v-if="loading" class="text-slate-400 py-8 text-center text-sm">Chargement…</div>
 
-    <!-- Tableau de tables -->
+    <!-- Cartes professionnelles des tables -->
     <div v-else-if="filtered.length === 0" class="bg-white border border-slate-200 rounded-xl py-14 text-center">
       <div class="w-14 h-14 mx-auto rounded-lg bg-slate-50 grid place-items-center mb-4 ring-1 ring-slate-100">
         <span class="material-symbols-outlined text-3xl text-slate-300">table_restaurant</span>
@@ -40,59 +40,59 @@
       <p class="text-[13px] text-slate-400 mt-1">Créez votre première table pour organiser les placements.</p>
     </div>
 
-    <div v-else class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-      <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-left text-slate-500">
-          <tr>
-            <th class="px-5 py-3.5 font-medium">Table</th>
-            <th class="px-5 py-3.5 font-medium">Capacité</th>
-            <th class="px-5 py-3.5 font-medium">Assignés</th>
-            <th class="px-5 py-3.5 font-medium">Occupation</th>
-            <th class="px-5 py-3.5 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          <tr v-for="t in filtered" :key="t.id" class="hover:bg-slate-50/80 transition-colors">
-            <td class="px-5 py-3.5">
-              <span class="font-semibold text-slate-700 text-[14px]">{{ t.name }}</span>
-            </td>
-            <td class="px-5 py-3.5 text-slate-600 text-[13px]">{{ t.capacity }}</td>
-            <td class="px-5 py-3.5">
-              <div v-if="guestsFor(t.id).length > 0" class="flex flex-wrap gap-1.5 max-w-[420px]">
-                <span v-for="a in guestsFor(t.id)" :key="a.assignmentId" class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-2.5 py-1 text-[12px] font-semibold">
-                  <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                  {{ a.guestName }}
-                  <span v-if="a.companions > 0" class="text-[10px] bg-white text-slate-600 rounded-full px-1.5 py-0.5" :title="a.companions + ' accompagnant(s) à la même table'">+{{ a.companions }}</span>
-                </span>
-              </div>
-              <span v-else class="text-slate-400 text-[12px]">Aucun invité placé</span>
-            </td>
-            <td class="px-5 py-3.5">
-              <div class="flex items-center gap-2">
-                <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div class="h-full bg-primary rounded-full transition-all" :style="{ width: Math.min(100, (t.assignedCount / t.capacity) * 100) + '%' }"></div>
-                </div>
-                <span class="text-xs text-slate-500">{{ Math.round((t.assignedCount / t.capacity) * 100) }}%</span>
-              </div>
-            </td>
-            <td class="px-5 py-3.5 text-right">
-              <div class="inline-flex items-center gap-1">
-                <PermGuard :allow="['TABLE_ASSIGN_GUEST']">
-                  <button class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg" title="Gérer les placements" @click="openAssign(t)"><span class="material-symbols-outlined text-base">groups</span></button>
-                </PermGuard>
-                <button class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg" title="Modifier" @click="$router.push(`/dashboard/events/${id}/tables/${t.id}/edit`)"><span class="material-symbols-outlined text-base">edit</span></button>
-                <PermGuard :allow="['TABLE_DELETE']">
-                  <button class="px-2 py-1 text-error hover:bg-error/10 rounded-lg" title="Supprimer" @click="remove(t)"><span class="material-symbols-outlined text-base">delete</span></button>
-                </PermGuard>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+      <article v-for="t in filtered" :key="t.id" class="table-card">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="table-icon"><span class="material-symbols-outlined text-[20px]">table_restaurant</span></span>
+              <h3 class="text-[17px] font-bold text-slate-900 truncate">{{ t.name }}</h3>
+            </div>
+            <p class="text-[12px] text-slate-500 mt-1">{{ t.assignedCount }} / {{ t.capacity }} personnes · {{ guestsFor(t.id).length }} invité(s)</p>
+          </div>
+          <span class="table-status" :class="occupancyClass(t)">{{ occupancyLabel(t) }}</span>
+        </div>
+
+        <div class="mt-4">
+          <div class="flex items-center justify-between text-[12px] mb-1.5">
+            <span class="font-semibold text-slate-600">Occupation</span>
+            <span class="font-bold text-slate-800">{{ occupancy(t) }}%</span>
+          </div>
+          <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+            <div class="h-full rounded-full transition-all" :class="occupancyBarClass(t)" :style="{ width: `${occupancy(t)}%` }"></div>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-slate-100">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-[12px] font-bold uppercase tracking-wide text-slate-500">Invités placés</h4>
+            <span v-if="guestsFor(t.id).length" class="text-[11px] text-slate-400">{{ t.remainingCapacity }} place(s) libre(s)</span>
+          </div>
+          <div v-if="guestsFor(t.id).length" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+            <div v-for="a in guestsFor(t.id)" :key="a.assignmentId" class="guest-row">
+              <span class="guest-avatar">{{ initials(a.guestName) }}</span>
+              <span class="flex-1 min-w-0 truncate text-[13px] font-semibold text-slate-700">{{ a.guestName }}</span>
+              <span v-if="a.companions > 0" class="companion-badge">+{{ a.companions }}</span>
+            </div>
+          </div>
+          <p v-else class="text-[12px] text-slate-400 py-2">Aucun invité placé sur cette table.</p>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+          <PermGuard :allow="['TABLE_ASSIGN_GUEST']">
+            <button type="button" class="table-action table-action-primary" @click.stop.prevent="openAssign(t)"><span class="material-symbols-outlined text-[16px]">groups</span>Gérer les invités</button>
+          </PermGuard>
+          <button class="table-action" title="Modifier" @click="$router.push(`/dashboard/events/${id}/tables/${t.id}/edit`)"><span class="material-symbols-outlined text-[16px]">edit</span>Modifier</button>
+          <PermGuard :allow="['TABLE_DELETE']">
+            <button class="table-action table-action-danger" title="Supprimer" @click="remove(t)"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+          </PermGuard>
+        </div>
+      </article>
     </div>
 
     <!-- Modale de gestion des placements -->
-    <div v-if="assignOpen" class="fixed inset-0 z-50 grid place-items-center bg-slate-900/40 backdrop-blur-sm p-4" @click.self="closeAssign">
+    <Teleport to="body">
+    <div v-if="assignOpen" class="fixed inset-0 z-[100] grid place-items-center bg-slate-900/40 backdrop-blur-sm p-4" @click.self="closeAssign">
       <div class="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div>
@@ -103,6 +103,11 @@
         </div>
 
         <div class="px-6 py-5 space-y-7">
+          <div v-if="assignmentError" class="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12px] text-red-700">
+            <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
+            <span>{{ assignmentError }}</span>
+          </div>
+
           <div>
             <h4 class="text-[12px] font-bold text-slate-500 uppercase tracking-wide mb-2.5">Sur cette table</h4>
             <div v-if="guestsFor(assignTable?.id).length === 0" class="text-[13px] text-slate-400 py-2">Aucun invité placé sur cette table.</div>
@@ -146,6 +151,7 @@
         </div>
       </div>
     </div>
+    </Teleport>
   </div>
 </template>
 
@@ -167,6 +173,7 @@ const query = ref('')
 
 const assignOpen = ref(false)
 const assignTable = ref<WeddingTable | null>(null)
+const assignmentError = ref('')
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -184,6 +191,38 @@ function guestsFor(tableId?: number): TableAssignment[] {
   return assignments.value.filter((a) => a.tableId === tableId)
 }
 
+function occupancy(table: WeddingTable): number {
+  if (!table.capacity) return 0
+  return Math.min(100, Math.round((table.assignedCount / table.capacity) * 100))
+}
+
+function occupancyLabel(table: WeddingTable): string {
+  const value = occupancy(table)
+  if (value >= 100) return 'Complète'
+  if (value >= 80) return 'Presque pleine'
+  if (value > 0) return 'Disponible'
+  return 'Vide'
+}
+
+function occupancyClass(table: WeddingTable): string {
+  const value = occupancy(table)
+  if (value >= 100) return 'table-status-full'
+  if (value >= 80) return 'table-status-warning'
+  if (value > 0) return 'table-status-open'
+  return 'table-status-empty'
+}
+
+function occupancyBarClass(table: WeddingTable): string {
+  const value = occupancy(table)
+  if (value >= 100) return 'bg-red-500'
+  if (value >= 80) return 'bg-amber-500'
+  return 'bg-primary'
+}
+
+function initials(name: string): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('') || '?'
+}
+
 onMounted(load)
 async function load() {
   try {
@@ -191,6 +230,9 @@ async function load() {
     tables.value = t
     assignments.value = a
     guests.value = g
+    if (assignTable.value) {
+      assignTable.value = t.find((table) => table.id === assignTable.value?.id) ?? null
+    }
   } finally {
     loading.value = false
   }
@@ -198,32 +240,44 @@ async function load() {
 
 function openAssign(t: WeddingTable) {
   assignTable.value = t
+  assignmentError.value = ''
   assignOpen.value = true
 }
 function closeAssign() {
   assignOpen.value = false
   assignTable.value = null
+  assignmentError.value = ''
 }
 
 async function assignTo(guestId: number) {
   const tableId = assignTable.value?.id
   if (tableId == null) return
+  assignmentError.value = ''
+  const guest = guests.value.find((item) => item.id === guestId)
+  const seatsRequired = 1 + Number(guest?.allowedCompanions ?? 0)
+  const available = assignTable.value?.remainingCapacity ?? 0
+  if (seatsRequired > available) {
+    assignmentError.value = `Cette table ne peut pas accueillir ce groupe : ${seatsRequired} place(s) nécessaire(s), ${available} libre(s). Choisissez une autre table ou retirez d'abord un invité.`
+    return
+  }
   try {
     await assignGuest(id, tableId, guestId)
     await load()
   } catch (e: any) {
-    alert(e?.response?.data?.error || 'Impossible de placer cet invité.')
+    assignmentError.value = e?.response?.data?.error || 'Impossible de placer cet invité. Vérifiez les places disponibles.'
   }
 }
 
 async function onMove(a: TableAssignment, ev: Event) {
   const target = Number((ev.target as HTMLSelectElement).value)
   if (!target || target === a.tableId || !assignTable.value) return
+  assignmentError.value = ''
   try {
     await moveAssignment(id, a.assignmentId, target)
     await load()
   } catch (e: any) {
-    alert(e?.response?.data?.error || 'Impossible de déplacer cet invité.')
+    assignmentError.value = e?.response?.data?.error || 'Impossible de déplacer cet invité. Vérifiez la capacité de la table cible.'
+    await load()
   }
 }
 
@@ -233,7 +287,7 @@ async function unassign(a: TableAssignment) {
     await removeAssignment(id, a.assignmentId)
     await load()
   } catch (e: any) {
-    alert(e?.response?.data?.error || 'Impossible de retirer cet invité.')
+    assignmentError.value = e?.response?.data?.error || 'Impossible de retirer cet invité de la table.'
   }
 }
 
@@ -246,4 +300,17 @@ async function remove(t: WeddingTable) {
 
 <style scoped>
 .input { @apply block w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-slate-400; }
+.table-card { @apply bg-white border border-slate-200 rounded-2xl p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/20; }
+.table-icon { @apply w-10 h-10 rounded-xl bg-primary/10 text-primary grid place-items-center shrink-0; }
+.table-status { @apply px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap; }
+.table-status-full { @apply bg-red-50 text-red-600; }
+.table-status-warning { @apply bg-amber-50 text-amber-700; }
+.table-status-open { @apply bg-green-50 text-green-700; }
+.table-status-empty { @apply bg-slate-100 text-slate-500; }
+.guest-row { @apply flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-100 px-2.5 py-2; }
+.guest-avatar { @apply w-7 h-7 rounded-full bg-primary/10 text-primary grid place-items-center text-[10px] font-bold shrink-0; }
+.companion-badge { @apply rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-600; }
+.table-action { @apply h-9 px-3 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-slate-50 transition-colors; }
+.table-action-primary { @apply border-primary/20 bg-primary/5 text-primary hover:bg-primary/10; }
+.table-action-danger { @apply px-2 border-error/20 text-error hover:bg-error/10; }
 </style>

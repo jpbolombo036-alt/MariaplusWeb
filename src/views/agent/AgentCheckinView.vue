@@ -136,6 +136,24 @@
                 </div>
               </div>
 
+              <!-- Table et choix de boisson -->
+              <div class="ag-assignmentbox">
+                <div class="ag-assignment-item">
+                  <span class="material-symbols-outlined ag-assignment-icon">table_restaurant</span>
+                  <div>
+                    <div class="ag-evlabel">TABLE</div>
+                    <div class="ag-evvalue">{{ sel.tableName || 'Non attribuée' }}</div>
+                  </div>
+                </div>
+                <div v-if="sel.drinkChoice" class="ag-assignment-item">
+                  <span class="material-symbols-outlined ag-assignment-icon">local_bar</span>
+                  <div>
+                    <div class="ag-evlabel">BOISSON</div>
+                    <div class="ag-evvalue">{{ sel.drinkChoice }}</div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Nombre de personnes + Check-in enregistré -->
               <div class="ag-duo">
                 <div class="ag-people">
@@ -244,26 +262,13 @@
       </div>
     </Teleport>
 
-    <!-- ======== MODAL CAMÉRA ======== -->
-    <Teleport to="body">
-      <div v-if="cameraOpen" class="ag-viewer" @click.self="closeScanner">
-        <div class="ag-viewer-box ag-camera-box">
-          <div class="ag-viewer-head">
-            <span>Scanner le QR code</span>
-            <button type="button" class="ag-viewer-close" @click="closeScanner">
-              <span class="material-symbols-outlined">close</span>
-            </button>
-          </div>
-          <div class="ag-camera-zone">
-            <video ref="videoEl" class="ag-camera-video" playsinline muted></video>
-          </div>
-          <div class="ag-viewer-foot">
-            <p v-if="cameraError" class="ag-error">{{ cameraError }}</p>
-            <p v-else-if="cameraLoading" class="ag-empty">Activation de la caméra…</p>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <AgentCameraModal
+      ref="cameraModal"
+      :open="cameraOpen"
+      :loading="cameraLoading"
+      :error="cameraError"
+      @close="closeScanner"
+    />
   </div>
 </template>
 
@@ -271,7 +276,6 @@
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import QRCode from 'qrcode'
-import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import {
   scan,
   checkIn,
@@ -283,6 +287,8 @@ import {
 } from '../../api/checkin'
 import { publicCardUrl } from '../../api/publicInvitation'
 import { useNotificationStore } from '../../stores/notifications'
+import AgentCameraModal from '../../components/agent/AgentCameraModal.vue'
+import { useQrCamera } from '../../composables/useQrCamera'
 
 const route = useRoute()
 const id = Number(route.params.id)
@@ -501,60 +507,31 @@ const clockText = computed(() =>
 )
 
 /* ---------- Scanner caméra ---------- */
-const cameraOpen = ref(false)
-const cameraLoading = ref(false)
-const cameraError = ref('')
-const videoEl = ref<HTMLVideoElement | null>(null)
-let reader: BrowserMultiFormatReader | null = null
-let controls: IScannerControls | null = null
-
-async function openScanner() {
-  cameraOpen.value = true
-  cameraError.value = ''
-  cameraLoading.value = true
-  await new Promise((r) => setTimeout(r, 60))
-  try {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      throw new Error('Caméra non disponible sur cet appareil/navigateur.')
+const cameraModal = ref<InstanceType<typeof AgentCameraModal> | null>(null)
+const cameraVideo = computed(() => cameraModal.value?.videoEl ?? null)
+const {
+  open: cameraOpen,
+  loading: cameraLoading,
+  error: cameraError,
+  openCamera,
+  closeCamera,
+  stopCamera,
+} = useQrCamera({
+  videoEl: cameraVideo,
+  onDetected: (raw) => {
+    const token = extractToken(raw)
+    if (token) {
+      qr.value = token
+      closeScanner()
+      void doScan()
     }
-    const reader2 = new BrowserMultiFormatReader()
-    reader = reader2
-    controls = await reader2.decodeFromVideoDevice(undefined, videoEl.value!, (res) => {
-      if (!res) return
-      const tok = extractToken(res.getText())
-      if (tok) {
-        qr.value = tok
-        closeScanner()
-        void doScan()
-      }
-    })
-    cameraLoading.value = false
-  } catch (e: any) {
-    cameraLoading.value = false
-    const name = e?.name ?? ''
-    cameraError.value = name === 'NotAllowedError'
-      ? 'Accès à la caméra refusé. Autorisez la caméra puis réessayez.'
-      : (name === 'NotFoundError' || name === 'OverconstrainedError')
-        ? 'Aucune caméra détectée sur cet appareil.'
-        : (e?.message || "Impossible d'accéder à la caméra.")
-    stopCamera()
-  }
-}
-function stopCamera() {
-  try {
-    controls?.stop()
-  } catch { /* ignore */ }
-  controls = null
-  reader = null
-  const v = videoEl.value
-  if (v?.srcObject) {
-    (v.srcObject as MediaStream).getTracks().forEach((t) => t.stop())
-    v.srcObject = null
-  }
+  },
+})
+function openScanner() {
+  void openCamera()
 }
 function closeScanner() {
-  cameraOpen.value = false
-  stopCamera()
+  closeCamera()
 }
 
 /* ---------- Cycle de vie ---------- */
@@ -764,6 +741,15 @@ onBeforeUnmount(() => {
 .ag-evlabel { font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px; color: #8f6fe0; margin-bottom: 5px; }
 .ag-evvalue { font-size: 15px; font-weight: 600; color: #172033; line-height: 1.4; }
 .ag-evsub { font-size: 13px; color: #667085; margin-top: 3px; }
+
+/* ---------- Table et boisson ---------- */
+.ag-assignmentbox {
+  margin-top: 14px; padding: 16px 20px;
+  background: #faf9fd; border: 1px solid #ece8f5; border-radius: 12px;
+  display: flex; flex-wrap: wrap; gap: 24px;
+}
+.ag-assignment-item { display: flex; align-items: center; gap: 10px; min-width: 180px; }
+.ag-assignment-icon { color: #5427c7; font-size: 22px; }
 
 /* ---------- Personnes + Check-in enregistré ---------- */
 .ag-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }

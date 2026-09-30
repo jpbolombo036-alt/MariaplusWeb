@@ -100,6 +100,24 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
   }
 }
 
+/**
+ * Vérifie qu'un jeton ouvre bien une invitation publique (endpoint public, sans
+ * effet de bord). Sondage **silencieux** : un jeton invalide (404) ne déclenche
+ * aucun toast — il permet de n'afficher à l'organisateur qu'un lien réellement
+ * partageable.
+ */
+export async function publicInvitationExists(token: string): Promise<boolean> {
+  if (!token) return false
+  try {
+    await http.get(`${ApiConfig.publicInvitationsPath}/${encodeURIComponent(token)}`, {
+      skipNotification: true,
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
 export async function listPublicDrinks(token: string): Promise<PublicDrink[]> {
   const res = await http.get(`${ApiConfig.publicInvitationsPath}/${token}/drinks`)
   const j = decodeList(res.data)

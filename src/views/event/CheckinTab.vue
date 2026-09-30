@@ -260,10 +260,10 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { scan, checkIn, listPresent, searchGuests, type CheckInScan, type CheckInSearchItem, type PresentGuest } from '../../api/checkin'
 import { publicCardUrl } from '../../api/publicInvitation'
 import PermGuard from '../../components/common/PermGuard.vue'
+import { useQrCamera } from '../../composables/useQrCamera'
 
 const route = useRoute()
 const id = Number(route.params.id)
@@ -375,12 +375,7 @@ async function checkInFromSearch(r: CheckInSearchItem) {
 }
 
 /* --- Scanner caméra (@zxing/browser) --- */
-const cameraOpen = ref(false)
-const cameraLoading = ref(false)
-const cameraError = ref('')
 const videoEl = ref<HTMLVideoElement | null>(null)
-let reader: BrowserMultiFormatReader | null = null
-let controls: IScannerControls | null = null
 
 /** Extrait le token public depuis un QR : token brut ou lien .../invitations/<token>. */
 function extractToken(raw: string): string {
@@ -395,60 +390,31 @@ function extractToken(raw: string): string {
   return t
 }
 
-async function openScanner() {
-  cameraOpen.value = true
-  cameraError.value = ''
-  cameraLoading.value = true
-  // laisse le <video> apparaître dans le DOM avant de démarrer le flux
-  await new Promise((r) => setTimeout(r, 60))
-  try {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      throw new Error('Caméra non disponible sur cet appareil/navigateur.')
+const camera = useQrCamera({
+  videoEl,
+  onDetected: (raw) => {
+    const token = extractToken(raw)
+    if (token) {
+      qr.value = token
+      closeScanner()
+      void doScan()
     }
-    const reader2 = new BrowserMultiFormatReader()
-    reader = reader2
-    controls = await reader2.decodeFromVideoDevice(undefined, videoEl.value!, (res) => {
-      if (!res) return
-      const token = extractToken(res.getText())
-      if (token) {
-        qr.value = token
-        closeScanner()
-        void doScan()
-      }
-    })
-    cameraLoading.value = false
-  } catch (e: any) {
-    cameraLoading.value = false
-    const name = e?.name ?? ''
-    if (name === 'NotAllowedError') {
-      cameraError.value = "Accès à la caméra refusé. Autorisez la caméra dans les paramètres du navigateur puis réessayez."
-    } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
-      cameraError.value = 'Aucune caméra détectée sur cet appareil.'
-    } else if (name === 'NotReadableError') {
-      cameraError.value = 'La caméra est déjà utilisée par une autre application.'
-    } else {
-      cameraError.value = e?.message || 'Impossible d\'accéder à la caméra.'
-    }
-    stopCamera()
-  }
-}
+  },
+})
+const {
+  open: cameraOpen,
+  loading: cameraLoading,
+  error: cameraError,
+  openCamera,
+  closeCamera,
+} = camera
 
-function stopCamera() {
-  try {
-    controls?.stop()
-  } catch { /* ignore */ }
-  controls = null
-  reader = null
-  const v = videoEl.value
-  if (v?.srcObject) {
-    (v.srcObject as MediaStream).getTracks().forEach((t) => t.stop())
-    v.srcObject = null
-  }
+function openScanner() {
+  void openCamera()
 }
 
 function closeScanner() {
-  cameraOpen.value = false
-  stopCamera()
+  closeCamera()
 }
 
 onBeforeUnmount(closeScanner)

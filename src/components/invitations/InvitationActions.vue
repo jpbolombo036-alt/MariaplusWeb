@@ -4,10 +4,11 @@
     <PermGuard :allow="['INVITATION_SEND']">
       <button
         v-if="i.status === 'GENERATED' || i.status === 'DRAFT'"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="busy"
         @click="$emit('send', i)"
       >
-        <span class="material-symbols-outlined text-[18px]">send</span>
+        <span class="material-symbols-outlined text-[18px]" :class="{ 'animate-spin': busy }">{{ busy ? 'progress_activity' : 'send' }}</span>
         <span class="hidden sm:inline">Envoyer</span>
       </button>
     </PermGuard>
@@ -16,11 +17,12 @@
     <PermGuard :allow="['INVITATION_RESEND']">
       <button
         v-if="i.status === 'SENT'"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="busy"
         @click="$emit('resend', i)"
       >
-        <span class="material-symbols-outlined text-[18px]">refresh</span>
-        <span class="hidden sm:inline">Relancer</span>
+        <span class="material-symbols-outlined text-[18px]" :class="{ 'animate-spin': busy }">{{ busy ? 'progress_activity' : 'refresh' }}</span>
+        <span class="hidden sm:inline">{{ busy ? 'Envoi…' : 'Relancer' }}</span>
       </button>
     </PermGuard>
 
@@ -33,6 +35,20 @@
       >
         <span class="material-symbols-outlined text-[18px]">qr_code</span>
         <span class="hidden sm:inline">QR</span>
+      </button>
+    </PermGuard>
+
+    <!-- Lien public : recopier le lien à envoyer à l'invité (WhatsApp, SMS…) -->
+    <PermGuard :allow="['INVITATION_SEND']">
+      <button
+        v-if="i.status !== 'CANCELLED'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="linkBusy"
+        :title="link ? 'Copier le lien de l’invitation' : 'Récupérer le lien de l’invitation'"
+        @click="$emit('link', i)"
+      >
+        <span class="material-symbols-outlined text-[18px]">{{ linkBusy ? 'progress_activity' : 'link' }}</span>
+        <span class="hidden sm:inline">Lien</span>
       </button>
     </PermGuard>
 
@@ -66,12 +82,19 @@ import PermGuard from '../common/PermGuard.vue'
 
 defineProps<{
   i: any
+  /** Lien public déjà connu pour cette invitation ('' = à récupérer). */
+  link?: string
+  /** Recherche du lien en cours (décodage du QR) → bouton désactivé. */
+  linkBusy?: boolean
+  /** Envoi / relance en cours pour cette invitation → boutons désactivés. */
+  busy?: boolean
 }>()
 
 defineEmits<{
   send: [i: any]
   resend: [i: any]
   qr: [i: any]
+  link: [i: any]
   cancel: [i: any]
   delete: [i: any]
 }>()

@@ -57,6 +57,7 @@ export const ApiConfig = {
   checkinsPath: '/api/checkins',
   // Réglages plateforme (lecture : tout utilisateur authentifié ; écriture : SUPER_ADMIN)
   adminWhatsappSettingsPath: '/api/admin/settings/whatsapp',
+  platformWhatsappEnabledPath: '/api/platform/whatsapp-enabled',
   publicInvitationsPath: '/api/public/invitations',
 
   usersPath: '/api/users',
