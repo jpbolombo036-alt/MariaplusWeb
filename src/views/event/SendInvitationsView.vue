@@ -157,12 +157,13 @@ import { getEvent, loadEventImage, type Event } from '../../api/events'
 import { useAuthStore } from '../../stores/auth'
 import { hasAny } from '../../permissions'
 import { useNotificationStore } from '../../stores/notifications'
-import { getWhatsappSettings } from '../../api/admin'
+import { usePlatformStore } from '../../stores/platform'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const notifications = useNotificationStore()
+const platform = usePlatformStore()
 const eventId = Number(route.params.id)
 
 type FilterKey = 'all' | 'pending' | 'sent'
@@ -337,7 +338,11 @@ onMounted(async () => {
     loading.value = false
   }
   try {
-    waEnabled.value = (await getWhatsappSettings()).whatsappSendingEnabled
+    // Réglage EFFECTIF pour l'organisation (override org sinon global) :
+    // route publique authentifiée /api/platform/whatsapp-enabled — et non la
+    // route admin /api/admin/settings/whatsapp qui renvoie 403 hors SUPER_ADMIN.
+    await platform.load()
+    waEnabled.value = platform.canSendWhatsapp
   } catch {
     // en cas d'erreur : l'envoi reste actif (comportement par défaut)
   }
