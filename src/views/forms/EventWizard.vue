@@ -117,6 +117,15 @@
             <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Message d'invitation (optionnel)</span>
             <textarea v-model="form.message" rows="2" placeholder="Nous avons l'immense joie de vous inviter…" class="input resize-none"></textarea>
           </label>
+
+          <label class="block">
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tenue demandée (facultatif)</span>
+            <select v-model="form.dressCode" class="input">
+              <option value="">Aucune tenue imposée</option>
+              <option v-for="d in dressCodes" :key="d.value" :value="d.value">{{ d.label }}</option>
+            </select>
+            <span v-if="selectedDressCode?.description" class="text-[11px] text-slate-500 mt-1 block">{{ selectedDressCode.description }}</span>
+          </label>
         </div>
 
         <!-- ============ ÉTAPE 2 : VISUELS ============ -->
@@ -256,9 +265,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { createEvent, uploadEventPhoto, uploadEventImage, type EventPhotoKind } from '../../api/events'
+import { createEvent, fetchDressCodes, uploadEventPhoto, uploadEventImage, type DressCodeOption, type EventPhotoKind } from '../../api/events'
 import { createWeddingEvent } from '../../api/weddingEvents'
 import ImageCropModal from '../../components/common/ImageCropModal.vue'
 import { useAuthStore } from '../../stores/auth'
@@ -381,6 +390,7 @@ async function submitCreate() {
       type: form.type,
       description: form.description || null,
       message: form.message || null,
+      dressCode: form.dressCode || null,
       eventDate: form.eventDate || null,
       startTime: form.startTime || null,
       endTime: form.endTime || null,
@@ -481,6 +491,14 @@ const form = reactive({
   groomLastName: '',
   brideFirstName: '',
   brideLastName: '',
+  dressCode: '',
+})
+
+/** Options de tenue fournies par le backend (libellés FR, source unique). */
+const dressCodes = ref<DressCodeOption[]>([])
+const selectedDressCode = computed(() => dressCodes.value.find((d) => d.value === form.dressCode) ?? null)
+onMounted(async () => {
+  try { dressCodes.value = await fetchDressCodes() } catch { /* la tenue reste facultative */ }
 })
 
 const TYPE_LABELS: Record<string, string> = {

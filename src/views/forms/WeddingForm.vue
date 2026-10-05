@@ -88,6 +88,15 @@
             <textarea v-model="form.message" rows="2" placeholder="Petit mot personnalisé (optionnel)" class="input resize-none"></textarea>
           </label>
 
+          <label class="block">
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tenue demandée (facultatif)</span>
+            <select v-model="form.dressCode" class="input">
+              <option value="">Aucune tenue imposée</option>
+              <option v-for="d in dressCodes" :key="d.value" :value="d.value">{{ d.label }}</option>
+            </select>
+            <span v-if="selectedDressCode?.description" class="text-[11px] text-slate-500 mt-1 block">{{ selectedDressCode.description }}</span>
+          </label>
+
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <label class="block">
               <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Date de l'événement</span>
@@ -146,9 +155,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { createEvent, uploadEventPhoto, uploadEventImage } from '../../api/events'
+import { createEvent, fetchDressCodes, uploadEventPhoto, uploadEventImage, type DressCodeOption } from '../../api/events'
 import ImageCropModal from '../../components/common/ImageCropModal.vue'
 import { useAuthStore } from '../../stores/auth'
 
@@ -175,6 +184,14 @@ const form = reactive({
   brideFirstName: '',
   brideLastName: '',
   welcomeMessage: '',
+  dressCode: '',
+})
+
+/** Options de tenue fournies par le backend (libellés FR, source unique). */
+const dressCodes = ref<DressCodeOption[]>([])
+const selectedDressCode = computed(() => dressCodes.value.find((d) => d.value === form.dressCode) ?? null)
+onMounted(async () => {
+  try { dressCodes.value = await fetchDressCodes() } catch { /* la tenue reste facultative */ }
 })
 
 /* --- Photos de la fiche mariage (upload, pas d'URL) --- */
@@ -283,6 +300,7 @@ async function submitCreate() {
     latitude: form.latitude ? Number(form.latitude) : null,
     longitude: form.longitude ? Number(form.longitude) : null,
     mapUrl: form.mapUrl || null,
+    dressCode: form.dressCode || null,
   }
   if (form.type === 'WEDDING') {
     payload.groomFirstName = form.groomFirstName
