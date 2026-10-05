@@ -201,7 +201,10 @@ export interface BulkSendBatch {
   channel: string
   status: string
   totalCount: number
+  /** Messages ACCEPTÉS par l'API Meta — ne prouve pas la réception. */
   sentCount: number
+  /** Messages dont la livraison est confirmée par le webhook Meta (0 = non confirmés). */
+  deliveredCount: number
   failedCount: number
   skippedCount: number
   createdAt?: string | null
@@ -236,6 +239,7 @@ function parseBatch(json: Record<string, unknown>): BulkSendBatch {
     status: String(json.status ?? 'PENDING'),
     totalCount: Number(json.totalCount ?? 0),
     sentCount: Number(json.sentCount ?? 0),
+    deliveredCount: Number(json.deliveredCount ?? 0),
     failedCount: Number(json.failedCount ?? 0),
     skippedCount: Number(json.skippedCount ?? 0),
     createdAt: json.createdAt ? String(json.createdAt) : null,

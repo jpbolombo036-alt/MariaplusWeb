@@ -57,10 +57,19 @@
                  :class="batch.failedCount > 0 ? 'bg-amber-500' : 'bg-primary'"
                  :style="{ width: progressPct + '%' }"></div>
           </div>
-          <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+          <div class="grid grid-cols-4 gap-2 mt-4 text-center">
             <div class="p-3 rounded-xl bg-surface-container/60">
               <p class="text-lg font-bold text-primary">{{ batch.sentCount }}</p>
-              <p class="text-xs text-on-surface-variant">Envoyées</p>
+              <p class="text-xs text-on-surface-variant">Acceptées</p>
+              <p class="text-[10px] text-on-surface-variant/80">par WhatsApp</p>
+            </div>
+            <div class="p-3 rounded-xl bg-surface-container/60">
+              <p class="text-lg font-bold"
+                 :class="deliveredCount === 0 && batch.sentCount > 0 ? 'text-amber-500' : 'text-green-600'">
+                {{ batch.deliveredCount }}
+              </p>
+              <p class="text-xs text-on-surface-variant">Livrées</p>
+              <p class="text-[10px] text-on-surface-variant/80">confirmées</p>
             </div>
             <div class="p-3 rounded-xl bg-surface-container/60">
               <p class="text-lg font-bold text-error">{{ batch.failedCount }}</p>
@@ -73,14 +82,30 @@
           </div>
         </div>
 
+        <div v-if="acceptedNotDelivered"
+             class="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 flex items-start gap-2">
+          <span class="material-symbols-outlined text-[18px] text-amber-600 shrink-0 mt-0.5">warning</span>
+          <div class="text-xs text-on-surface min-w-0">
+            <p class="font-semibold">
+              WhatsApp a accepté {{ batch?.sentCount }} message(s), mais aucune livraison n'est confirmée.
+            </p>
+            <p class="text-on-surface-variant mt-1">
+              Vos invités ne les ont donc pas reçus. Cause la plus fréquente : la facturation Meta est en
+              défaut (messagerie en pause) ou le webhook Meta n'est pas abonné. Régularisez la facture
+              dans Meta Business Suite, puis relancez l'envoi.
+            </p>
+          </div>
+        </div>
+
         <div v-if="logs.length" class="max-h-44 overflow-y-auto rounded-xl border border-outline-variant/60 divide-y divide-outline-variant/60 mb-4">
           <div v-for="l in logs" :key="l.id" class="px-3 py-2 text-xs flex items-start gap-2">
             <span class="material-symbols-outlined text-[16px] shrink-0 mt-0.5"
-                  :class="l.status === 'SENT' ? 'text-primary' : l.status === 'FAILED' ? 'text-error' : 'text-on-surface-variant'">
-              {{ l.status === 'SENT' ? 'check_circle' : l.status === 'FAILED' ? 'cancel' : 'skip_next' }}
+                  :class="l.status === 'DELIVERED' || l.status === 'READ' ? 'text-green-600' : l.status === 'SENT' ? 'text-primary' : l.status === 'FAILED' ? 'text-error' : 'text-on-surface-variant'">
+              {{ statusIcon(l.status) }}
             </span>
             <div class="min-w-0">
               <p class="font-medium text-on-surface">{{ guestNameFor(l) }}</p>
+              <p class="text-[11px] text-on-surface-variant">{{ statusLabel(l.status) }}</p>
               <p v-if="l.errorMessage" class="text-error truncate" :title="l.errorMessage">{{ l.errorMessage }}</p>
             </div>
           </div>
@@ -125,6 +150,15 @@ const logs = ref<NotificationLog[]>([])
 let timer: ReturnType<typeof setInterval> | null = null
 
 const finished = computed(() => batch.value?.status === 'COMPLETED' || batch.value?.status === 'FAILED')
+const deliveredCount = computed(() => batch.value?.deliveredCount ?? 0)
+/**
+ * Meta a accepté des messages mais aucun n'est confirmé livré : les invités ne les
+ * ont pas reçus. Cause typique = messagerie Meta en pause (facture impayée) ou
+ * webhook non abonné. À ne surtout pas présenter comme un envoi réussi.
+ */
+const acceptedNotDelivered = computed(
+  () => finished.value && (batch.value?.sentCount ?? 0) > 0 && deliveredCount.value === 0,
+)
 const processed = computed(() => (batch.value?.sentCount ?? 0) + (batch.value?.failedCount ?? 0) + (batch.value?.skippedCount ?? 0))
 const progressPct = computed(() => {
   const total = batch.value?.totalCount ?? 0
@@ -192,6 +226,31 @@ async function poll() {
       emit('completed')
     }
   } catch { /* nouvelle tentative au prochain tick */ }
+}
+
+/** Icône du journal : distingue « livré » de « seulement accepté par Meta ». */
+function statusIcon(status: string): string {
+  if (status === 'DELIVERED' || status === 'READ') return 'mark_email_read'
+  if (status === 'SENT') return 'check_circle'
+  if (status === 'FAILED') return 'cancel'
+  return 'skip_next'
+}
+
+function statusLabel(status: string): string {
+  switch (status) {
+    case 'DELIVERED':
+      return 'Livrée à l’invité'
+    case 'READ':
+      return 'Lue par l’invité'
+    case 'SENT':
+      return 'Acceptée par WhatsApp (livraison non confirmée)'
+    case 'FAILED':
+      return 'Échec'
+    case 'SKIPPED':
+      return 'Ignorée (aucun numéro valide)'
+    default:
+      return status
+  }
 }
 
 function guestNameFor(l: NotificationLog): string {
