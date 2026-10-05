@@ -71,21 +71,21 @@
             </h2>
 
             <div class="mp-inv-infos">
-              <div v-if="dateValue" class="mp-inv-info">
+              <div v-if="dateValue" class="mp-inv-info mp-inv-info--date">
                 <span class="mp-inv-info-icon"><span class="material-symbols-outlined">calendar_month</span></span>
                 <span class="mp-inv-info-label">DATE</span>
                 <span class="mp-inv-info-value">{{ dateValue }}</span>
                 <span v-if="dayOfWeekText" class="mp-inv-info-sub">{{ dayOfWeekText }}</span>
               </div>
 
-              <div v-if="timeValue" class="mp-inv-info">
+              <div v-if="timeValue" class="mp-inv-info mp-inv-info--time">
                 <span class="mp-inv-info-icon"><span class="material-symbols-outlined">schedule</span></span>
                 <span class="mp-inv-info-label">HEURE</span>
                 <span class="mp-inv-info-value">{{ timeValue }}</span>
                 <span class="mp-inv-info-sub">Heure locale</span>
               </div>
 
-              <div v-if="venueValue" class="mp-inv-info">
+              <div v-if="venueValue" class="mp-inv-info mp-inv-info--place">
                 <span class="mp-inv-info-icon"><span class="material-symbols-outlined">location_on</span></span>
                 <span class="mp-inv-info-label">LIEU</span>
                 <span class="mp-inv-info-value">{{ venueValue }}</span>
@@ -130,9 +130,17 @@
             </h2>
             <div class="mp-inv-program">
               <div v-for="(s, i) in programSessions" :key="i" class="mp-inv-program-item">
-                <div class="mp-inv-program-time">{{ sessionTime(s) }}</div>
-                <div class="mp-inv-program-dot"></div>
+                <span class="mp-inv-program-dot" aria-hidden="true">{{ i + 1 }}</span>
                 <div class="mp-inv-program-body">
+                  <div
+                    v-if="sessionTime(s) || (s.type && sessionTypeLabel(s.type))"
+                    class="mp-inv-program-top"
+                  >
+                    <span v-if="sessionTime(s)" class="mp-inv-program-time">{{ sessionTime(s) }}</span>
+                    <span v-if="s.type && sessionTypeLabel(s.type)" class="mp-inv-program-badge">
+                      {{ sessionTypeLabel(s.type) }}
+                    </span>
+                  </div>
                   <p class="mp-inv-program-name">{{ s.name }}</p>
                   <p v-if="sessionDateLabel(s)" class="mp-inv-program-date">{{ sessionDateLabel(s) }}</p>
                   <p v-if="sessionPlace(s)" class="mp-inv-program-place">
@@ -163,7 +171,11 @@
 
           <!-- ================= RSVP ================= -->
           <section class="mp-inv-section mp-inv-rsvp">
-            <h2 class="mp-inv-section-title">Confirmez votre présence</h2>
+            <h2 class="mp-inv-section-title">
+              <span class="mp-inv-sep mp-inv-sep--left"></span>
+              Confirmez votre présence
+              <span class="mp-inv-sep mp-inv-sep--right"></span>
+            </h2>
             <span class="mp-inv-heart mp-inv-heart--violet">♥</span>
 
             <!-- État succès -->
@@ -615,6 +627,20 @@ function sessionDateLabel(s: PublicSessionItem): string {
 
 function sessionPlace(s: PublicSessionItem): string {
   return [s.venueName, s.city].filter(Boolean).join(', ')
+}
+
+/** Libellés FR des types de session (badge du programme — source : enum EventSessionType). */
+const SESSION_TYPE_LABELS: Record<string, string> = {
+  CIVIL_CEREMONY: 'Cérémonie civile',
+  RELIGIOUS_CEREMONY: 'Bénédiction',
+  RECEPTION: 'Réception',
+  AFTER_PARTY: 'Soirée',
+  OTHER: 'Autre',
+}
+
+function sessionTypeLabel(t?: string | null): string {
+  if (!t) return ''
+  return SESSION_TYPE_LABELS[t] ?? t
 }
 
 /* Coordonnées organisateur & date limite — uniquement si le backend les fournit. */
@@ -1247,44 +1273,89 @@ onBeforeUnmount(stopAutoplay)
 /* ---------- Informations DATE / HEURE / LIEU ---------- */
 .mp-inv-infos {
   display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-top: 26px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
 }
 .mp-inv-info {
+  position: relative;
   display:flex;
   flex-direction:column;
   align-items:center;
   text-align:center;
-  gap: 3px;
-  padding: 14px 8px;
+  gap: 4px;
+  padding: 22px 14px 18px;
+  background: #ffffff;
+  border: 1px solid #ece7fa;
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(40, 25, 80, 0.04);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  animation: mp-rise 0.45s ease both;
 }
+.mp-inv-info:nth-child(1) { animation-delay: 0.05s; }
+.mp-inv-info:nth-child(2) { animation-delay: 0.12s; }
+.mp-inv-info:nth-child(3) { animation-delay: 0.19s; }
+.mp-inv-info:hover {
+  transform: translateY(-4px);
+  border-color: #d9cffb;
+  box-shadow: 0 10px 26px rgba(84, 39, 199, 0.10);
+}
+/* Filet dégradé en haut de la carte (apparaît au survol) */
+.mp-inv-info::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, #5427c7, #a78bfa);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.mp-inv-info:hover::before { opacity: 1; }
 .mp-inv-info-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #f0ebff;
-  color: #5427c7;
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #5427c7 0%, #8f6fe0 100%);
+  color: #ffffff;
   display:grid;
   place-items:center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 6px 16px rgba(84, 39, 199, 0.28);
 }
-.mp-inv-info-icon .material-symbols-outlined { font-size: 26px; }
+/* Le lieu se démarque (épingle rose) comme dans la maquette */
+.mp-inv-info--place .mp-inv-info-icon {
+  background: linear-gradient(135deg, #e0447c 0%, #f78fb3 100%);
+  box-shadow: 0 6px 16px rgba(224, 68, 124, 0.25);
+}
+.mp-inv-info-icon .material-symbols-outlined { font-size: 24px; }
 .mp-inv-info-label {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
   color: #8f6fe0;
 }
+.mp-inv-info--place .mp-inv-info-label { color: #e0447c; }
 .mp-inv-info-value {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: #1d1733;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 .mp-inv-info-sub {
-  font-size: 13px;
-  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6d3ff0;
+  background: #f4f0ff;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-top: 5px;
+}
+/* « samedi » → « Samedi » uniquement sur la carte date */
+.mp-inv-info--date .mp-inv-info-sub { text-transform: capitalize; }
+.mp-inv-info--place .mp-inv-info-sub {
+  color: #c23a6a;
+  background: #fdf0f5;
 }
 .mp-inv-message {
   margin: 22px auto 4px;
@@ -1298,72 +1369,119 @@ onBeforeUnmount(stopAutoplay)
 
 /* ---------- Programme de la journée (timeline) ---------- */
 .mp-inv-program {
-  margin: 24px auto 6px;
-  max-width: 560px;
+  margin: 26px auto 6px;
+  max-width: 620px;
 }
 .mp-inv-program-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
   position: relative;
-  padding-bottom: 20px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 14px;
+  padding-bottom: 18px;
 }
 .mp-inv-program-item:last-child { padding-bottom: 4px; }
-.mp-inv-program-time {
-  min-width: 92px;
-  font-weight: 700;
-  font-size: 14px;
-  color: #5427c7;
-  text-align: right;
-  padding-top: 2px;
-}
-.mp-inv-program-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #8f6fe0;
-  border: 2px solid #e6dfff;
-  margin-top: 4px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-}
+/* Rail vertical dégradé sous chaque nœud */
 .mp-inv-program-item::before {
   content: '';
   position: absolute;
-  left: calc(92px + 14px + 5px);
-  top: 16px;
+  left: 13px;
+  top: 34px;
   bottom: 0;
   width: 2px;
-  background: #e6dfff;
+  background: linear-gradient(180deg, #d9cffb 0%, #ece7fa 100%);
 }
 .mp-inv-program-item:last-child::before { display: none; }
-.mp-inv-program-body { flex: 1; }
+/* Nœud numéroté */
+.mp-inv-program-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, #5427c7 0%, #8f6fe0 100%);
+  box-shadow: 0 0 0 4px #f0ebff, 0 4px 10px rgba(84, 39, 199, 0.25);
+  position: relative;
+  z-index: 1;
+}
+.mp-inv-program-body {
+  background: #ffffff;
+  border: 1px solid #ece7fa;
+  border-radius: 16px;
+  padding: 14px 16px 15px;
+  box-shadow: 0 2px 10px rgba(40, 25, 80, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  animation: mp-rise 0.45s ease both;
+}
+.mp-inv-program-item:nth-child(1) .mp-inv-program-body { animation-delay: 0.08s; }
+.mp-inv-program-item:nth-child(2) .mp-inv-program-body { animation-delay: 0.16s; }
+.mp-inv-program-item:nth-child(3) .mp-inv-program-body { animation-delay: 0.24s; }
+.mp-inv-program-item:nth-child(4) .mp-inv-program-body { animation-delay: 0.32s; }
+.mp-inv-program-item:nth-child(5) .mp-inv-program-body { animation-delay: 0.40s; }
+.mp-inv-program-body:hover {
+  transform: translateY(-3px);
+  border-color: #d9cffb;
+  box-shadow: 0 10px 24px rgba(84, 39, 199, 0.10);
+}
+/* Ligne du haut : pastille d'horaire + badge de type */
+.mp-inv-program-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.mp-inv-program-time {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.3px;
+  color: #5427c7;
+  background: #f4f0ff;
+  border: 1px solid #e6dfff;
+  padding: 4px 11px;
+  border-radius: 999px;
+}
+.mp-inv-program-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #6d6588;
+  background: #f4f2fa;
+  border: 1px solid #eceafa;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
 .mp-inv-program-name {
   margin: 0;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 15.5px;
+  font-weight: 700;
   color: #1d1733;
 }
 .mp-inv-program-date {
-  margin: 2px 0 0;
+  margin: 4px 0 0;
   font-size: 12.5px;
   color: #8f6fe0;
   font-weight: 600;
 }
 .mp-inv-program-place {
-  margin: 3px 0 0;
+  margin: 5px 0 0;
   font-size: 13.5px;
   color: #667085;
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.mp-inv-program-place .material-symbols-outlined { font-size: 16px; color: #8f6fe0; }
+.mp-inv-program-place .material-symbols-outlined { font-size: 16px; color: #e0447c; }
 .mp-inv-program-desc {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-size: 13.5px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #667085;
 }
 
@@ -1408,42 +1526,78 @@ onBeforeUnmount(stopAutoplay)
 .mp-inv-you-count .material-symbols-outlined { font-size: 16px; color: #8f6fe0; }
 .mp-inv-you-count strong { color: #5427c7; }
 
+/* ---------- Panneau RSVP ---------- */
+.mp-inv-rsvp {
+  position: relative;
+  margin-top: 26px;
+  padding: 30px 26px 28px;
+  background: linear-gradient(180deg, #faf8ff 0%, #f5f1ff 100%);
+  border: 1px solid #ece7fa;
+  border-radius: 20px;
+}
+.mp-inv-rsvp .mp-inv-heart--violet { margin: 8px auto 6px; }
+
 /* ---------- Choix RSVP ---------- */
 .mp-inv-choices {
   display:grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-top: 20px;
+  gap: 16px;
+  margin-top: 16px;
 }
 .mp-inv-choice {
+  position: relative;
   display:flex;
   flex-direction:column;
   align-items:center;
   text-align:center;
-  gap: 6px;
-  padding: 22px 16px 20px;
-  border-radius: 14px;
-  border: 1.5px solid #d9d5e5;
+  gap: 7px;
+  padding: 24px 16px 22px;
+  border-radius: 16px;
+  border: 1.5px solid #e3ddf5;
   background: #ffffff;
   cursor:pointer;
+  box-shadow: 0 2px 10px rgba(40, 25, 80, 0.04);
   transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
-.mp-inv-choice:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(40,25,80,0.08); }
+.mp-inv-choice:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(40, 25, 80, 0.10); }
 .mp-inv-choice--ok {
   border-color: #2e9b59;
   background: #f5fcf7;
+  box-shadow: 0 0 0 3px rgba(46, 155, 89, 0.13), 0 4px 14px rgba(46, 155, 89, 0.10);
 }
 .mp-inv-choice--no {
   border-color: #e53935;
   background: #fff7f7;
+  box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.12), 0 4px 14px rgba(229, 57, 53, 0.08);
 }
+/* Pastille de sélection (coin supérieur droit) */
+.mp-inv-choice::after {
+  content: '✓';
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  background: #cfc8e6;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+.mp-inv-choice--ok::after { content: '✓'; background: #2e9b59; opacity: 1; transform: scale(1); }
+.mp-inv-choice--no::after { content: '✕'; background: #e53935; opacity: 1; transform: scale(1); }
 .mp-inv-choice-icon {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display:grid;
   place-items:center;
-  font-size: 16px;
+  font-size: 17px;
   color: #667085;
   background: #f0ebff;
   transition: all 0.18s ease;
@@ -1471,18 +1625,18 @@ onBeforeUnmount(stopAutoplay)
 
 /* ---------- Formulaire ---------- */
 .mp-inv-form {
-  margin-top: 22px;
+  margin-top: 24px;
   text-align: left;
   display:flex;
   flex-direction:column;
-  gap: 8px;
+  gap: 10px;
   animation: mp-rise 0.22s ease both;
 }
 .mp-inv-label {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 700;
   color: #1d1733;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 .mp-inv-label-muted { color: #9aa3b2; font-weight: 400; }
 .mp-inv-stepper {
@@ -1490,17 +1644,18 @@ onBeforeUnmount(stopAutoplay)
   align-items:center;
   justify-content:space-between;
   width: 100%;
-  max-width: 220px;
-  height: 48px;
-  border: 1px solid #d8d3e8;
-  border-radius: 10px;
+  max-width: 210px;
+  height: 50px;
+  border: 1px solid #e3ddf5;
+  border-radius: 14px;
   background: #ffffff;
+  box-shadow: 0 1px 4px rgba(40, 25, 80, 0.05);
   overflow: hidden;
 }
 .mp-inv-step-btn {
-  width: 52px;
+  width: 54px;
   height: 100%;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
   color: #5427c7;
   background: transparent;
@@ -1618,20 +1773,28 @@ textarea.mp-inv-input {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  height: 50px;
+  height: 52px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 14px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  margin-top: 12px;
-  transition: background 0.18s ease, transform 0.12s ease, opacity 0.15s ease;
+  margin-top: 14px;
+  transition: background 0.18s ease, transform 0.12s ease, opacity 0.15s ease, box-shadow 0.18s ease;
 }
 .mp-inv-btn:active:not(:disabled) { transform: translateY(1px); }
 .mp-inv-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.mp-inv-btn--primary { background: #5427c7; color: #ffffff; }
-.mp-inv-btn--primary:hover:not(:disabled) { background: #3f1d9a; }
+.mp-inv-btn--primary {
+  background: linear-gradient(135deg, #5427c7 0%, #7c4dff 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(84, 39, 199, 0.28);
+}
+.mp-inv-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #481fb0 0%, #6d3ff0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(84, 39, 199, 0.34);
+}
 .mp-inv-btn--decline { background: #fff0f0; color: #e53935; border: 1px solid #f5c4c4; }
 .mp-inv-btn--decline:hover:not(:disabled) { background: #ffe3e3; }
 
@@ -1936,7 +2099,41 @@ html.dark .mp-inv-choice--ok { background: #1b2a22; border-color: #2e9b59; }
 html.dark .mp-inv-choice--ok .mp-inv-choice-title { color: #4cc97a; }
 html.dark .mp-inv-choice--no { background: #2b1d1d; border-color: #e53935; }
 html.dark .mp-inv-choice--no .mp-inv-choice-title { color: #f07a77; }
-html.dark .mp-inv-info-icon { background: #211b2d; }
+html.dark .mp-inv-info {
+  background: #191522;
+  border-color: #342d45;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+html.dark .mp-inv-info:hover {
+  border-color: #4b3f6b;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+}
+html.dark .mp-inv-info-sub { background: #241d38; color: #b9a5f8; }
+html.dark .mp-inv-info--place .mp-inv-info-sub { background: #2c1a24; color: #f78fb3; }
+html.dark .mp-inv-info--place .mp-inv-info-label { color: #f78fb3; }
+html.dark .mp-inv-program-body {
+  background: #191522;
+  border-color: #342d45;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+html.dark .mp-inv-program-body:hover { border-color: #4b3f6b; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4); }
+html.dark .mp-inv-program-dot { box-shadow: 0 0 0 4px #241d38, 0 4px 10px rgba(0, 0, 0, 0.45); }
+html.dark .mp-inv-program-item::before { background: linear-gradient(180deg, #4b3f6b 0%, #342d45 100%); }
+html.dark .mp-inv-program-time { background: #241d38; border-color: #4b3f6b; color: #b9a5f8; }
+html.dark .mp-inv-program-badge { background: #211b2d; border-color: #342d45; color: #b8b2c7; }
+html.dark .mp-inv-program-name { color: #f7f5ff; }
+html.dark .mp-inv-program-date { color: #a78bfa; }
+html.dark .mp-inv-program-place,
+html.dark .mp-inv-program-desc { color: #b8b2c7; }
+html.dark .mp-inv-program-place .material-symbols-outlined { color: #f78fb3; }
+html.dark .mp-inv-rsvp {
+  background: linear-gradient(180deg, #161220 0%, #1b1628 100%);
+  border-color: #342d45;
+}
+html.dark .mp-inv-choice--ok::after { background: #2e9b59; }
+html.dark .mp-inv-choice--no::after { background: #e53935; }
+html.dark .mp-inv-choice--ok { box-shadow: 0 0 0 3px rgba(46, 155, 89, 0.18), 0 4px 14px rgba(0, 0, 0, 0.3); }
+html.dark .mp-inv-choice--no { box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.16), 0 4px 14px rgba(0, 0, 0, 0.3); }
 html.dark .mp-inv-stepper { border-color: #342d45; background: #191522; }
 html.dark .mp-inv-step-btn:hover:not(:disabled) { background: #211b2d; }
 html.dark .mp-inv-input {
@@ -1962,8 +2159,8 @@ html.dark .mp-inv-footer-deadline { color: #8f88a3; }
 html.dark .mp-inv-unavailable-icon,
 html.dark .mp-inv-footer-strong,
 html.dark .mp-inv-link { color: #8b5cf6; }
-html.dark .mp-inv-btn--primary { background: #8b5cf6; }
-html.dark .mp-inv-btn--primary:hover:not(:disabled) { background: #9776ff; }
+html.dark .mp-inv-btn--primary { background: linear-gradient(135deg, #7c4dff 0%, #9776ff 100%); }
+html.dark .mp-inv-btn--primary:hover:not(:disabled) { background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); }
 html.dark .mp-inv-btn--decline { background: #2b1d1d; color: #f07a77; border-color: #4a2a2a; }
 html.dark .mp-inv-btn--decline:hover:not(:disabled) { background: #362222; }
 html.dark .mp-inv-error { background: #2b1d1d; border-color: #4a2a2a; color: #f07a77; }
@@ -1993,10 +2190,15 @@ html.dark .mp-inv-qr img { background: #ffffff; }
   .mp-inv-tagline { font-size: 15px; }
   .mp-inv-body { padding: 26px 20px 0; }
   .mp-inv-infos { grid-template-columns: 1fr; gap: 10px; margin-top: 18px; }
-  .mp-inv-info { padding: 10px 8px; }
-  .mp-inv-info-icon { width: 48px; height: 48px; }
+  .mp-inv-info { padding: 16px 12px 14px; }
+  .mp-inv-info-icon { width: 46px; height: 46px; border-radius: 13px; }
   .mp-inv-choices { grid-template-columns: 1fr; gap: 12px; }
   .mp-inv-section-title { font-size: 20px; }
+  .mp-inv-rsvp { padding: 22px 16px 20px; border-radius: 16px; margin-top: 20px; }
+  .mp-inv-program { margin-top: 18px; }
+  .mp-inv-program-item { gap: 10px; padding-bottom: 14px; }
+  .mp-inv-program-body { padding: 12px 13px 13px; }
+  .mp-inv-program-top { margin-bottom: 6px; }
   .mp-inv-help { flex-direction: column; align-items: flex-start; }
 }
 
