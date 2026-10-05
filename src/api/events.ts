@@ -169,16 +169,18 @@ export async function getEvent(id: number): Promise<Event> {
   return parseEvent(decodeMap(res.data))
 }
 
-/** Option de tenue vestimentaire proposée dans les formulaires organisateur. */
+/** Option de couleur de tenue proposée dans les formulaires organisateur. */
 export interface DressCodeOption {
   value: string
   label: string
+  /** Code couleur CSS (hex) pour l'aperçu visuel. */
+  hex: string
   description?: string | null
 }
 
 /**
- * Tenues disponibles (code + libellé français). Les libellés viennent du backend
- * (enum EventDressCode) : rien n'est codé en dur ici, donc aucune divergence.
+ * Couleurs disponibles (libellé français + aperçu). Les libellés viennent du
+ * backend (enum EventDressCode) : rien n'est codé en dur ici.
  */
 export async function fetchDressCodes(): Promise<DressCodeOption[]> {
   const res = await http.get(`${ApiConfig.eventsPath}/dress-codes`, { skipNotification: true })
@@ -187,6 +189,7 @@ export async function fetchDressCodes(): Promise<DressCodeOption[]> {
     return {
       value: String(o.value ?? ''),
       label: String(o.label ?? ''),
+      hex: String(o.hex ?? ''),
       description: o.description ? String(o.description) : null,
     }
   })

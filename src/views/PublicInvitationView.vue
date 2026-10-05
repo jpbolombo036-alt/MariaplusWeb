@@ -92,10 +92,13 @@
                 <span v-if="venueSub" class="mp-inv-info-sub">{{ venueSub }}</span>
               </div>
 
-              <!-- Tenue demandée (facultative) -->
+              <!-- Couleur de tenue demandée (facultative) : l'invité voit la teinte attendue -->
               <div v-if="dressCodeValue" class="mp-inv-info">
-                <span class="mp-inv-info-icon"><span class="material-symbols-outlined">style</span></span>
-                <span class="mp-inv-info-label">TENUE</span>
+                <span class="mp-inv-info-icon">
+                  <span v-if="dressCodeHex" class="w-6 h-6 rounded-full inline-block border border-outline-variant align-middle" :style="{ backgroundColor: dressCodeHex }"></span>
+                  <span v-else class="material-symbols-outlined">palette</span>
+                </span>
+                <span class="mp-inv-info-label">COULEUR</span>
                 <span class="mp-inv-info-value">{{ dressCodeValue }}</span>
                 <span v-if="dressCodeSub" class="mp-inv-info-sub">{{ dressCodeSub }}</span>
               </div>
@@ -547,9 +550,10 @@ const venueParts = computed(() =>
 )
 const venueValue = computed(() => venueParts.value[0] || '')
 const venueSub = computed(() => (venueParts.value.length > 1 ? venueParts.value.slice(1).join(' · ') : ''))
-/** Tenue demandée par l'organisateur (libellé FR fourni par l'API publique). */
+/** Couleur de tenue demandée par l'organisateur (libellé + aperçu fournis par l'API publique). */
 const dressCodeValue = computed(() => inv.value?.dressCodeLabel || '')
 const dressCodeSub = computed(() => inv.value?.dressCodeDescription || '')
+const dressCodeHex = computed(() => inv.value?.dressCodeHex || '')
 const hasEventInfo = computed(() => Boolean(dateValue.value || timeValue.value || venueValue.value || dressCodeValue.value))
 
 /* Format court pour la carte téléchargeable : « Sam 12 oct 2025 » / « 18h00 » */

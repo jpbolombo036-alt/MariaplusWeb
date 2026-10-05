@@ -31,12 +31,15 @@
       <textarea v-model="form.description" rows="2" placeholder="Description (optionnel)" class="input mb-3 resize-none"></textarea>
       <textarea v-model="form.message" rows="2" placeholder="Message d'invitation (optionnel)" class="input resize-none"></textarea>
       <label class="block mt-3">
-        <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Tenue demandée (facultatif)</span>
+        <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Couleur de tenue (facultatif)</span>
         <select v-model="form.dressCode" class="input">
-          <option value="">Aucune tenue imposée</option>
+          <option value="">Aucune couleur imposée</option>
           <option v-for="d in dressCodes" :key="d.value" :value="d.value">{{ d.label }}</option>
         </select>
-        <span v-if="selectedDressCode?.description" class="text-[11px] text-on-surface-variant mt-1 block">{{ selectedDressCode.description }}</span>
+        <span v-if="selectedDressCode" class="flex items-center gap-2 text-[11px] text-on-surface-variant mt-1">
+          <span class="w-3.5 h-3.5 rounded-full border border-outline-variant shrink-0" :style="{ backgroundColor: selectedDressCode?.hex }"></span>
+          {{ selectedDressCode?.description }}
+        </span>
       </label>
       <p v-if="error" class="text-error text-sm mt-3">{{ error }}</p>
       <div class="flex justify-end gap-2 mt-6">
