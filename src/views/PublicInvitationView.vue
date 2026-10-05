@@ -91,6 +91,14 @@
                 <span class="mp-inv-info-value">{{ venueValue }}</span>
                 <span v-if="venueSub" class="mp-inv-info-sub">{{ venueSub }}</span>
               </div>
+
+              <!-- Tenue demandée (facultative) -->
+              <div v-if="dressCodeValue" class="mp-inv-info">
+                <span class="mp-inv-info-icon"><span class="material-symbols-outlined">style</span></span>
+                <span class="mp-inv-info-label">TENUE</span>
+                <span class="mp-inv-info-value">{{ dressCodeValue }}</span>
+                <span v-if="dressCodeSub" class="mp-inv-info-sub">{{ dressCodeSub }}</span>
+              </div>
             </div>
 
             <p v-if="inv.message" class="mp-inv-message">{{ inv.message }}</p>
@@ -539,7 +547,10 @@ const venueParts = computed(() =>
 )
 const venueValue = computed(() => venueParts.value[0] || '')
 const venueSub = computed(() => (venueParts.value.length > 1 ? venueParts.value.slice(1).join(' · ') : ''))
-const hasEventInfo = computed(() => Boolean(dateValue.value || timeValue.value || venueValue.value))
+/** Tenue demandée par l'organisateur (libellé FR fourni par l'API publique). */
+const dressCodeValue = computed(() => inv.value?.dressCodeLabel || '')
+const dressCodeSub = computed(() => inv.value?.dressCodeDescription || '')
+const hasEventInfo = computed(() => Boolean(dateValue.value || timeValue.value || venueValue.value || dressCodeValue.value))
 
 /* Format court pour la carte téléchargeable : « Sam 12 oct 2025 » / « 18h00 » */
 const cardDateShort = computed(() => {

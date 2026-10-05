@@ -63,6 +63,15 @@
             <textarea v-model="form.message" rows="3" placeholder="Message affiché sur l'invitation (optionnel)" class="input resize-none"></textarea>
           </label>
 
+          <label class="block">
+            <span class="field-label">Tenue demandée (facultatif)</span>
+            <select v-model="form.dressCode" class="input">
+              <option value="">Aucune tenue imposée</option>
+              <option v-for="d in dressCodes" :key="d.value" :value="d.value">{{ d.label }}</option>
+            </select>
+            <span v-if="selectedDressCode?.description" class="text-[11px] text-slate-500 mt-1 block">{{ selectedDressCode.description }}</span>
+          </label>
+
           <section class="border-t border-slate-100 pt-5 space-y-5">
             <div>
               <h2 class="text-[15px] font-bold text-slate-900">Photos de l'événement</h2>
@@ -117,9 +126,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import { absolutePhotoUrl, deleteEventImage, getEvent, loadEventImage, updateEvent, uploadEventImage, uploadEventPhoto, type EventPhotoKind } from '../../api/events'
+import { absolutePhotoUrl, deleteEventImage, fetchDressCodes, getEvent, loadEventImage, updateEvent, uploadEventImage, uploadEventPhoto, type DressCodeOption, type EventPhotoKind } from '../../api/events'
 import ImageCropModal from '../../components/common/ImageCropModal.vue'
 
 const route = useRoute()
@@ -154,9 +163,17 @@ const form = reactive({
   city: '',
   description: '',
   message: '',
+  dressCode: '',
 })
 
+/** Options de tenue fournies par le backend (libellés FR, source unique). */
+const dressCodes = ref<DressCodeOption[]>([])
+const selectedDressCode = computed(() => dressCodes.value.find((d) => d.value === form.dressCode) ?? null)
+
 onMounted(async () => {
+  try {
+    dressCodes.value = await fetchDressCodes().catch(() => [] as DressCodeOption[])
+  } catch { /* le champ reste vide : la tenue est facultative */ }
   try {
     const ev = await getEvent(id)
     form.name = ev.name ?? ''
@@ -168,6 +185,7 @@ onMounted(async () => {
     form.city = ev.city ?? ''
     form.description = ev.description ?? ''
     form.message = ev.message ?? ''
+    form.dressCode = ev.dressCode ?? ''
     coverPreview.value = await loadEventImage(id)
     for (const photo of photoFields) {
       const details = ev.weddingDetails
@@ -259,6 +277,7 @@ async function submit() {
     payload.city = form.city || null
     payload.description = form.description || null
     payload.message = form.message || null
+    payload.dressCode = form.dressCode || null
     await updateEvent(id, payload)
     if (coverFile.value) await uploadEventImage(id, coverFile.value)
     else if (coverRemoved.value) await deleteEventImage(id)

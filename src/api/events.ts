@@ -55,6 +55,8 @@ export interface Event {
   longitude?: number | null
   mapUrl?: string | null
   status: string
+  /** Tenue demandée aux invités (code technique ; libellé FR via fetchDressCodes). */
+  dressCode?: string | null
   displayOrder?: number | null
   active?: boolean | null
   createdAt?: string | null
@@ -143,6 +145,7 @@ export function parseEvent(json: Record<string, unknown>): Event {
     longitude: json.longitude != null ? Number(json.longitude) : null,
     mapUrl: json.mapUrl ? String(json.mapUrl) : null,
     status: String(json.status ?? 'DRAFT'),
+    dressCode: json.dressCode ? String(json.dressCode) : null,
     displayOrder: json.displayOrder != null ? Number(json.displayOrder) : null,
     active: json.active != null ? Boolean(json.active) : null,
     createdAt: json.createdAt ? String(json.createdAt) : null,
@@ -164,6 +167,29 @@ export async function listEvents(type?: string, page = 0, size = 25): Promise<Ev
 export async function getEvent(id: number): Promise<Event> {
   const res = await http.get(`${ApiConfig.eventsPath}/${id}`)
   return parseEvent(decodeMap(res.data))
+}
+
+/** Option de tenue vestimentaire proposée dans les formulaires organisateur. */
+export interface DressCodeOption {
+  value: string
+  label: string
+  description?: string | null
+}
+
+/**
+ * Tenues disponibles (code + libellé français). Les libellés viennent du backend
+ * (enum EventDressCode) : rien n'est codé en dur ici, donc aucune divergence.
+ */
+export async function fetchDressCodes(): Promise<DressCodeOption[]> {
+  const res = await http.get(`${ApiConfig.eventsPath}/dress-codes`, { skipNotification: true })
+  return decodeList(res.data).map((d) => {
+    const o = d as Record<string, unknown>
+    return {
+      value: String(o.value ?? ''),
+      label: String(o.label ?? ''),
+      description: o.description ? String(o.description) : null,
+    }
+  })
 }
 
 export async function createEvent(payload: Record<string, unknown>): Promise<Event> {
@@ -202,6 +228,7 @@ export async function createEvent(payload: Record<string, unknown>): Promise<Eve
   if (payload.latitude !== undefined) eventPayload.latitude = payload.latitude
   if (payload.longitude !== undefined) eventPayload.longitude = payload.longitude
   if (payload.mapUrl !== undefined) eventPayload.mapUrl = payload.mapUrl
+  if (payload.dressCode !== undefined) eventPayload.dressCode = payload.dressCode
   const res = await http.post(ApiConfig.eventsPath, eventPayload)
   return parseEvent(decodeMap(res.data))
 }
@@ -226,6 +253,7 @@ export async function updateEvent(id: number, payload: Record<string, unknown>):
   if (payload.latitude !== undefined) eventPayload.latitude = payload.latitude
   if (payload.longitude !== undefined) eventPayload.longitude = payload.longitude
   if (payload.mapUrl !== undefined) eventPayload.mapUrl = payload.mapUrl
+  if (payload.dressCode !== undefined) eventPayload.dressCode = payload.dressCode
   if (Object.keys(weddingDetails).length > 0) eventPayload.weddingDetails = weddingDetails
   const res = await http.put(`${ApiConfig.eventsPath}/${id}`, eventPayload)
   return parseEvent(decodeMap(res.data))

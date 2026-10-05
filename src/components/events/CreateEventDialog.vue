@@ -30,6 +30,14 @@
       <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onPhotoPick" />
       <textarea v-model="form.description" rows="2" placeholder="Description (optionnel)" class="input mb-3 resize-none"></textarea>
       <textarea v-model="form.message" rows="2" placeholder="Message d'invitation (optionnel)" class="input resize-none"></textarea>
+      <label class="block mt-3">
+        <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Tenue demandée (facultatif)</span>
+        <select v-model="form.dressCode" class="input">
+          <option value="">Aucune tenue imposée</option>
+          <option v-for="d in dressCodes" :key="d.value" :value="d.value">{{ d.label }}</option>
+        </select>
+        <span v-if="selectedDressCode?.description" class="text-[11px] text-on-surface-variant mt-1 block">{{ selectedDressCode.description }}</span>
+      </label>
       <p v-if="error" class="text-error text-sm mt-3">{{ error }}</p>
       <div class="flex justify-end gap-2 mt-6">
         <button type="button" class="px-4 h-10 rounded-lg text-on-surface-variant" @click="$emit('close')">Annuler</button>
@@ -51,14 +59,20 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { createEvent, uploadEventImage, uploadEventPhoto, type Event as EventModel } from '../../api/events'
+import { reactive, ref, computed, onMounted } from 'vue'
+import { createEvent, fetchDressCodes, uploadEventImage, uploadEventPhoto, type DressCodeOption, type Event as EventModel } from '../../api/events'
 import { useAuthStore } from '../../stores/auth'
 import ImageCropModal from '../common/ImageCropModal.vue'
 
 const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: EventModel): void }>()
 const auth = useAuthStore()
-const form = reactive({ groomFirstName: '', groomLastName: '', brideFirstName: '', brideLastName: '', description: '', message: '' })
+const form = reactive({ groomFirstName: '', groomLastName: '', brideFirstName: '', brideLastName: '', description: '', message: '', dressCode: '' })
+/** Options de tenue fournies par le backend (libellés FR, source unique). */
+const dressCodes = ref<DressCodeOption[]>([])
+const selectedDressCode = computed(() => dressCodes.value.find((d) => d.value === form.dressCode) ?? null)
+onMounted(async () => {
+  try { dressCodes.value = await fetchDressCodes() } catch { /* sélecteur vide : la tenue reste facultative */ }
+})
 const loading = ref(false)
 const error = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -107,6 +121,7 @@ async function submit() {
       brideLastName: form.brideLastName,
       description: form.description || null,
       message: form.message || null,
+      dressCode: form.dressCode || null,
       organizationId: auth.isSuperAdmin && auth.user?.organizationId ? auth.user.organizationId : undefined,
     })
     if (photoFile.value) {

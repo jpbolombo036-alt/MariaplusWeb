@@ -14,6 +14,10 @@ export interface PublicInvitation {
   eventDate?: string | null
   eventStartTime?: string | null
   eventVenue?: string | null
+  /** Tenue demandée : code technique + libellé français (null si aucune). */
+  dressCode?: string | null
+  dressCodeLabel?: string | null
+  dressCodeDescription?: string | null
   maxAccepted?: number | null
   status: string
   rsvpStatus?: string | null
@@ -73,6 +77,9 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
     eventDate: j.eventDate ? String(j.eventDate) : null,
     eventStartTime: j.eventStartTime ? String(j.eventStartTime) : null,
     eventVenue: j.eventVenue ? String(j.eventVenue) : null,
+    dressCode: j.dressCode ? String(j.dressCode) : null,
+    dressCodeLabel: j.dressCodeLabel ? String(j.dressCodeLabel) : null,
+    dressCodeDescription: j.dressCodeDescription ? String(j.dressCodeDescription) : null,
     maxAccepted: j.maxAccepted != null ? Number(j.maxAccepted) : null,
     status: String(j.status ?? ''),
     rsvpStatus: j.rsvpStatus ? String(j.rsvpStatus) : null,
