@@ -118,17 +118,7 @@
             <textarea v-model="form.message" rows="2" placeholder="Nous avons l'immense joie de vous inviter…" class="input resize-none"></textarea>
           </label>
 
-          <label class="block">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Couleur de tenue (facultatif)</span>
-            <select v-model="form.dressCode" class="input">
-              <option value="">Aucune couleur imposée</option>
-              <option v-for="d in dressCodes" :key="d.value" :value="d.value">{{ d.label }}</option>
-            </select>
-            <span v-if="selectedDressCode" class="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
-              <span class="w-3.5 h-3.5 rounded-full border border-slate-300 shrink-0" :style="{ backgroundColor: selectedDressCode?.hex }"></span>
-              {{ selectedDressCode?.description }}
-            </span>
-          </label>
+          <DressCodeField v-model="form.dressColors" @pending-file="dressFile = $event" />
         </div>
 
         <!-- ============ ÉTAPE 2 : VISUELS ============ -->
@@ -268,9 +258,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { createEvent, fetchDressCodes, uploadEventPhoto, uploadEventImage, type DressCodeOption, type EventPhotoKind } from '../../api/events'
+import { createEvent, uploadEventDressImage, uploadEventPhoto, uploadEventImage, type EventPhotoKind } from '../../api/events'
+import DressCodeField from '../../components/events/DressCodeField.vue'
 import { createWeddingEvent } from '../../api/weddingEvents'
 import ImageCropModal from '../../components/common/ImageCropModal.vue'
 import { useAuthStore } from '../../stores/auth'
@@ -393,7 +384,7 @@ async function submitCreate() {
       type: form.type,
       description: form.description || null,
       message: form.message || null,
-      dressCode: form.dressCode || null,
+      dressColors: form.dressColors,
       eventDate: form.eventDate || null,
       startTime: form.startTime || null,
       endTime: form.endTime || null,
@@ -417,6 +408,9 @@ async function submitCreate() {
     // Visuels (non bloquant)
     if (coverFile.value) {
       try { await uploadEventImage(created.id, coverFile.value) } catch { /* ignore */ }
+    }
+    if (dressFile.value) {
+      try { await uploadEventDressImage(created.id, dressFile.value) } catch { /* ignore */ }
     }
     if (form.type === 'WEDDING') {
       for (const p of photoFields) {
@@ -494,15 +488,10 @@ const form = reactive({
   groomLastName: '',
   brideFirstName: '',
   brideLastName: '',
-  dressCode: '',
+  dressColors: [] as string[],
 })
-
-/** Options de tenue fournies par le backend (libellés FR, source unique). */
-const dressCodes = ref<DressCodeOption[]>([])
-const selectedDressCode = computed(() => dressCodes.value.find((d) => d.value === form.dressCode) ?? null)
-onMounted(async () => {
-  try { dressCodes.value = await fetchDressCodes() } catch { /* la tenue reste facultative */ }
-})
+/** Photo du pagne choisie avant la création : uploadée juste après (l'ID n'existe pas encore). */
+const dressFile = ref<File | null>(null)
 
 const TYPE_LABELS: Record<string, string> = {
   WEDDING: 'Mariage', COLLATION: 'Collation', ANNIVERSARY: 'Anniversaire',

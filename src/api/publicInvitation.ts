@@ -1,5 +1,6 @@
 import { http, decodeMap, decodeList } from './http'
 import { ApiConfig } from './config'
+import type { DressCodeOption as DressColorOption } from './events'
 
 export interface PublicInvitation {
   guestFirstName?: string | null
@@ -14,11 +15,9 @@ export interface PublicInvitation {
   eventDate?: string | null
   eventStartTime?: string | null
   eventVenue?: string | null
-  /** Couleur de tenue demandée : code, libellé français et aperçu (null si aucune). */
-  dressCode?: string | null
-  dressCodeLabel?: string | null
-  dressCodeDescription?: string | null
-  dressCodeHex?: string | null
+  /** Vestiaire : couleurs demandées (max 3, libellé + aperçu) et photo du pagne. */
+  dressColors?: DressColorOption[] | null
+  dressImageUrl?: string | null
   maxAccepted?: number | null
   status: string
   rsvpStatus?: string | null
@@ -78,10 +77,15 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
     eventDate: j.eventDate ? String(j.eventDate) : null,
     eventStartTime: j.eventStartTime ? String(j.eventStartTime) : null,
     eventVenue: j.eventVenue ? String(j.eventVenue) : null,
-    dressCode: j.dressCode ? String(j.dressCode) : null,
-    dressCodeLabel: j.dressCodeLabel ? String(j.dressCodeLabel) : null,
-    dressCodeDescription: j.dressCodeDescription ? String(j.dressCodeDescription) : null,
-    dressCodeHex: j.dressCodeHex ? String(j.dressCodeHex) : null,
+    dressColors: Array.isArray(j.dressColors)
+      ? (j.dressColors as Record<string, unknown>[]).map((c) => ({
+          value: String(c.value ?? ''),
+          label: String(c.label ?? ''),
+          hex: String(c.hex ?? ''),
+          description: c.description ? String(c.description) : null,
+        }))
+      : [],
+    dressImageUrl: j.dressImageUrl ? String(j.dressImageUrl) : null,
     maxAccepted: j.maxAccepted != null ? Number(j.maxAccepted) : null,
     status: String(j.status ?? ''),
     rsvpStatus: j.rsvpStatus ? String(j.rsvpStatus) : null,

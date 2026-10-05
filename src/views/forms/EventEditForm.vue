@@ -63,17 +63,7 @@
             <textarea v-model="form.message" rows="3" placeholder="Message affiché sur l'invitation (optionnel)" class="input resize-none"></textarea>
           </label>
 
-          <label class="block">
-            <span class="field-label">Couleur de tenue (facultatif)</span>
-            <select v-model="form.dressCode" class="input">
-              <option value="">Aucune couleur imposée</option>
-              <option v-for="d in dressCodes" :key="d.value" :value="d.value">{{ d.label }}</option>
-            </select>
-            <span v-if="selectedDressCode" class="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
-              <span class="w-3.5 h-3.5 rounded-full border border-slate-300 shrink-0" :style="{ backgroundColor: selectedDressCode?.hex }"></span>
-              {{ selectedDressCode?.description }}
-            </span>
-          </label>
+          <DressCodeField v-model="form.dressColors" :event-id="id" />
 
           <section class="border-t border-slate-100 pt-5 space-y-5">
             <div>
@@ -129,9 +119,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import { absolutePhotoUrl, deleteEventImage, fetchDressCodes, getEvent, loadEventImage, updateEvent, uploadEventImage, uploadEventPhoto, type DressCodeOption, type EventPhotoKind } from '../../api/events'
+import { absolutePhotoUrl, deleteEventImage, getEvent, loadEventImage, updateEvent, uploadEventImage, uploadEventPhoto, type EventPhotoKind } from '../../api/events'
+import DressCodeField from '../../components/events/DressCodeField.vue'
 import ImageCropModal from '../../components/common/ImageCropModal.vue'
 
 const route = useRoute()
@@ -166,17 +157,10 @@ const form = reactive({
   city: '',
   description: '',
   message: '',
-  dressCode: '',
+  dressColors: [] as string[],
 })
 
-/** Options de tenue fournies par le backend (libellés FR, source unique). */
-const dressCodes = ref<DressCodeOption[]>([])
-const selectedDressCode = computed(() => dressCodes.value.find((d) => d.value === form.dressCode) ?? null)
-
 onMounted(async () => {
-  try {
-    dressCodes.value = await fetchDressCodes().catch(() => [] as DressCodeOption[])
-  } catch { /* le champ reste vide : la tenue est facultative */ }
   try {
     const ev = await getEvent(id)
     form.name = ev.name ?? ''
@@ -188,7 +172,7 @@ onMounted(async () => {
     form.city = ev.city ?? ''
     form.description = ev.description ?? ''
     form.message = ev.message ?? ''
-    form.dressCode = ev.dressCode ?? ''
+    form.dressColors = ev.dressColors ?? []
     coverPreview.value = await loadEventImage(id)
     for (const photo of photoFields) {
       const details = ev.weddingDetails
@@ -280,7 +264,7 @@ async function submit() {
     payload.city = form.city || null
     payload.description = form.description || null
     payload.message = form.message || null
-    payload.dressCode = form.dressCode || null
+    payload.dressColors = form.dressColors
     await updateEvent(id, payload)
     if (coverFile.value) await uploadEventImage(id, coverFile.value)
     else if (coverRemoved.value) await deleteEventImage(id)

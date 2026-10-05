@@ -55,8 +55,10 @@ export interface Event {
   longitude?: number | null
   mapUrl?: string | null
   status: string
-  /** Tenue demandée aux invités (code technique ; libellé FR via fetchDressCodes). */
-  dressCode?: string | null
+  /** Couleurs de tenue demandées aux invités (max 3), dans l'ordre saisi. */
+  dressColors?: string[] | null
+  /** Une photo du pagne / tissu à porter est-elle jointe ? */
+  hasDressImage?: boolean | null
   displayOrder?: number | null
   active?: boolean | null
   createdAt?: string | null
@@ -86,6 +88,28 @@ export async function uploadEventImage(eventId: number, file: File): Promise<voi
 
 export async function deleteEventImage(eventId: number): Promise<void> {
   await http.delete(`${ApiConfig.eventsPath}/${eventId}/image`)
+}
+
+/** Charge la photo du pagne / tissu en blob URL (null si 404 = pas de photo). */
+export async function loadEventDressImage(eventId: number): Promise<string | null> {
+  try {
+    const res = await http.get(`${ApiConfig.eventsPath}/${eventId}/dress-image`, { responseType: 'blob' })
+    return URL.createObjectURL(res.data as Blob)
+  } catch {
+    return null
+  }
+}
+
+export async function uploadEventDressImage(eventId: number, file: File): Promise<void> {
+  const form = new FormData()
+  form.append('file', file)
+  await http.put(`${ApiConfig.eventsPath}/${eventId}/dress-image`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export async function deleteEventDressImage(eventId: number): Promise<void> {
+  await http.delete(`${ApiConfig.eventsPath}/${eventId}/dress-image`)
 }
 
 export type EventPhotoKind = 'groom' | 'bride' | 'couple'
@@ -145,7 +169,10 @@ export function parseEvent(json: Record<string, unknown>): Event {
     longitude: json.longitude != null ? Number(json.longitude) : null,
     mapUrl: json.mapUrl ? String(json.mapUrl) : null,
     status: String(json.status ?? 'DRAFT'),
-    dressCode: json.dressCode ? String(json.dressCode) : null,
+    dressColors: Array.isArray(json.dressColors)
+      ? (json.dressColors as unknown[]).map((c) => String(c))
+      : [],
+    hasDressImage: Boolean(json.hasDressImage),
     displayOrder: json.displayOrder != null ? Number(json.displayOrder) : null,
     active: json.active != null ? Boolean(json.active) : null,
     createdAt: json.createdAt ? String(json.createdAt) : null,
@@ -231,7 +258,7 @@ export async function createEvent(payload: Record<string, unknown>): Promise<Eve
   if (payload.latitude !== undefined) eventPayload.latitude = payload.latitude
   if (payload.longitude !== undefined) eventPayload.longitude = payload.longitude
   if (payload.mapUrl !== undefined) eventPayload.mapUrl = payload.mapUrl
-  if (payload.dressCode !== undefined) eventPayload.dressCode = payload.dressCode
+  if (payload.dressColors !== undefined) eventPayload.dressColors = payload.dressColors
   const res = await http.post(ApiConfig.eventsPath, eventPayload)
   return parseEvent(decodeMap(res.data))
 }
@@ -256,7 +283,7 @@ export async function updateEvent(id: number, payload: Record<string, unknown>):
   if (payload.latitude !== undefined) eventPayload.latitude = payload.latitude
   if (payload.longitude !== undefined) eventPayload.longitude = payload.longitude
   if (payload.mapUrl !== undefined) eventPayload.mapUrl = payload.mapUrl
-  if (payload.dressCode !== undefined) eventPayload.dressCode = payload.dressCode
+  if (payload.dressColors !== undefined) eventPayload.dressColors = payload.dressColors
   if (Object.keys(weddingDetails).length > 0) eventPayload.weddingDetails = weddingDetails
   const res = await http.put(`${ApiConfig.eventsPath}/${id}`, eventPayload)
   return parseEvent(decodeMap(res.data))

@@ -30,17 +30,7 @@
       <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onPhotoPick" />
       <textarea v-model="form.description" rows="2" placeholder="Description (optionnel)" class="input mb-3 resize-none"></textarea>
       <textarea v-model="form.message" rows="2" placeholder="Message d'invitation (optionnel)" class="input resize-none"></textarea>
-      <label class="block mt-3">
-        <span class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide mb-1.5">Couleur de tenue (facultatif)</span>
-        <select v-model="form.dressCode" class="input">
-          <option value="">Aucune couleur imposée</option>
-          <option v-for="d in dressCodes" :key="d.value" :value="d.value">{{ d.label }}</option>
-        </select>
-        <span v-if="selectedDressCode" class="flex items-center gap-2 text-[11px] text-on-surface-variant mt-1">
-          <span class="w-3.5 h-3.5 rounded-full border border-outline-variant shrink-0" :style="{ backgroundColor: selectedDressCode?.hex }"></span>
-          {{ selectedDressCode?.description }}
-        </span>
-      </label>
+      <DressCodeField v-model="form.dressColors" @pending-file="dressFile = $event" />
       <p v-if="error" class="text-error text-sm mt-3">{{ error }}</p>
       <div class="flex justify-end gap-2 mt-6">
         <button type="button" class="px-4 h-10 rounded-lg text-on-surface-variant" @click="$emit('close')">Annuler</button>
@@ -62,20 +52,17 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted } from 'vue'
-import { createEvent, fetchDressCodes, uploadEventImage, uploadEventPhoto, type DressCodeOption, type Event as EventModel } from '../../api/events'
+import { reactive, ref } from 'vue'
+import { createEvent, uploadEventDressImage, uploadEventImage, uploadEventPhoto, type Event as EventModel } from '../../api/events'
+import DressCodeField from './DressCodeField.vue'
 import { useAuthStore } from '../../stores/auth'
 import ImageCropModal from '../common/ImageCropModal.vue'
 
 const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: EventModel): void }>()
 const auth = useAuthStore()
-const form = reactive({ groomFirstName: '', groomLastName: '', brideFirstName: '', brideLastName: '', description: '', message: '', dressCode: '' })
-/** Options de tenue fournies par le backend (libellés FR, source unique). */
-const dressCodes = ref<DressCodeOption[]>([])
-const selectedDressCode = computed(() => dressCodes.value.find((d) => d.value === form.dressCode) ?? null)
-onMounted(async () => {
-  try { dressCodes.value = await fetchDressCodes() } catch { /* sélecteur vide : la tenue reste facultative */ }
-})
+const form = reactive({ groomFirstName: '', groomLastName: '', brideFirstName: '', brideLastName: '', description: '', message: '', dressColors: [] as string[] })
+/** Photo du pagne choisie avant la création : uploadée juste après (l'ID n'existe pas encore). */
+const dressFile = ref<File | null>(null)
 const loading = ref(false)
 const error = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -124,11 +111,15 @@ async function submit() {
       brideLastName: form.brideLastName,
       description: form.description || null,
       message: form.message || null,
-      dressCode: form.dressCode || null,
+      dressColors: form.dressColors,
       organizationId: auth.isSuperAdmin && auth.user?.organizationId ? auth.user.organizationId : undefined,
     })
     if (photoFile.value) {
       try { await uploadEventImage(w.id, photoFile.value); await uploadEventPhoto(w.id, 'couple', photoFile.value) }
+      catch { /* la création reste valide même si l'upload échoue */ }
+    }
+    if (dressFile.value) {
+      try { await uploadEventDressImage(w.id, dressFile.value) }
       catch { /* la création reste valide même si l'upload échoue */ }
     }
     emit('created', w)

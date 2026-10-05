@@ -92,19 +92,33 @@
                 <span v-if="venueSub" class="mp-inv-info-sub">{{ venueSub }}</span>
               </div>
 
-              <!-- Couleur de tenue demandée (facultative) : l'invité voit la teinte attendue -->
-              <div v-if="dressCodeValue" class="mp-inv-info">
-                <span class="mp-inv-info-icon">
-                  <span v-if="dressCodeHex" class="w-6 h-6 rounded-full inline-block border border-outline-variant align-middle" :style="{ backgroundColor: dressCodeHex }"></span>
-                  <span v-else class="material-symbols-outlined">palette</span>
-                </span>
-                <span class="mp-inv-info-label">COULEUR</span>
-                <span class="mp-inv-info-value">{{ dressCodeValue }}</span>
-                <span v-if="dressCodeSub" class="mp-inv-info-sub">{{ dressCodeSub }}</span>
-              </div>
             </div>
 
             <p v-if="inv.message" class="mp-inv-message">{{ inv.message }}</p>
+          </section>
+
+          <!-- ============ VESTIAIRE : couleurs demandées + pagne ============ -->
+          <section v-if="dressColors.length || dressImageUrl" class="mp-inv-section">
+            <h2 class="mp-inv-section-title">
+              <span class="mp-inv-sep mp-inv-sep--left"></span>
+              Tenue demandée
+              <span class="mp-inv-sep mp-inv-sep--right"></span>
+            </h2>
+
+            <div v-if="dressColors.length" class="flex flex-wrap items-start justify-center gap-4 mb-4">
+              <div v-for="c in dressColors" :key="c.value" class="flex flex-col items-center gap-1.5 w-24">
+                <span class="w-9 h-9 rounded-full border-2 border-outline-variant shadow-sm"
+                      :style="{ backgroundColor: c.hex }"
+                      :title="c.description || c.label"></span>
+                <span class="text-[12px] font-semibold text-on-surface text-center">{{ c.label }}</span>
+              </div>
+            </div>
+
+            <div v-if="dressImageUrl" class="text-center">
+              <img :src="absoluteUrl(dressImageUrl)" alt="Pagne ou tissu à porter"
+                   class="mx-auto rounded-xl border border-outline-variant max-h-72 object-contain" />
+              <p class="text-[11px] text-on-surface-variant mt-2">Voici le pagne à coudre pour votre tenue.</p>
+            </div>
           </section>
 
           <!-- Programme de la journée (sessions de l'événement — additif) -->
@@ -550,11 +564,10 @@ const venueParts = computed(() =>
 )
 const venueValue = computed(() => venueParts.value[0] || '')
 const venueSub = computed(() => (venueParts.value.length > 1 ? venueParts.value.slice(1).join(' · ') : ''))
-/** Couleur de tenue demandée par l'organisateur (libellé + aperçu fournis par l'API publique). */
-const dressCodeValue = computed(() => inv.value?.dressCodeLabel || '')
-const dressCodeSub = computed(() => inv.value?.dressCodeDescription || '')
-const dressCodeHex = computed(() => inv.value?.dressCodeHex || '')
-const hasEventInfo = computed(() => Boolean(dateValue.value || timeValue.value || venueValue.value || dressCodeValue.value))
+const hasEventInfo = computed(() => Boolean(dateValue.value || timeValue.value || venueValue.value))
+/** Vestiaire : jusqu'à 3 couleurs demandées + photo du pagne (libellés FR fournis par l'API). */
+const dressColors = computed(() => inv.value?.dressColors ?? [])
+const dressImageUrl = computed(() => inv.value?.dressImageUrl || '')
 
 /* Format court pour la carte téléchargeable : « Sam 12 oct 2025 » / « 18h00 » */
 const cardDateShort = computed(() => {
