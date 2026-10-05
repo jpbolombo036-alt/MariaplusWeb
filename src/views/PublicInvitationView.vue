@@ -114,10 +114,9 @@
               </div>
             </div>
 
-            <div v-if="dressImageUrl" class="text-center">
-              <img :src="absoluteUrl(dressImageUrl)" alt="Pagne ou tissu à porter"
-                   class="mx-auto rounded-xl border border-outline-variant max-h-72 object-contain" />
-              <p class="text-[11px] text-on-surface-variant mt-2">Voici le pagne à coudre pour votre tenue.</p>
+            <div v-if="dressImageUrl" class="mp-inv-dress-photo">
+              <img :src="absoluteUrl(dressImageUrl)" alt="Pagne ou tissu à porter" />
+              <p class="mp-inv-dress-caption">Voici le pagne à coudre pour votre tenue.</p>
             </div>
           </section>
 
@@ -1485,6 +1484,38 @@ onBeforeUnmount(stopAutoplay)
   color: #667085;
 }
 
+/* ---------- Photo du pagne / tissu ---------- */
+.mp-inv-dress-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 4px;
+}
+.mp-inv-dress-photo img {
+  display: block;
+  width: auto;
+  height: auto;
+  /* Cadrage compact et centré : la photo ne doit jamais dominer la section */
+  max-width: min(100%, 280px);
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 16px;
+  border: 1px solid #ece7fa;
+  background: #faf8ff;
+  box-shadow: 0 8px 22px rgba(84, 39, 199, 0.12);
+}
+.mp-inv-dress-caption {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #667085;
+  background: #f4f0ff;
+  border: 1px solid #e6dfff;
+  border-radius: 999px;
+  padding: 5px 14px;
+  text-align: center;
+}
+
 /* ---------- Votre invitation ---------- */
 .mp-inv-you {
   margin-top: 26px;
@@ -2129,6 +2160,16 @@ html.dark .mp-inv-program-place .material-symbols-outlined { color: #f78fb3; }
 html.dark .mp-inv-rsvp {
   background: linear-gradient(180deg, #161220 0%, #1b1628 100%);
   border-color: #342d45;
+}
+html.dark .mp-inv-dress-photo img {
+  background: #211b2d;
+  border-color: #342d45;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+html.dark .mp-inv-dress-caption {
+  background: #241d38;
+  border-color: #4b3f6b;
+  color: #b8b2c7;
 }
 html.dark .mp-inv-choice--ok::after { background: #2e9b59; }
 html.dark .mp-inv-choice--no::after { background: #e53935; }

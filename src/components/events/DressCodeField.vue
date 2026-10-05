@@ -60,11 +60,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   deleteEventDressImage,
   fetchDressCodes,
+  getEvent,
   loadEventDressImage,
+  updateEvent,
   uploadEventDressImage,
   type DressCodeOption,
 } from '../../api/events'
@@ -97,9 +99,55 @@ onMounted(async () => {
     /* sélecteur vide : la tenue reste facultative */
   }
   if (props.eventId) {
+    try {
+      const ev = await getEvent(props.eventId)
+      serverColors = (ev.dressColors ?? []).join(',')
+    } catch {
+      /* non bloquant : la comparaison repart de '' */
+    }
     preview.value = await loadEventDressImage(props.eventId)
   }
 })
+
+/* ============ Enregistrement automatique des couleurs (mode édition) ============
+   La photo est enregistrée immédiatement à la sélection : les couleurs doivent
+   faire de même, sinon l'organisateur quitte le formulaire sans appuyer sur
+   « Enregistrer » et le vestiaire de l'invitation reste vide. */
+let serverColors = ''
+let saveTimer: ReturnType<typeof setTimeout> | undefined
+let queued: string[] | null = null
+
+function persistColors(next: string[]) {
+  if (!props.eventId) return
+  const key = next.join(',')
+  if (key === serverColors) return
+  serverColors = key
+  updateEvent(props.eventId, { dressColors: next }).catch(() => {
+    serverColors = '' // autorise une nouvelle tentative au prochain changement
+    error.value = 'Enregistrement des couleurs impossible.'
+  })
+}
+
+function flushColors() {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = undefined
+  }
+  if (queued && props.eventId) {
+    const next = queued
+    queued = null
+    persistColors(next)
+  }
+}
+
+watch(colors, (next) => {
+  if (!props.eventId) return
+  queued = [...next]
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(flushColors, 500)
+})
+
+onBeforeUnmount(flushColors)
 
 function isSelected(value: string): boolean {
   return colors.value.includes(value)
