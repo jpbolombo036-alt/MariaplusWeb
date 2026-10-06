@@ -38,87 +38,162 @@
 
       <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
         <!-- ============ ÉTAPE 1 : INFORMATIONS ============ -->
-        <div v-if="step === 1" class="space-y-5">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Nom de l'événement *</span>
-              <input v-model="form.name" placeholder="Ex : Mariage de Jean et Marie" class="input" />
-            </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Type *</span>
-              <select v-model="form.type" class="input">
-                <option value="WEDDING">Mariage</option>
-                <option value="COLLATION">Collation</option>
-                <option value="ANNIVERSARY">Anniversaire</option>
-                <option value="BAPTISM">Baptême</option>
-                <option value="GRADUATION">Graduation</option>
-                <option value="OTHER">Autre</option>
-              </select>
-            </label>
-          </div>
+        <div v-if="step === 1">
+          <!-- 1. Identité -->
+          <section class="pb-5">
+            <div class="flex items-center gap-2.5 mb-4">
+              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-[16px]">badge</span>
+              </span>
+              <h2 class="text-[13px] font-bold text-slate-800">Identité de l'événement</h2>
+              <span class="text-[11px] font-medium text-slate-400 ml-auto">* obligatoire</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+              <label class="block">
+                <span class="field-label">Nom de l'événement <span class="text-error">*</span></span>
+                <input v-model="form.name" placeholder="Ex : Mariage de Jean et Marie" class="input" />
+              </label>
+              <label class="block">
+                <span class="field-label">Type <span class="text-error">*</span></span>
+                <select v-model="form.type" class="input">
+                  <option value="WEDDING">Mariage</option>
+                  <option value="COLLATION">Collation</option>
+                  <option value="ANNIVERSARY">Anniversaire</option>
+                  <option value="BAPTISM">Baptême</option>
+                  <option value="GRADUATION">Graduation</option>
+                  <option value="OTHER">Autre</option>
+                </select>
+              </label>
+            </div>
+          </section>
 
-          <div v-if="form.type === 'WEDDING'" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Marié 🎩</p>
-              <div class="grid grid-cols-2 gap-3">
-                <input v-model="form.groomFirstName" placeholder="Prénom" class="input" />
-                <input v-model="form.groomLastName" placeholder="Nom" class="input" />
+          <!-- 2. Les mariés -->
+          <section v-if="form.type === 'WEDDING'" class="border-t border-slate-100 py-5">
+            <div class="flex items-center gap-2.5 mb-4">
+              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-[16px]">favorite</span>
+              </span>
+              <h2 class="text-[13px] font-bold text-slate-800">Les mariés</h2>
+              <span class="text-[11px] font-medium text-slate-400 ml-auto">requis pour un mariage</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                <p class="flex items-center gap-1.5 text-[12px] font-bold text-slate-700 mb-3">
+                  <span class="text-[15px] leading-none">🎩</span> Marié
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                  <label class="block">
+                    <span class="micro-label">Prénom</span>
+                    <input v-model="form.groomFirstName" placeholder="Jean" class="input" />
+                  </label>
+                  <label class="block">
+                    <span class="micro-label">Nom</span>
+                    <input v-model="form.groomLastName" placeholder="Kabongo" class="input" />
+                  </label>
+                </div>
+              </div>
+              <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                <p class="flex items-center gap-1.5 text-[12px] font-bold text-slate-700 mb-3">
+                  <span class="text-[15px] leading-none">👰</span> Mariée
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                  <label class="block">
+                    <span class="micro-label">Prénom</span>
+                    <input v-model="form.brideFirstName" placeholder="Marie" class="input" />
+                  </label>
+                  <label class="block">
+                    <span class="micro-label">Nom</span>
+                    <input v-model="form.brideLastName" placeholder="Mukendi" class="input" />
+                  </label>
+                </div>
               </div>
             </div>
-            <div>
-              <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Mariée 👰</p>
-              <div class="grid grid-cols-2 gap-3">
-                <input v-model="form.brideFirstName" placeholder="Prénom" class="input" />
-                <input v-model="form.brideLastName" placeholder="Nom" class="input" />
-              </div>
+          </section>
+
+          <!-- 3. Date & horaire -->
+          <section class="border-t border-slate-100 py-5">
+            <div class="flex items-center gap-2.5 mb-4">
+              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-[16px]">schedule</span>
+              </span>
+              <h2 class="text-[13px] font-bold text-slate-800">Date & horaire</h2>
             </div>
-          </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-4">
+              <label class="block">
+                <span class="field-label">Date</span>
+                <input v-model="form.eventDate" type="date" class="input" />
+              </label>
+              <label class="block">
+                <span class="field-label">Heure de début</span>
+                <input v-model="form.startTime" type="time" class="input" />
+              </label>
+              <label class="block">
+                <span class="field-label">Heure de fin</span>
+                <input v-model="form.endTime" type="time" class="input" />
+              </label>
+            </div>
+          </section>
+          <!-- 4. Lieu -->
+          <section class="border-t border-slate-100 py-5">
+            <div class="flex items-center gap-2.5 mb-4">
+              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-[16px]">location_on</span>
+              </span>
+              <h2 class="text-[13px] font-bold text-slate-800">Lieu</h2>
+              <span class="text-[11px] font-medium text-slate-400 ml-auto">facultatif</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+              <label class="block">
+                <span class="field-label">Nom du lieu</span>
+                <input v-model="form.venueName" placeholder="Ex : Église Saint-Roch" class="input" />
+              </label>
+              <label class="block">
+                <span class="field-label">Ville</span>
+                <input v-model="form.city" placeholder="Ex : Kinshasa" class="input" />
+              </label>
+              <label class="block">
+                <span class="field-label">Commune</span>
+                <input v-model="form.commune" placeholder="Ex : Gombe" class="input" />
+              </label>
+              <label class="block">
+                <span class="field-label">Pays</span>
+                <input v-model="form.country" placeholder="Ex : RDC" class="input" />
+              </label>
+            </div>
+          </section>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Date</span>
-              <input v-model="form.eventDate" type="date" class="input" />
-            </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Heure de début</span>
-              <input v-model="form.startTime" type="time" class="input" />
-            </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Heure de fin</span>
-              <input v-model="form.endTime" type="time" class="input" />
-            </label>
-          </div>
-<!-- PART2 -->
+          <!-- 5. Votre message -->
+          <section class="border-t border-slate-100 py-5">
+            <div class="flex items-center gap-2.5 mb-4">
+              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-[16px]">chat_bubble</span>
+              </span>
+              <h2 class="text-[13px] font-bold text-slate-800">Votre message</h2>
+              <span class="text-[11px] font-medium text-slate-400 ml-auto">facultatif</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label class="block">
+                <span class="field-label">Description</span>
+                <textarea v-model="form.description" rows="3" placeholder="Quelques mots sur l'événement…" class="input resize-none"></textarea>
+              </label>
+              <label class="block">
+                <span class="field-label">Message d'invitation</span>
+                <textarea v-model="form.message" rows="3" placeholder="Nous avons l'immense joie de vous inviter…" class="input resize-none"></textarea>
+              </label>
+            </div>
+          </section>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Lieu</span>
-              <input v-model="form.venueName" placeholder="Nom du lieu (optionnel)" class="input" />
-            </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Ville</span>
-              <input v-model="form.city" placeholder="Ville (optionnel)" class="input" />
-            </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Commune</span>
-              <input v-model="form.commune" placeholder="Commune (optionnel)" class="input" />
-            </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Pays</span>
-              <input v-model="form.country" placeholder="Pays (optionnel)" class="input" />
-            </label>
-          </div>
-
-          <label class="block">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Description (optionnel)</span>
-            <textarea v-model="form.description" rows="2" placeholder="Quelques mots sur l'événement…" class="input resize-none"></textarea>
-          </label>
-          <label class="block">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Message d'invitation (optionnel)</span>
-            <textarea v-model="form.message" rows="2" placeholder="Nous avons l'immense joie de vous inviter…" class="input resize-none"></textarea>
-          </label>
-
-          <DressCodeField v-model="form.dressColors" @pending-file="dressFile = $event" />
+          <!-- 6. Tenue demandée -->
+          <section class="border-t border-slate-100 pt-5">
+            <div class="flex items-center gap-2.5 mb-4">
+              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
+                <span class="material-symbols-outlined text-[16px]">checkroom</span>
+              </span>
+              <h2 class="text-[13px] font-bold text-slate-800">Tenue demandée</h2>
+              <span class="text-[11px] font-medium text-slate-400 ml-auto">facultatif</span>
+            </div>
+            <DressCodeField v-model="form.dressColors" @pending-file="dressFile = $event" />
+          </section>
         </div>
 
         <!-- ============ ÉTAPE 2 : VISUELS ============ -->
@@ -514,5 +589,7 @@ function validateInfos(): boolean {
 
 <style scoped>
 .input { @apply block w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-slate-400; }
+.field-label { @apply block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5; }
+.micro-label { @apply block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1; }
 </style>
 
