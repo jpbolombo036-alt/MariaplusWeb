@@ -98,6 +98,9 @@
                   <PermGuard :allow="['INVITATION_SEND']">
                     <button v-if="i.status!=='CANCELLED'" class="px-2 py-1 text-primary hover:bg-primary/10 rounded-lg disabled:opacity-50" :disabled="linkBusy === i.id" :title="links[i.id] ? 'Copier le lien de l’invitation' : 'Récupérer le lien de l’invitation'" @click="openLink(i)"><span class="material-symbols-outlined text-base">{{ linkBusy === i.id ? 'progress_activity' : 'link' }}</span></button>
                   </PermGuard>
+                  <PermGuard :allow="['INVITATION_SEND']">
+                    <button v-if="i.status!=='CANCELLED'" class="px-2 py-1 text-[#128C7E] hover:bg-[#25D366]/10 rounded-lg disabled:opacity-50" :disabled="linkBusy === i.id" :title="linkBusy === i.id ? 'Récupération du lien…' : 'Partager le lien sur WhatsApp'" @click="openWhatsapp(i)"><WhatsappIcon class="w-4 h-4" /></button>
+                  </PermGuard>
                   <PermGuard :allow="['INVITATION_CANCEL']">
                     <button v-if="i.status!=='CANCELLED'" class="px-2 py-1 text-amber-500 hover:bg-amber-50 rounded-lg" title="Annuler" @click="cancel(i)"><span class="material-symbols-outlined text-base">block</span></button>
                   </PermGuard>
@@ -152,6 +155,7 @@
             @resend="resend"
             @qr="showQr"
             @link="openLink"
+            @whatsapp="openWhatsapp"
             @cancel="cancel"
             @delete="remove"
           />
@@ -191,14 +195,25 @@
         </div>
         <div class="mt-3 flex items-center justify-between gap-3">
           <p class="text-xs text-on-surface-variant">Email envoyé : <strong>{{ shareEmailSent ? 'Oui' : 'Non' }}</strong></p>
-          <a
-            :href="shareUrl"
-            target="_blank"
-            rel="noopener"
-            class="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
-          >
-            <span class="material-symbols-outlined text-[16px]">open_in_new</span> Ouvrir le lien
-          </a>
+          <div class="flex items-center gap-4">
+            <a
+              :href="whatsappShareHref"
+              target="_blank"
+              rel="noopener"
+              class="text-xs font-semibold text-[#128C7E] hover:underline inline-flex items-center gap-1.5"
+              title="Ouvrir WhatsApp avec le message et le lien pré-remplis"
+            >
+              <WhatsappIcon class="w-4 h-4" /> Ouvrir dans WhatsApp
+            </a>
+            <a
+              :href="shareUrl"
+              target="_blank"
+              rel="noopener"
+              class="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+            >
+              <span class="material-symbols-outlined text-[16px]">open_in_new</span> Ouvrir le lien
+            </a>
+          </div>
         </div>
         <div class="mt-5 flex justify-end">
           <button class="px-4 py-2 rounded-lg border border-outline-variant text-sm" @click="shareOpen=false">Fermer</button>
@@ -225,6 +240,7 @@ import { withTimeout } from '../../utils/withTimeout'
 import PermGuard from '../../components/common/PermGuard.vue'
 import StatusBadge from '../../components/common/StatusBadge.vue'
 import InvitationActions from '../../components/invitations/InvitationActions.vue'
+import WhatsappIcon from '../../components/common/WhatsappIcon.vue'
 import BulkSendPanel from '../../components/invitations/BulkSendPanel.vue'
 import { useNotificationStore } from '../../stores/notifications'
 import { useAuthStore } from '../../stores/auth'
@@ -315,6 +331,13 @@ function openShare(url: string, emailSent: boolean) {
   shareOpen.value = true
 }
 
+/** Lien wa.me pré-rempli pour la modale de partage (sélecteur de contacts WhatsApp). */
+const whatsappShareHref = computed(() =>
+  shareUrl.value
+    ? `https://wa.me/?text=${encodeURIComponent(`Vous êtes invité(e) ! Voici votre invitation : ${shareUrl.value}`)}`
+    : '#',
+)
+
 /**
  * Retrouve le lien public d'une invitation SANS la renvoyer : le backend ne
  * l'expose que dans la réponse de /send ou /resend. En dernier recours on lit le
@@ -336,6 +359,23 @@ async function linkFromQr(i: Invitation): Promise<string> {
   return exists ? url : ''
 }
 
+/**
+ * Récupère le lien public d'une invitation (cache local, sinon lecture du QR),
+ * avec le même indicateur de chargement que l'action « Lien ».
+ */
+async function resolveLink(i: Invitation): Promise<string> {
+  const known = links.value[i.id]
+  if (known) return known
+  linkBusy.value = i.id
+  try {
+    const url = await withTimeout(linkFromQr(i), 12000, '')
+    if (url) links.value[i.id] = url
+    return url
+  } finally {
+    linkBusy.value = null
+  }
+}
+
 /** Action « Lien » : recopie un lien déjà connu, sinon tente de le retrouver. */
 async function openLink(i: Invitation) {
   const known = links.value[i.id]
@@ -343,23 +383,43 @@ async function openLink(i: Invitation) {
     openShare(known, false)
     return
   }
-  linkBusy.value = i.id
-  try {
-    const url = await withTimeout(linkFromQr(i), 12000, '')
-    if (url) {
-      links.value[i.id] = url
-      openShare(url, false)
-      return
-    }
+  const url = await resolveLink(i)
+  if (url) {
+    openShare(url, false)
+    return
+  }
+  notifications.push(
+    "Lien introuvable pour cette invitation : le serveur n'a renvoyé aucune URL publique. " +
+      'Vérifiez la configuration du backend (URL publique du front) puis réessayez.',
+    'error',
+    8000,
+  )
+}
+
+/**
+ * Ouvre WhatsApp directement avec le message pré-rempli contenant le lien :
+ * - numéro international de l'invité (10+ chiffres) → sa conversation s'ouvre ;
+ * - sinon → sélecteur de contacts WhatsApp (partage classique wa.me/?text=…),
+ *   pour ne jamais ouvrir la conversation d'un mauvais numéro à cause d'un
+ *   numéro local incomplet.
+ */
+async function openWhatsapp(i: Invitation) {
+  const url = await resolveLink(i)
+  if (!url) {
     notifications.push(
-      "Lien introuvable pour cette invitation : le serveur n'a renvoyé aucune URL publique. " +
-        'Vérifiez la configuration du backend (URL publique du front) puis réessayez.',
+      "Lien introuvable pour cette invitation : vérifiez l'URL publique du front " +
+        '(VITE_PUBLIC_BASE_URL) configurée côté serveur, puis réessayez.',
       'error',
       8000,
     )
-  } finally {
-    linkBusy.value = null
+    return
   }
+  const g = guest(i)
+  const hello = g?.firstName ? `Bonjour ${g.firstName} 🎉, ` : ''
+  const message = `${hello}vous êtes invité(e) ! Voici votre invitation : ${url}`
+  const digits = (g?.phone ?? '').replace(/\D/g, '')
+  const target = digits.length >= 10 ? `${digits}?text=` : '?text='
+  window.open(`https://wa.me/${target}${encodeURIComponent(message)}`, '_blank', 'noopener')
 }
 
 /** Envoi / relance d'une invitation, puis affichage du lien à partager. */

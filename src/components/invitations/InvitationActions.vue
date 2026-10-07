@@ -52,6 +52,21 @@
       </button>
     </PermGuard>
 
+    <!-- Partager sur WhatsApp : ouvre WhatsApp directement avec le lien pré-rempli -->
+    <PermGuard :allow="['INVITATION_SEND']">
+      <button
+        v-if="i.status !== 'CANCELLED'"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#25D366] text-white hover:brightness-95 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-[#25D366]/30"
+        :disabled="linkBusy"
+        :title="linkBusy ? 'Récupération du lien…' : 'Partager le lien sur WhatsApp'"
+        @click="$emit('whatsapp', i)"
+      >
+        <span v-if="linkBusy" class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+        <WhatsappIcon v-else class="w-4 h-4" />
+        <span class="hidden sm:inline">WhatsApp</span>
+      </button>
+    </PermGuard>
+
     <!-- Annuler -->
     <PermGuard :allow="['INVITATION_CANCEL']">
       <button
@@ -79,6 +94,7 @@
 
 <script setup lang="ts">
 import PermGuard from '../common/PermGuard.vue'
+import WhatsappIcon from '../common/WhatsappIcon.vue'
 
 defineProps<{
   i: any
@@ -95,6 +111,7 @@ defineEmits<{
   resend: [i: any]
   qr: [i: any]
   link: [i: any]
+  whatsapp: [i: any]
   cancel: [i: any]
   delete: [i: any]
 }>()
