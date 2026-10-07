@@ -14,21 +14,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '../../stores/auth'
+import { computed } from 'vue'
 import { filterNav, navTo } from '../../navigation'
-import { listEvents, type Event } from '../../api/events'
+import { useAuthStore } from '../../stores/auth'
+import { useWeddingStore } from '../../stores/wedding'
 
 const auth = useAuthStore()
-const weddings = ref<Event[]>([])
-const activeWeddingId = computed(() => weddings.value[0]?.id ?? null)
-const visible = computed(() => filterNav(auth.permissions).slice(0, 4))
+const weddingStore = useWeddingStore()
 
-onMounted(async () => {
-  try {
-    weddings.value = await listEvents()
-  } catch {
-    /* aucune liste */
-  }
-})
+// Même événement actif que la sidebar / le dashboard (cascade intelligente
+// du store) — plus de « premier événement de la liste », souvent passé.
+weddingStore.load()
+const activeWeddingId = computed(() => weddingStore.activeId)
+const visible = computed(() => filterNav(auth.permissions).slice(0, 4))
 </script>

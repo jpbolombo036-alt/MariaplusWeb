@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { listEvents, type Event } from '../api/events'
+import { pickDefaultEventId } from '../utils/eventStatus'
 
 const STORAGE_KEY = 'mp_active_event'
 
@@ -15,12 +16,16 @@ export const useWeddingStore = defineStore('wedding', {
     loaded: false,
   }),
   getters: {
+    /**
+     * Événement actif. Si l'id courant n'est plus valide (ou devient passé),
+     * on retombe sur la même cascade de sélection par défaut que `load()`.
+     */
     active(state): Event | null {
-      return (
-        state.weddings.find((w) => w.id === state.activeId) ??
-        state.weddings[0] ??
-        null
-      )
+      if (!state.weddings.length) return null
+      const byId = state.weddings.find((w) => w.id === state.activeId)
+      if (byId) return byId
+      const fallback = pickDefaultEventId(state.weddings, null)
+      return state.weddings.find((w) => w.id === fallback) ?? null
     },
   },
   actions: {
@@ -39,10 +44,18 @@ export const useWeddingStore = defineStore('wedding', {
         this.weddings = await listEvents()
         const saved = sessionStorage.getItem(STORAGE_KEY)
         const savedId = saved ? Number(saved) : null
-        this.activeId =
-          savedId && this.weddings.some((w) => w.id === savedId)
-            ? savedId
-            : (this.weddings[0]?.id ?? null)
+        // Cascade intelligente : le choix de session n'est honoré que s'il
+        // existe encore et n'est ni passé ni annulé ; sinon on prend
+        // l'événement à venir le plus pertinent — jamais un événement passé
+        // par défaut (sauf si tous le sont).
+        this.activeId = pickDefaultEventId(this.weddings, savedId)
+        if (this.activeId != null) {
+          try {
+            sessionStorage.setItem(STORAGE_KEY, String(this.activeId))
+          } catch {
+            /* stockage indisponible */
+          }
+        }
         this.loaded = true
       } finally {
         this.loading = false

@@ -74,6 +74,7 @@ import RecentGuestsTable from '../components/dashboard/RecentGuestsTable.vue'
 import RecentActivityCard from '../components/dashboard/RecentActivityCard.vue'
 import { useAuthStore } from '../stores/auth'
 import { initialsOf, fullName } from '../utils/initials'
+import { eventDateLabel, eventTypeLabel, statusLabel } from '../utils/eventStatus'
 
 interface GuestRow {
   id: number
@@ -104,7 +105,16 @@ const error = ref('')
 
 const firstName = computed(() => auth.user?.firstName || 'JP')
 const active = computed(() => weddingStore.active)
-const eventSubtitle = computed(() => (active.value ? `${active.value.type || 'ÉVÉNEMENT'} • ${active.value.status || 'DRAFT'}` : ''))
+/** Sous-titre : « Mariage • 12 oct. 2026 · 14:30 • À venir » (sans date si absente). */
+const eventSubtitle = computed(() => {
+  if (!active.value) return ''
+  const ev = active.value
+  const parts = [eventTypeLabel(ev.type)]
+  const date = eventDateLabel(ev)
+  if (date) parts.push(date)
+  parts.push(statusLabel(ev.status) || 'Brouillon')
+  return parts.join(' • ')
+})
 const notifications = computed(() => 3)
 
 const guestsTotal = computed(() => guests.value.length)
