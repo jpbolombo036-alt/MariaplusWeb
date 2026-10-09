@@ -21,41 +21,44 @@
     </div>
 
     <!-- 4 cartes statistiques -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-      <div class="bg-white border border-slate-200 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-        <div class="w-12 h-12 rounded-lg bg-primary-light flex items-center justify-center shrink-0">
-          <span class="material-symbols-outlined text-primary text-[24px]">group</span>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8">
+      <!-- min-w-0 + libellés break-words : sans ça, la colonne de texte ne peut
+           pas réduire sa largeur sous « le mot le plus long » et le texte
+           déborde de la carte sur les petits écrans (iPhone SE, 375 px). -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm min-w-0">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary-light flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[22px] sm:text-[24px]">group</span>
         </div>
-        <div>
-          <p class="text-[13px] text-slate-500">Membres</p>
-          <p class="text-2xl font-bold text-slate-900">{{ members.length }}</p>
-        </div>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-        <div class="w-12 h-12 rounded-lg bg-success-light flex items-center justify-center shrink-0">
-          <span class="material-symbols-outlined text-success text-[24px]">how_to_reg</span>
-        </div>
-        <div>
-          <p class="text-[13px] text-slate-500">Gestionnaires d'invités</p>
-          <p class="text-2xl font-bold text-slate-900">{{ countRole('GESTIONNAIRE_INVITES') }}</p>
+        <div class="min-w-0">
+          <p class="text-[12px] sm:text-[13px] text-slate-500 break-words">Membres</p>
+          <p class="text-xl sm:text-2xl font-bold text-slate-900">{{ members.length }}</p>
         </div>
       </div>
-      <div class="bg-white border border-slate-200 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-        <div class="w-12 h-12 rounded-lg bg-attention-light flex items-center justify-center shrink-0">
-          <span class="material-symbols-outlined text-attention text-[24px]">badge</span>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm min-w-0">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-success-light flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-success text-[22px] sm:text-[24px]">how_to_reg</span>
         </div>
-        <div>
-          <p class="text-[13px] text-slate-500">Agents d'accueil</p>
-          <p class="text-2xl font-bold text-slate-900">{{ countRole('AGENT_ACCUEIL') }}</p>
+        <div class="min-w-0">
+          <p class="text-[12px] sm:text-[13px] text-slate-500 break-words">Gestionnaires d'invités</p>
+          <p class="text-xl sm:text-2xl font-bold text-slate-900">{{ countRole('GESTIONNAIRE_INVITES') }}</p>
         </div>
       </div>
-      <div class="bg-white border border-slate-200 rounded-xl p-5 flex items-center gap-4 shadow-sm">
-        <div class="w-12 h-12 rounded-lg bg-error-light flex items-center justify-center shrink-0">
-          <span class="material-symbols-outlined text-error text-[24px]">event</span>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm min-w-0">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-attention-light flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-attention text-[22px] sm:text-[24px]">badge</span>
         </div>
-        <div>
-          <p class="text-[13px] text-slate-500">Affectations à un mariage</p>
-          <p class="text-2xl font-bold text-slate-900">{{ members.filter((m) => m.eventId != null).length }}</p>
+        <div class="min-w-0">
+          <p class="text-[12px] sm:text-[13px] text-slate-500 break-words">Agents d'accueil</p>
+          <p class="text-xl sm:text-2xl font-bold text-slate-900">{{ countRole('AGENT_ACCUEIL') }}</p>
+        </div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex items-center gap-3 sm:gap-4 shadow-sm min-w-0">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-error-light flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-error text-[22px] sm:text-[24px]">event</span>
+        </div>
+        <div class="min-w-0">
+          <p class="text-[12px] sm:text-[13px] text-slate-500 break-words">Affectations à un mariage</p>
+          <p class="text-xl sm:text-2xl font-bold text-slate-900">{{ members.filter((m) => m.eventId != null).length }}</p>
         </div>
       </div>
     </div>

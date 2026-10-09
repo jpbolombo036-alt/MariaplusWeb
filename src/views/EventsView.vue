@@ -20,15 +20,18 @@
     </div>
 
     <!-- 4 cartes statistiques -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-      <div v-for="s in statCards" :key="s.label" class="bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-5 shadow-sm hover:shadow-md transition-all">
-        <span class="w-14 h-14 rounded-lg grid place-items-center shrink-0" :style="{ background: s.bg, color: s.color }">
-          <span class="material-symbols-outlined text-[26px]">{{ s.icon }}</span>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8">
+      <div v-for="s in statCards" :key="s.label" class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 flex items-center gap-3 sm:gap-5 shadow-sm hover:shadow-md transition-all min-w-0">
+        <span class="w-11 h-11 sm:w-14 sm:h-14 rounded-lg grid place-items-center shrink-0" :style="{ background: s.bg, color: s.color }">
+          <span class="material-symbols-outlined text-[22px] sm:text-[26px]">{{ s.icon }}</span>
         </span>
-        <div>
-          <div class="text-[13px] text-slate-500 font-medium">{{ s.label }}</div>
-          <div class="text-[24px] font-bold text-slate-900 mt-0.5">{{ s.value }}</div>
-          <div class="text-[13px] text-slate-400 mt-0.5">{{ s.sub }}</div>
+        <!-- min-w-0 indispensable : sans lui, la colonne de texte (flex) ne peut
+             pas réduire sa largeur sous « le mot le plus long » et le texte
+             déborde de la carte sur les petits écrans. -->
+        <div class="min-w-0">
+          <div class="text-[12px] sm:text-[13px] text-slate-500 font-medium break-words">{{ s.label }}</div>
+          <div class="text-[22px] sm:text-[24px] font-bold text-slate-900 mt-0.5">{{ s.value }}</div>
+          <div class="text-[12px] sm:text-[13px] text-slate-400 mt-0.5 break-words">{{ s.sub }}</div>
         </div>
       </div>
     </div>
