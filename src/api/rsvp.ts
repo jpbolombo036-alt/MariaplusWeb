@@ -7,6 +7,8 @@ export interface RsvpRow {
   status?: string | null
   numberOfAttendees?: number | null
   respondedAt?: string | null
+  /** Choix de boissons de l'invité (1 à 3) — base des achats avant le jour J. */
+  drinkChoices?: string[] | null
 }
 
 export async function listRsvps(eventId: number): Promise<RsvpRow[]> {
@@ -19,6 +21,9 @@ export async function listRsvps(eventId: number): Promise<RsvpRow[]> {
       status: j.status ? String(j.status) : null,
       numberOfAttendees: j.numberOfAttendees != null ? Number(j.numberOfAttendees) : null,
       respondedAt: j.respondedAt ? String(j.respondedAt) : null,
+      drinkChoices: Array.isArray(j.drinkChoices)
+        ? (j.drinkChoices as unknown[]).map((v) => String(v))
+        : null,
     }
   })
 }

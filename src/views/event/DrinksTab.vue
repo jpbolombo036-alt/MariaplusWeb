@@ -15,6 +15,64 @@
       </div>
     </div>
 
+    <!-- ========== Choix des invités : base d'achat avant le jour J ========== -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 mb-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-[18px] font-bold text-slate-900 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[20px] text-primary">shopping_cart</span>
+            Choix des invités
+          </h2>
+          <p class="text-[13px] text-slate-500 mt-0.5">
+            Réponses acceptées — servez-vous pour acheter les boissons avant le jour J.
+          </p>
+        </div>
+        <span v-if="!rsvpLoading && acceptedRsvps.length" class="text-[12px] text-slate-400 self-start sm:self-auto">
+          {{ acceptedRsvps.length }} réponse(s) acceptée(s) · {{ noChoiceCount }} sans choix
+        </span>
+      </div>
+
+      <p v-if="rsvpLoading" class="text-slate-400 text-sm py-6 text-center">Chargement des réponses…</p>
+
+      <div v-else-if="!acceptedRsvps.length" class="text-center py-8">
+        <div class="w-14 h-14 mx-auto rounded-full bg-slate-50 grid place-items-center mb-3">
+          <span class="material-symbols-outlined text-2xl text-slate-300">how_to_reg</span>
+        </div>
+        <p class="text-sm text-slate-500">Aucune réponse RSVP acceptée pour le moment.</p>
+        <p class="text-[12px] text-slate-400 mt-1">Les choix de boisson apparaîtront ici dès que vos invités répondront.</p>
+      </div>
+
+      <div v-else-if="!choiceStats.length" class="text-center py-8">
+        <div class="w-14 h-14 mx-auto rounded-full bg-slate-50 grid place-items-center mb-3">
+          <span class="material-symbols-outlined text-2xl text-slate-300">local_bar</span>
+        </div>
+        <p class="text-sm text-slate-500">Aucune boisson choisie pour l'instant.</p>
+        <p class="text-[12px] text-slate-400 mt-1">{{ acceptedRsvps.length }} réponse(s) acceptée(s), {{ noChoiceCount }} sans choix.</p>
+      </div>
+
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-for="s in choiceStats" :key="s.name.toLowerCase()" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 min-w-0">
+          <div class="flex items-center gap-3">
+            <img v-if="s.imageUrl" :src="absUrl(s.imageUrl)" :alt="s.name" class="w-11 h-11 rounded-lg object-cover bg-white border border-slate-200 shrink-0" />
+            <span v-else class="w-11 h-11 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
+              <span class="material-symbols-outlined text-[20px]">local_bar</span>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[14px] font-bold text-slate-800 truncate">{{ s.name }}</p>
+              <p class="text-[11px] text-slate-500">≈ {{ s.attendees }} personne(s) à prévoir</p>
+            </div>
+            <span class="shrink-0 px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-[15px] font-bold leading-none" :title="`${s.count} réponse(s)`">
+              {{ s.count }}<span class="text-[10px] font-semibold"> rép.</span>
+            </span>
+          </div>
+          <p class="text-[12px] text-slate-500 mt-3 truncate" :title="s.guests.join(', ')">
+            {{ s.guests.slice(0, 3).join(', ') }}{{ s.guests.length > 3 ? ` +${s.guests.length - 3} autre(s)` : '' }}
+          </p>
+          <span v-if="!s.declared" class="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">Hors catalogue déclaré</span>
+        </div>
+      </div>
+    </div>
+
     <div v-if="loading" class="text-on-surface-variant">Chargement…</div>
 
     <div v-else-if="drinks.length === 0" class="bg-surface-container-lowest border border-outline-variant/50 rounded-2xl p-10 text-center">
@@ -70,6 +128,8 @@ import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import StatusBadge from '../../components/common/StatusBadge.vue'
 import { listAvailableDrinks, toggleAvailableDrink, type AvailableDrink } from '../../api/availableDrinks'
+import { listRsvps, type RsvpRow } from '../../api/rsvp'
+import { listGuests, type Guest } from '../../api/guests'
 import { ApiConfig } from '../../api/config'
 
 const route = useRoute()
@@ -78,7 +138,68 @@ const drinks = ref<AvailableDrink[]>([])
 const loading = ref(false)
 const busyId = ref<number | null>(null)
 
+// Réponses RSVP + invités : base du bloc « Choix des invités » (achat avant
+// le jour J). Chargés en parallèle du catalogue, indépendamment de `loading`.
+const rsvps = ref<RsvpRow[]>([])
+const guests = ref<Guest[]>([])
+const rsvpLoading = ref(false)
+
 const availableCount = computed(() => drinks.value.filter((d) => d.available && d.active).length)
+
+/** Réponses acceptées : seules elles comptent pour les achats du jour J. */
+const acceptedRsvps = computed(() => rsvps.value.filter((r) => r.status === 'ACCEPTED'))
+
+/** Réponses acceptées qui n'ont choisi aucune boisson. */
+const noChoiceCount = computed(() =>
+  acceptedRsvps.value.filter((r) => !r.drinkChoices || r.drinkChoices.length === 0).length,
+)
+
+const guestById = computed(() => new Map(guests.value.map((g) => [g.id, g])))
+
+/** Agrégat par boisson : réponses, personnes concernées, invités, photo. */
+interface ChoiceStat {
+  name: string
+  count: number
+  attendees: number
+  guests: string[]
+  imageUrl: string | null
+  declared: boolean
+}
+
+const choiceStats = computed<ChoiceStat[]>(() => {
+  const byName = new Map<string, ChoiceStat>()
+  // Index du catalogue (déclaré disponible ou non) pour la photo et le badge.
+  const drinkByKey = new Map(drinks.value.map((d) => [d.name.toLowerCase(), d]))
+  for (const r of acceptedRsvps.value) {
+    const choices = r.drinkChoices ?? []
+    if (!choices.length) continue
+    const g = guestById.value.get(r.guestId)
+    const personName = g ? `${g.firstName} ${g.lastName}` : `#${r.guestId}`
+    for (const raw of choices) {
+      const name = raw.trim()
+      if (!name) continue
+      const key = name.toLowerCase()
+      let stat = byName.get(key)
+      if (!stat) {
+        const declared = drinkByKey.get(key)
+        stat = {
+          name,
+          count: 0,
+          attendees: 0,
+          guests: [],
+          imageUrl: declared?.imageUrl ?? null,
+          declared: declared != null,
+        }
+        byName.set(key, stat)
+      }
+      stat.count += 1
+      stat.attendees += r.numberOfAttendees ?? 1
+      stat.guests.push(personName)
+    }
+  }
+  // Le plus choisi d'abord (pour l'achat), puis par ordre alphabétique.
+  return [...byName.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'fr'))
+})
 
 function absUrl(u: string): string {
   if (/^https?:\/\//i.test(u) || u.startsWith('blob:')) return u
@@ -94,6 +215,20 @@ async function load() {
   }
 }
 
+/** Charge les réponses RSVP et les invités pour agréger les choix de boisson. */
+async function loadRsvpChoices() {
+  rsvpLoading.value = true
+  try {
+    const [rows, g] = await Promise.all([listRsvps(eventId), listGuests(eventId)])
+    rsvps.value = rows
+    guests.value = g
+  } catch {
+    // erreurs HTTP déjà notifiées par l'intercepteur
+  } finally {
+    rsvpLoading.value = false
+  }
+}
+
 async function toggle(d: AvailableDrink) {
   busyId.value = d.catalogItemId
   try {
@@ -104,5 +239,8 @@ async function toggle(d: AvailableDrink) {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadRsvpChoices()
+})
 </script>
