@@ -50,11 +50,12 @@
           </div>
 
           <div class="mp-inv-cover-content">
+            <span class="mp-inv-hero-kicker">Invitation privée</span>
             <span v-if="typeLabel" class="mp-inv-type">{{ typeLabel }}</span>
             <h1 class="mp-inv-title">{{ title }}</h1>
-            <span class="mp-inv-heart">♥</span>
+            <span class="mp-inv-hero-rule"><i></i><span>✦</span><i></i></span>
             <p class="mp-inv-tagline">
-              Nous avons le plaisir de vous inviter à partager ce moment exceptionnel avec nous.
+              Nous avons le plaisir de vous inviter à partager ce moment précieux avec nous.
             </p>
           </div>
         </div>
@@ -64,11 +65,12 @@
 
           <!-- Informations de l'événement -->
           <section v-if="hasEventInfo" class="mp-inv-section">
-            <h2 class="mp-inv-section-title">
-              <span class="mp-inv-sep mp-inv-sep--left"></span>
-              Informations de l’événement
-              <span class="mp-inv-sep mp-inv-sep--right"></span>
-            </h2>
+            <div class="mp-inv-section-heading">
+              <span class="mp-inv-section-kicker">Les détails</span>
+              <h2 class="mp-inv-section-title">
+                Informations de l’événement
+              </h2>
+            </div>
 
             <div class="mp-inv-infos">
               <div v-if="dateValue" class="mp-inv-info mp-inv-info--date">
@@ -85,12 +87,20 @@
                 <span class="mp-inv-info-sub">Heure locale</span>
               </div>
 
-              <div v-if="venueValue" class="mp-inv-info mp-inv-info--place">
+              <component
+                :is="venueMapUrl ? 'a' : 'div'"
+                v-if="venueValue"
+                :href="venueMapUrl || undefined"
+                :target="venueMapUrl ? '_blank' : undefined"
+                :rel="venueMapUrl ? 'noopener noreferrer' : undefined"
+                class="mp-inv-info mp-inv-info--place mp-inv-info-link"
+                :aria-label="venueMapUrl ? `Ouvrir ${venueValue} dans Google Maps` : undefined"
+              >
                 <span class="mp-inv-info-icon"><span class="material-symbols-outlined">location_on</span></span>
                 <span class="mp-inv-info-label">LIEU</span>
                 <span class="mp-inv-info-value">{{ venueValue }}</span>
                 <span v-if="venueSub" class="mp-inv-info-sub">{{ venueSub }}</span>
-              </div>
+              </component>
 
             </div>
 
@@ -108,36 +118,54 @@
             <p v-if="inv.message" class="mp-inv-message">{{ inv.message }}</p>
           </section>
 
-          <!-- ============ VESTIAIRE : couleurs demandées + pagne ============ -->
-          <section v-if="dressColors.length || dressImageUrl" class="mp-inv-section">
-            <h2 class="mp-inv-section-title">
-              <span class="mp-inv-sep mp-inv-sep--left"></span>
-              Tenue demandée
-              <span class="mp-inv-sep mp-inv-sep--right"></span>
-            </h2>
-
-            <div v-if="dressColors.length" class="flex flex-wrap items-start justify-center gap-4 mb-4">
-              <div v-for="c in dressColors" :key="c.value" class="flex flex-col items-center gap-1.5 w-24">
-                <span class="w-9 h-9 rounded-full border-2 border-outline-variant shadow-sm"
-                      :style="{ backgroundColor: c.hex }"
-                      :title="c.description || c.label"></span>
-                <span class="text-[12px] font-semibold text-on-surface text-center">{{ c.label }}</span>
-              </div>
+          <!-- ============ DRESS CODE : palette + référence tissu ============ -->
+          <section v-if="dressColors.length || dressImageUrl" class="mp-inv-section mp-inv-dress-section">
+            <div class="mp-inv-section-heading">
+              <span class="mp-inv-section-kicker">Dress code</span>
+              <h2 class="mp-inv-section-title">Tenue &amp; harmonie</h2>
+              <p class="mp-inv-section-lead">Une palette pensée pour créer une belle unité le jour de la célébration.</p>
             </div>
 
-            <div v-if="dressImageUrl" class="mp-inv-dress-photo">
-              <img :src="absoluteUrl(dressImageUrl)" alt="Pagne ou tissu à porter" />
-              <p class="mp-inv-dress-caption">Voici le pagne à coudre pour votre tenue.</p>
+            <div class="mp-inv-dress-grid">
+              <div v-if="dressColors.length" class="mp-inv-dress-panel">
+                <div class="mp-inv-dress-panel-title">
+                  <span class="material-symbols-outlined">palette</span>
+                  <span>Palette conseillée</span>
+                </div>
+                <div class="mp-inv-color-list">
+                  <div v-for="c in dressColors" :key="c.value" class="mp-inv-color-item">
+                    <span
+                      class="mp-inv-color-swatch"
+                      :style="{ backgroundColor: safeColorHex(c.hex) }"
+                      :title="c.description || c.label"
+                    ></span>
+                    <span class="mp-inv-color-name">{{ c.label }}</span>
+                    <span v-if="c.description" class="mp-inv-color-description">{{ c.description }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="dressImageUrl" class="mp-inv-fabric-card">
+                <div class="mp-inv-dress-panel-title">
+                  <span class="material-symbols-outlined">texture</span>
+                  <span>Référence tissu</span>
+                </div>
+                <div class="mp-inv-fabric-image">
+                  <img :src="absoluteUrl(dressImageUrl)" alt="Référence du pagne à porter" loading="lazy" />
+                </div>
+                <p class="mp-inv-fabric-caption">Le pagne présenté sert de référence pour votre tenue.</p>
+              </div>
             </div>
           </section>
 
           <!-- Programme de la journée (sessions de l'événement — additif) -->
           <section v-if="programSessions.length" class="mp-inv-section">
-            <h2 class="mp-inv-section-title">
-              <span class="mp-inv-sep mp-inv-sep--left"></span>
-              Programme
-              <span class="mp-inv-sep mp-inv-sep--right"></span>
-            </h2>
+            <div class="mp-inv-section-heading">
+              <span class="mp-inv-section-kicker">Le déroulé</span>
+              <h2 class="mp-inv-section-title">
+                Programme
+              </h2>
+            </div>
             <div class="mp-inv-program">
               <div v-for="(s, i) in programSessions" :key="i" class="mp-inv-program-item">
                 <span class="mp-inv-program-dot" aria-hidden="true">{{ i + 1 }}</span>
@@ -190,11 +218,12 @@
 
           <!-- ================= RSVP ================= -->
           <section class="mp-inv-section mp-inv-rsvp">
-            <h2 class="mp-inv-section-title">
-              <span class="mp-inv-sep mp-inv-sep--left"></span>
-              Confirmez votre présence
-              <span class="mp-inv-sep mp-inv-sep--right"></span>
-            </h2>
+            <div class="mp-inv-section-heading">
+              <span class="mp-inv-section-kicker">Votre réponse</span>
+              <h2 class="mp-inv-section-title">
+                Confirmez votre présence
+              </h2>
+            </div>
             <span class="mp-inv-heart mp-inv-heart--violet">♥</span>
 
             <!-- État succès -->
@@ -611,13 +640,24 @@ function coordinatesMapUrl(latitude?: number | null, longitude?: number | null):
   return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
 }
 
+function addressMapUrl(venue?: string, sub?: string): string {
+  const query = [venue, sub].filter(Boolean).join(', ').trim()
+  return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : ''
+}
+
 const venueMapUrl = computed(() =>
-  safeMapUrl(inv.value?.mapUrl) || coordinatesMapUrl(inv.value?.latitude, inv.value?.longitude),
+  safeMapUrl(inv.value?.mapUrl)
+    || coordinatesMapUrl(inv.value?.latitude, inv.value?.longitude)
+    || addressMapUrl(venueValue.value, venueSub.value),
 )
 const hasEventInfo = computed(() => Boolean(dateValue.value || timeValue.value || venueValue.value))
 /** Vestiaire : jusqu'à 3 couleurs demandées + photo du pagne (libellés FR fournis par l'API). */
 const dressColors = computed(() => inv.value?.dressColors ?? [])
 const dressImageUrl = computed(() => inv.value?.dressImageUrl || '')
+function safeColorHex(value?: string | null): string {
+  const color = value?.trim() || ''
+  return /^#[0-9a-f]{3,8}$/i.test(color) ? color : '#d9d0e8'
+}
 
 /* Format court pour la carte téléchargeable : « Sam 12 oct 2025 » / « 18h00 » */
 const cardDateShort = computed(() => {
@@ -1246,8 +1286,17 @@ onBeforeUnmount(stopAutoplay)
   padding: 0 28px 42px;
   z-index: 2;
 }
+.mp-inv-hero-kicker {
+  margin-bottom: 12px;
+  color: rgba(255,255,255,.82);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2.8px;
+  text-transform: uppercase;
+}
 .mp-inv-type {
-  background: #5427c7;
+  background: rgba(37, 19, 73, 0.72);
+  border: 1px solid rgba(255,255,255,.34);
   color: #ffffff;
   border-radius: 999px;
   padding: 6px 14px;
@@ -1255,17 +1304,32 @@ onBeforeUnmount(stopAutoplay)
   font-weight: 700;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  margin-bottom: 14px;
+  margin-bottom: 13px;
 }
 .mp-inv-title {
   font-family: 'Playfair Display', serif;
-  font-size: 40px;
+  font-size: clamp(34px, 5vw, 46px);
   font-weight: 700;
   line-height: 1.12;
   color: #ffffff;
   text-shadow: 0 2px 16px rgba(20, 8, 48, 0.5);
   margin: 0;
 }
+.mp-inv-hero-rule {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0 12px;
+  color: #f1c982;
+  font-size: 13px;
+}
+.mp-inv-hero-rule i {
+  display: block;
+  width: 42px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(241,201,130,.9));
+}
+.mp-inv-hero-rule i:last-child { transform: scaleX(-1); }
 .mp-inv-heart {
   color: #ffffff;
   font-size: 18px;
@@ -1295,23 +1359,29 @@ onBeforeUnmount(stopAutoplay)
   font-weight: 700;
   text-align:center;
   color: #1d1733;
-  margin:0 0 6px;
+  line-height: 1.3;
+  letter-spacing: .1px;
+  margin:0;
+}
+.mp-inv-section-heading { text-align: center; }
+.mp-inv-section-kicker {
+  display: block;
+  margin-bottom: 7px;
+  color: #a47a35;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+}
+.mp-inv-section-lead {
+  max-width: 520px;
+  margin: 9px auto 0;
+  color: #7b718d;
+  font-size: 13.5px;
+  line-height: 1.65;
 }
 
 /* Séparateurs décoratifs autour du titre */
-.mp-inv-sep {
-  display:inline-block;
-  width:26px;
-  height:2px;
-  border-radius:2px;
-  vertical-align:middle;
-  margin:0 10px 4px;
-  background:#cbb8f5;
-}
-.mp-inv-sep--left,
-.mp-inv-sep--right { background: linear-gradient(90deg, rgba(84,39,199,0) 0%, #8f6fe0 100%); }
-.mp-inv-sep--right { transform: scaleX(-1); }
-
 /* ---------- Informations DATE / HEURE / LIEU ---------- */
 .mp-inv-infos {
   display:grid;
@@ -1334,6 +1404,11 @@ onBeforeUnmount(stopAutoplay)
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   animation: mp-rise 0.45s ease both;
+}
+.mp-inv-info-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
 }
 .mp-inv-info:nth-child(1) { animation-delay: 0.05s; }
 .mp-inv-info:nth-child(2) { animation-delay: 0.12s; }
@@ -1587,6 +1662,87 @@ onBeforeUnmount(stopAutoplay)
   padding: 5px 14px;
   text-align: center;
 }
+.mp-inv-dress-section { padding-top: 28px; }
+.mp-inv-dress-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 760px;
+  margin: 26px auto 8px;
+}
+.mp-inv-dress-panel,
+.mp-inv-fabric-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #ece5f7;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #ffffff 0%, #fbf9ff 100%);
+  box-shadow: 0 10px 28px rgba(48, 30, 84, .07);
+}
+.mp-inv-dress-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #3b2a5f;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+}
+.mp-inv-dress-panel-title .material-symbols-outlined { color: #b28745; font-size: 19px; }
+.mp-inv-color-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+.mp-inv-color-item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  text-align: center;
+}
+.mp-inv-color-swatch {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #e4dced, 0 7px 16px rgba(48, 30, 84, .14);
+}
+.mp-inv-color-name {
+  overflow: hidden;
+  max-width: 100%;
+  color: #2e2540;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-inv-color-description {
+  overflow: hidden;
+  max-width: 100%;
+  color: #8a8198;
+  font-size: 10.5px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-inv-fabric-image {
+  display: grid;
+  place-items: center;
+  height: 190px;
+  margin-top: 16px;
+  overflow: hidden;
+  border: 1px solid #e8def4;
+  border-radius: 14px;
+  background: #f5f0fb;
+}
+.mp-inv-fabric-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mp-inv-fabric-caption { margin: 12px 0 0; color: #766b84; font-size: 12px; line-height: 1.55; text-align: center; }
 
 /* ---------- Votre invitation ---------- */
 .mp-inv-you {
@@ -2243,6 +2399,23 @@ html.dark .mp-inv-dress-caption {
   border-color: #4b3f6b;
   color: #b8b2c7;
 }
+html.dark .mp-inv-section-lead { color: #b8b2c7; }
+html.dark .mp-inv-section-kicker { color: #d8b779; }
+html.dark .mp-inv-dress-panel,
+html.dark .mp-inv-fabric-card {
+  background: linear-gradient(145deg, #211b2d 0%, #191522 100%);
+  border-color: #342d45;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .24);
+}
+html.dark .mp-inv-dress-panel-title { color: #f1eaff; }
+html.dark .mp-inv-color-swatch {
+  border-color: #191522;
+  box-shadow: 0 0 0 1px #4b3f6b, 0 7px 16px rgba(0, 0, 0, .32);
+}
+html.dark .mp-inv-color-name { color: #f7f5ff; }
+html.dark .mp-inv-color-description,
+html.dark .mp-inv-fabric-caption { color: #b8b2c7; }
+html.dark .mp-inv-fabric-image { background: #211b2d; border-color: #342d45; }
 html.dark .mp-inv-choice--ok::after { background: #2e9b59; }
 html.dark .mp-inv-choice--no::after { background: #e53935; }
 html.dark .mp-inv-choice--ok { box-shadow: 0 0 0 3px rgba(46, 155, 89, 0.18), 0 4px 14px rgba(0, 0, 0, 0.3); }
@@ -2297,6 +2470,8 @@ html.dark .mp-inv-qr img { background: #ffffff; }
   }
   .mp-inv-dots { bottom: 12px; }
   .mp-inv-cover-content { padding: 0 20px 38px; }
+  .mp-inv-hero-kicker { letter-spacing: 2px; }
+  .mp-inv-hero-rule i { width: 30px; }
   .mp-inv-logo-text { font-size: 20px; }
   .mp-inv-type { margin-bottom: 10px; }
   .mp-inv-title { font-size: 30px; }
@@ -2307,6 +2482,10 @@ html.dark .mp-inv-qr img { background: #ffffff; }
   .mp-inv-info-icon { width: 46px; height: 46px; border-radius: 13px; }
   .mp-inv-choices { grid-template-columns: 1fr; gap: 12px; }
   .mp-inv-section-title { font-size: 20px; }
+  .mp-inv-dress-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 20px; }
+  .mp-inv-dress-panel,
+  .mp-inv-fabric-card { padding: 16px; border-radius: 16px; }
+  .mp-inv-fabric-image { height: 210px; }
   .mp-inv-rsvp { padding: 22px 16px 20px; border-radius: 16px; margin-top: 20px; }
   .mp-inv-program { margin-top: 18px; }
   .mp-inv-program-item { gap: 10px; padding-bottom: 14px; }

@@ -61,6 +61,7 @@
             <th class="px-5 py-3.5">Statut</th>
             <th class="px-5 py-3.5">Personnes</th>
             <th class="px-5 py-3.5">Répondu le</th>
+            <th class="px-5 py-3.5">Message</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-outline-variant text-on-surface">
@@ -74,6 +75,10 @@
             <td class="px-5 py-3.5"><StatusBadge :status="r.status || 'PENDING'" /></td>
             <td class="px-5 py-3.5">{{ r.numberOfAttendees ?? 0 }}</td>
             <td class="px-5 py-3.5 text-on-surface-variant">{{ r.respondedAt ? formatDate(r.respondedAt) : '—' }}</td>
+            <td class="px-5 py-3.5 max-w-[280px]">
+              <span v-if="r.note" class="block truncate text-on-surface-variant" :title="r.note">{{ r.note }}</span>
+              <span v-else class="text-on-surface-variant/60">Aucun message</span>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -105,6 +110,9 @@
             <span class="material-symbols-outlined text-[14px]">schedule</span>
             {{ r.respondedAt ? formatDate(r.respondedAt) : 'Pas encore répondu' }}
           </span>
+        </div>
+        <div v-if="r.note" class="mt-3 rounded-lg bg-surface-container px-3 py-2 text-xs text-on-surface-variant whitespace-pre-line break-words">
+          <span class="font-semibold text-on-surface">Message :</span> {{ r.note }}
         </div>
       </div>
     </div>
