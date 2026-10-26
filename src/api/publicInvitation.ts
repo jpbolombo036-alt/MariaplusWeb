@@ -15,6 +15,9 @@ export interface PublicInvitation {
   eventDate?: string | null
   eventStartTime?: string | null
   eventVenue?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  mapUrl?: string | null
   /** Vestiaire : couleurs demandées (max 3, libellé + aperçu) et photo du pagne. */
   dressColors?: DressColorOption[] | null
   dressImageUrl?: string | null
@@ -48,6 +51,8 @@ export interface PublicSessionItem {
   venueName?: string | null
   venueAddress?: string | null
   city?: string | null
+  latitude?: number | null
+  longitude?: number | null
   mapUrl?: string | null
 }
 
@@ -77,6 +82,9 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
     eventDate: j.eventDate ? String(j.eventDate) : null,
     eventStartTime: j.eventStartTime ? String(j.eventStartTime) : null,
     eventVenue: j.eventVenue ? String(j.eventVenue) : null,
+    latitude: j.latitude != null ? Number(j.latitude) : null,
+    longitude: j.longitude != null ? Number(j.longitude) : null,
+    mapUrl: j.mapUrl ? String(j.mapUrl) : null,
     dressColors: Array.isArray(j.dressColors)
       ? (j.dressColors as Record<string, unknown>[]).map((c) => ({
           value: String(c.value ?? ''),
@@ -107,6 +115,8 @@ export async function getPublicInvitation(token: string): Promise<PublicInvitati
           venueName: s.venueName ? String(s.venueName) : null,
           venueAddress: s.venueAddress ? String(s.venueAddress) : null,
           city: s.city ? String(s.city) : null,
+          latitude: s.latitude != null ? Number(s.latitude) : null,
+          longitude: s.longitude != null ? Number(s.longitude) : null,
           mapUrl: s.mapUrl ? String(s.mapUrl) : null,
         }))
       : null,

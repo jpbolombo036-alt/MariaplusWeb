@@ -94,6 +94,17 @@
 
             </div>
 
+            <a
+              v-if="venueMapUrl"
+              :href="venueMapUrl"
+              class="mp-inv-map-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="material-symbols-outlined">map</span>
+              Voir l’itinéraire
+            </a>
+
             <p v-if="inv.message" class="mp-inv-message">{{ inv.message }}</p>
           </section>
 
@@ -145,6 +156,15 @@
                   <p v-if="sessionPlace(s)" class="mp-inv-program-place">
                     <span class="material-symbols-outlined">location_on</span>{{ sessionPlace(s) }}
                   </p>
+                  <a
+                    v-if="sessionMapUrl(s)"
+                    :href="sessionMapUrl(s)"
+                    class="mp-inv-program-map"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span class="material-symbols-outlined">map</span>Itinéraire
+                  </a>
                   <p v-if="s.description" class="mp-inv-program-desc">{{ s.description }}</p>
                 </div>
               </div>
@@ -575,6 +595,25 @@ const venueParts = computed(() =>
 )
 const venueValue = computed(() => venueParts.value[0] || '')
 const venueSub = computed(() => (venueParts.value.length > 1 ? venueParts.value.slice(1).join(' · ') : ''))
+function safeMapUrl(value?: string | null): string {
+  const raw = value?.trim() || ''
+  if (!raw) return ''
+  try {
+    const url = new URL(raw)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : ''
+  } catch {
+    return ''
+  }
+}
+
+function coordinatesMapUrl(latitude?: number | null, longitude?: number | null): string {
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return ''
+  return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+}
+
+const venueMapUrl = computed(() =>
+  safeMapUrl(inv.value?.mapUrl) || coordinatesMapUrl(inv.value?.latitude, inv.value?.longitude),
+)
 const hasEventInfo = computed(() => Boolean(dateValue.value || timeValue.value || venueValue.value))
 /** Vestiaire : jusqu'à 3 couleurs demandées + photo du pagne (libellés FR fournis par l'API). */
 const dressColors = computed(() => inv.value?.dressColors ?? [])
@@ -626,6 +665,10 @@ function sessionDateLabel(s: PublicSessionItem): string {
 
 function sessionPlace(s: PublicSessionItem): string {
   return [s.venueName, s.city].filter(Boolean).join(', ')
+}
+
+function sessionMapUrl(s: PublicSessionItem): string {
+  return safeMapUrl(s.mapUrl) || coordinatesMapUrl(s.latitude, s.longitude)
 }
 
 /** Libellés FR des types de session (badge du programme — source : enum EventSessionType). */
@@ -1356,6 +1399,23 @@ onBeforeUnmount(stopAutoplay)
   color: #c23a6a;
   background: #fdf0f5;
 }
+.mp-inv-map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 18px auto 2px;
+  padding: 9px 16px;
+  border: 1px solid #e6dfff;
+  border-radius: 999px;
+  color: #5427c7;
+  background: #f8f5ff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.mp-inv-map-link:hover { background: #eee8ff; transform: translateY(-1px); }
+.mp-inv-map-link .material-symbols-outlined { font-size: 18px; }
 .mp-inv-message {
   margin: 22px auto 4px;
   max-width: 620px;
@@ -1477,6 +1537,18 @@ onBeforeUnmount(stopAutoplay)
   gap: 4px;
 }
 .mp-inv-program-place .material-symbols-outlined { font-size: 16px; color: #e0447c; }
+.mp-inv-program-map {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  color: #5427c7;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.mp-inv-program-map:hover { text-decoration: underline; }
+.mp-inv-program-map .material-symbols-outlined { font-size: 15px; }
 .mp-inv-program-desc {
   margin: 6px 0 0;
   font-size: 13.5px;

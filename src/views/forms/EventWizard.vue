@@ -147,6 +147,10 @@
                 <span class="field-label">Nom du lieu</span>
                 <input v-model="form.venueName" placeholder="Ex : Église Saint-Roch" class="input" />
               </label>
+              <label class="block sm:col-span-2">
+                <span class="field-label">Adresse complète</span>
+                <input v-model="form.venueAddress" placeholder="Rue, numéro, repère…" class="input" />
+              </label>
               <label class="block">
                 <span class="field-label">Ville</span>
                 <input v-model="form.city" placeholder="Ex : Kinshasa" class="input" />
@@ -158,6 +162,18 @@
               <label class="block">
                 <span class="field-label">Pays</span>
                 <input v-model="form.country" placeholder="Ex : RDC" class="input" />
+              </label>
+              <label class="block">
+                <span class="field-label">Latitude <span class="font-normal text-slate-400">(optionnel)</span></span>
+                <input v-model="form.latitude" inputmode="decimal" placeholder="Ex : -4.3250" class="input" />
+              </label>
+              <label class="block">
+                <span class="field-label">Longitude <span class="font-normal text-slate-400">(optionnel)</span></span>
+                <input v-model="form.longitude" inputmode="decimal" placeholder="Ex : 15.3222" class="input" />
+              </label>
+              <label class="block sm:col-span-2">
+                <span class="field-label">Lien Google Maps <span class="font-normal text-slate-400">(optionnel)</span></span>
+                <input v-model="form.mapUrl" type="url" placeholder="Collez le lien Google Maps du lieu" class="input" />
               </label>
             </div>
           </section>
@@ -468,6 +484,9 @@ async function submitCreate() {
       city: form.city || null,
       commune: form.commune || null,
       country: form.country || null,
+      latitude: parseCoordinate(form.latitude),
+      longitude: parseCoordinate(form.longitude),
+      mapUrl: form.mapUrl.trim() || null,
     }
     if (form.type === 'WEDDING') {
       payload.groomFirstName = form.groomFirstName
@@ -559,12 +578,22 @@ const form = reactive({
   city: '',
   commune: '',
   country: '',
+  latitude: '',
+  longitude: '',
+  mapUrl: '',
   groomFirstName: '',
   groomLastName: '',
   brideFirstName: '',
   brideLastName: '',
   dressColors: [] as string[],
 })
+
+function parseCoordinate(value: string): number | null {
+  const normalized = value.trim().replace(',', '.')
+  if (!normalized) return null
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : null
+}
 /** Photo du pagne choisie avant la création : uploadée juste après (l'ID n'existe pas encore). */
 const dressFile = ref<File | null>(null)
 

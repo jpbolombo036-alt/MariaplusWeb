@@ -48,6 +48,22 @@
             </label>
           </div>
 
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <label class="block">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Latitude <span class="font-normal text-slate-400">(optionnel)</span></span>
+              <input v-model="form.latitude" inputmode="decimal" placeholder="Ex : -4.3250" class="input" />
+            </label>
+            <label class="block">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Longitude <span class="font-normal text-slate-400">(optionnel)</span></span>
+              <input v-model="form.longitude" inputmode="decimal" placeholder="Ex : 15.3222" class="input" />
+            </label>
+          </div>
+
+          <label class="block">
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Lien Google Maps <span class="font-normal text-slate-400">(optionnel)</span></span>
+            <input v-model="form.mapUrl" type="url" placeholder="Collez le lien Google Maps du lieu" class="input" />
+          </label>
+
           <label class="block">
             <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Ville</span>
             <input v-model="form.city" placeholder="Ville" class="input" />
@@ -155,6 +171,9 @@ const form = reactive({
   venueName: '',
   venueAddress: '',
   city: '',
+  latitude: '',
+  longitude: '',
+  mapUrl: '',
   description: '',
   message: '',
   dressColors: [] as string[],
@@ -170,6 +189,9 @@ onMounted(async () => {
     form.venueName = ev.venueName ?? ''
     form.venueAddress = ev.venueAddress ?? ''
     form.city = ev.city ?? ''
+    form.latitude = ev.latitude != null ? String(ev.latitude) : ''
+    form.longitude = ev.longitude != null ? String(ev.longitude) : ''
+    form.mapUrl = ev.mapUrl ?? ''
     form.description = ev.description ?? ''
     form.message = ev.message ?? ''
     form.dressColors = ev.dressColors ?? []
@@ -262,6 +284,9 @@ async function submit() {
     payload.venueName = form.venueName || null
     payload.venueAddress = form.venueAddress || null
     payload.city = form.city || null
+    payload.latitude = parseCoordinate(form.latitude)
+    payload.longitude = parseCoordinate(form.longitude)
+    payload.mapUrl = form.mapUrl.trim() || null
     payload.description = form.description || null
     payload.message = form.message || null
     payload.dressColors = form.dressColors
@@ -278,6 +303,13 @@ async function submit() {
   } finally {
     saving.value = false
   }
+}
+
+function parseCoordinate(value: string): number | null {
+  const normalized = value.trim().replace(',', '.')
+  if (!normalized) return null
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 onBeforeUnmount(() => {
