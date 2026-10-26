@@ -351,6 +351,19 @@
 
             <!-- Formulaire DECLINED -->
             <form v-else-if="choice === 'DECLINED'" class="mp-inv-form" novalidate @submit.prevent="submitDecline">
+              <label class="mp-inv-label" for="mp-decline-note">
+                Message pour les mariés <span class="mp-inv-label-muted">(optionnel)</span>
+              </label>
+              <textarea
+                id="mp-decline-note"
+                v-model="note"
+                class="mp-inv-input"
+                rows="4"
+                maxlength="250"
+                placeholder="Souhaitez-vous leur laisser un petit mot ?"
+              ></textarea>
+              <span class="mp-inv-count">{{ note.length }} / 250</span>
+
               <button type="submit" class="mp-inv-btn mp-inv-btn--decline" :disabled="sending">
                 <span v-if="sending" class="mp-spinner mp-spinner--sm"></span>
                 <span v-else class="mp-inv-btn-icon">✕</span>
@@ -909,10 +922,11 @@ async function submitAccepted() {
 async function submitDecline() {
   sending.value = true
   try {
-    await submitPublicRsvp(token, 'DECLINED', 0)
+    await submitPublicRsvp(token, 'DECLINED', 0, [], note.value)
     inv.value = await getPublicInvitation(token)
     success.value = 'DECLINED'
     qrDataUri.value = ''
+    note.value = ''
     notifications.push('Votre réponse a bien été enregistrée.', 'success')
   } catch (e: any) {
     notifications.push(e?.response ? 'Erreur serveur. Merci de réessayer.' : 'Erreur réseau. Vérifiez votre connexion et réessayez.', 'error')
