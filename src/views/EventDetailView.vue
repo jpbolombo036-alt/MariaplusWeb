@@ -3,9 +3,10 @@
   <div v-else-if="!event" class="text-error">Événement introuvable</div>
 
   <div v-else>
-    <!-- Carrousel photos : couverture / couple / marié / mariée -->
-    <div v-if="isWedding && photos.length" class="relative rounded-b-2xl overflow-hidden">
+    <!-- En-tête toujours visible ; carrousel si des photos existent, sinon couverture par défaut. -->
+    <div class="relative rounded-b-2xl overflow-hidden">
       <div
+        v-if="photos.length"
         ref="carouselEl"
         class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
         @scroll.passive="onScroll"
@@ -18,6 +19,13 @@
           class="w-full h-64 md:h-80 object-cover snap-center shrink-0"
           alt=""
         />
+      </div>
+      <div
+        v-else
+        class="w-full h-64 md:h-80 bg-gradient-to-br from-primary via-primary-dark to-slate-900 flex flex-col items-center justify-center gap-2 text-white/70"
+      >
+        <span class="material-symbols-outlined text-6xl">event</span>
+        <span class="text-xs font-semibold uppercase tracking-[0.2em]">Couverture par défaut</span>
       </div>
       <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
       <div v-if="photos.length > 1" class="absolute bottom-3 inset-x-0 flex justify-center gap-1.5">
@@ -53,8 +61,14 @@
               </button>
             </PermGuard>
             <PermGuard :allow="['WEDDING_PUBLISH']">
-              <button v-if="event.status === 'DRAFT'" class="h-10 px-5 rounded-lg bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm" @click="changeStatus('PUBLISHED')">
-                <span class="material-symbols-outlined text-base">publish</span>Publier
+              <button
+                v-if="event.status === 'DRAFT'"
+                :disabled="statusUpdating"
+                class="h-10 px-5 rounded-lg bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 shadow-sm disabled:opacity-60"
+                @click="publishEvent"
+              >
+                <span class="material-symbols-outlined text-base" :class="{ 'animate-spin': statusUpdating }">{{ statusUpdating ? 'progress_activity' : 'publish' }}</span>
+                {{ statusUpdating ? 'Publication…' : 'Publier' }}
               </button>
             </PermGuard>
             <PermGuard :allow="['WEDDING_UPDATE']">
@@ -71,6 +85,11 @@
         </div>
       </div>
     </div>
+
+    <p v-if="statusError" class="mt-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+      <span class="material-symbols-outlined text-[18px]">error</span>
+      {{ statusError }}
+    </p>
 
     <!-- Bandeau : événement passé -->
     <div
@@ -117,10 +136,6 @@ const stats = ref<Dashboard | null>(null)
 const loading = ref(true)
 
 const eventId = Number(route.params.id)
-
-/** Carrousel multi-photos + boutons dédiés : uniquement pour les mariages
- * (fiche couple). Les autres types ont leur carte héros dans OverviewTab. */
-const isWedding = computed(() => event.value?.type === 'WEDDING')
 
 /* --- Carrousel photos : couverture / couple / marié / mariée --- */
 const carouselEl = ref<HTMLElement | null>(null)
@@ -187,11 +202,28 @@ async function load() {
 }
 onBeforeUnmount(stopAutoplay)
 
+const statusUpdating = ref(false)
+const statusError = ref('')
+
+async function publishEvent() {
+  if (!photos.value.length) {
+    const confirmed = window.confirm(
+      "Aucune photo n'a été ajoutée. L'événement sera publié avec la couverture par défaut. Continuer ?",
+    )
+    if (!confirmed) return
+  }
+  await changeStatus('PUBLISHED')
+}
+
 async function changeStatus(status: string) {
+  statusError.value = ''
+  statusUpdating.value = true
   try {
     event.value = await updateEventStatus(eventId, status)
-  } catch {
-    /* ignoré */
+  } catch (e: any) {
+    statusError.value = e?.response?.data?.error || e?.message || "Impossible de modifier le statut de l'événement."
+  } finally {
+    statusUpdating.value = false
   }
 }
 
