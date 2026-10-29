@@ -34,9 +34,9 @@
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div class="flex flex-col gap-3">
             <div class="flex items-center gap-3">
-              <span class="px-3 py-1 rounded-full bg-primary-container text-white text-[10px] uppercase tracking-wider font-bold">{{ event.type }}</span>
+              <span class="px-3 py-1 rounded-full bg-primary-container text-white text-[10px] uppercase tracking-wider font-bold">{{ eventTypeLabel(event.type) }}</span>
               <span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[10px] uppercase tracking-wider font-bold inline-flex items-center gap-1">
-                <span class="material-symbols-outlined text-xs">check_circle</span>{{ event.status }}
+                <span class="material-symbols-outlined text-xs">check_circle</span>{{ statusLabel(event.status) }}
               </span>
             </div>
             <h1 class="text-2xl md:text-3xl font-bold">{{ event.weddingDetails?.displayName || event.name || 'Événement' }}</h1>
@@ -108,6 +108,7 @@ import { getDashboard, type Dashboard } from '../api/dashboard'
 import PermGuard from '../components/common/PermGuard.vue'
 import { useAuthStore } from '../stores/auth'
 import { Perm } from '../permissions'
+import { eventTypeLabel, statusLabel } from '../utils/eventStatus'
 
 const route = useRoute()
 const auth = useAuthStore()

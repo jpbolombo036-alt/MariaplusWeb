@@ -96,7 +96,7 @@
                   </div>
                   <div>
                     <div class="text-[16px] font-semibold text-slate-700 group-hover/ev:text-primary transition-colors">{{ ev.weddingDetails?.displayName || ev.name || 'Sans nom' }}</div>
-                    <div class="text-[12px] font-bold text-primary tracking-wide">• {{ ev.type }}</div>
+                    <div class="text-[12px] font-bold text-primary tracking-wide">• {{ eventTypeLabel(ev.type) }}</div>
                   </div>
                 </router-link>
               </td>
@@ -116,7 +116,7 @@
               <td class="px-6 py-4"><StatusBadge :status="ev.status" /></td>
               <!-- Invités -->
               <td class="px-6 py-4">
-                <div class="text-[16px] font-semibold text-slate-700">—</div>
+                <div class="text-[16px] font-semibold text-slate-700">{{ ev.guestCount }}</div>
                 <div class="text-[13px] text-slate-400">Invités attendus</div>
               </td>
               <!-- Actions -->
@@ -152,6 +152,7 @@ import CreateEventDialog from '../components/events/CreateEventDialog.vue'
 import { useAuthStore } from '../stores/auth'
 import { usePlatformStore } from '../stores/platform'
 import { Perm } from '../permissions'
+import { eventTypeLabel } from '../utils/eventStatus'
 
 const auth = useAuthStore()
 const platform = usePlatformStore()

@@ -10,10 +10,27 @@ import { computed } from 'vue'
 
 const props = defineProps<{ status?: string; dot?: boolean }>()
 
-const label = computed(() => (props.status || 'DRAFT').toUpperCase())
+const normalized = computed(() => (props.status || 'DRAFT').toUpperCase())
+
+const STATUS_LABELS: Record<string, string> = {
+  ACCEPTED: 'Accepté',
+  ACTIVE: 'Actif',
+  ARCHIVED: 'Archivé',
+  CANCELLED: 'Annulé',
+  COMPLETED: 'Terminé',
+  DECLINED: 'Refusé',
+  DRAFT: 'Brouillon',
+  EXPIRED: 'Expiré',
+  GENERATED: 'Générée',
+  PENDING: 'En attente',
+  PUBLISHED: 'Publié',
+  SENT: 'Envoyée',
+}
+
+const label = computed(() => STATUS_LABELS[normalized.value] ?? props.status ?? 'Brouillon')
 
 const classes = computed(() => {
-  switch (label.value) {
+  switch (normalized.value) {
     case 'ACCEPTED':
     case 'ACCEPTÉ':
     case 'ACTIVE':
@@ -36,7 +53,7 @@ const classes = computed(() => {
 })
 
 const dotColor = computed(() => {
-  switch (label.value) {
+  switch (normalized.value) {
     case 'ACCEPTED':
     case 'ACCEPTÉ':
       return 'bg-green-600'

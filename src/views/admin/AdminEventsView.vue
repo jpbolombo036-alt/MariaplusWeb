@@ -57,7 +57,7 @@
               <td class="py-4 px-4">
                 <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold"
                       :class="e.type === 'WEDDING' ? 'bg-primary-light text-primary' : 'bg-slate-100 text-slate-600'">
-                  {{ e.type }}
+                  {{ eventTypeLabel(e.type) }}
                 </span>
               </td>
               <td class="py-4 px-4 text-sm text-slate-700">{{ orgName(e.organizationId) }}</td>
@@ -101,6 +101,7 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { listAllEvents, listOrganizations, type AdminOrganization } from '../../api/admin'
 import type { Event } from '../../api/events'
+import { eventTypeLabel } from '../../utils/eventStatus'
 
 const route = useRoute()
 const rows = ref<Event[]>([])

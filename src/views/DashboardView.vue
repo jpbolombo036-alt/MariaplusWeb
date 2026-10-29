@@ -120,9 +120,11 @@ const notifications = computed(() => 3)
 const guestsTotal = computed(() => guests.value.length)
 const invitedTotal = computed(() => dashboard.value?.invitations.total ?? 0)
 const accepted = computed(() => dashboard.value?.invitations.accepted ?? 0)
-const pending = computed(() => dashboard.value?.invitations.pending ?? 0)
+// Le backend nomme `pending` le nombre d'invitations sans réponse
+// (total - acceptées - refusées). Ce ne sont pas des réponses RSVP PENDING.
+const pending = computed(() => 0)
 const declined = computed(() => dashboard.value?.invitations.declined ?? 0)
-const noResponse = computed(() => Math.max(0, guestsTotal.value - accepted.value - pending.value - declined.value))
+const noResponse = computed(() => dashboard.value?.invitations.pending ?? 0)
 const checkedIn = computed(() => dashboard.value?.attendance.checkedIn ?? 0)
 const expectedGuests = computed(() => dashboard.value?.attendance.expected ?? 0)
 const inviteProgress = computed(() =>
@@ -132,9 +134,7 @@ const checkinProgress = computed(() =>
   expectedGuests.value > 0 ? Math.round((checkedIn.value / expectedGuests.value) * 100) : 0,
 )
 const responseRate = computed(() => {
-  const total = accepted.value + pending.value + declined.value + noResponse.value
-  if (total === 0) return 0
-  return Math.round((accepted.value / total) * 100)
+  return Math.round(dashboard.value?.invitations.responseRate ?? 0)
 })
 
 const guestRows = computed<GuestRow[]>(() =>
@@ -219,15 +219,19 @@ function formatActivityTime(iso: string): string {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}, ${hhmm}`
 }
 
-onMounted(async () => {
-  await weddingStore.load()
-  await loadData()
+onMounted(() => {
+  void weddingStore.load().catch((e: any) => {
+    error.value = e?.message || 'Erreur de chargement'
+    loading.value = false
+  })
 })
 
 watch(
   () => weddingStore.activeId,
-  (nv, old) => {
-    if (nv && nv !== old) void loadData()
+  (nv) => {
+    if (nv) void loadData()
+    else if (weddingStore.loaded) loading.value = false
   },
+  { immediate: true },
 )
 </script>

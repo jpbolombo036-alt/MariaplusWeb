@@ -131,7 +131,7 @@
               </td>
               <td class="py-4 px-4 text-right">
                 <button
-                  v-if="canManage"
+                  v-if="canRemove(m)"
                   @click="onRemove(m)"
                   class="p-2 rounded-lg text-slate-400 hover:bg-error-light hover:text-error transition"
                   title="Retirer l'affectation"
@@ -179,8 +179,14 @@ function isAgent(code: string): boolean {
 
 function roleLabel(code: string): string {
   if (code === 'GESTIONNAIRE_INVITES') return "Gestionnaire d'invités"
+  if (code === 'AGENT_ACCUEIL') return "Agent d'accueil"
   if (code === 'ORGANISATEUR') return 'Organisateur'
+  if (code === 'SUPER_ADMIN') return 'Super administrateur'
   return code
+}
+
+function canRemove(m: OrgMember): boolean {
+  return canManage.value && m.userId !== auth.user?.id
 }
 
 function roleBadgeClass(code: string): string {
@@ -221,6 +227,7 @@ async function onAssign(m: OrgMember, ev: globalThis.Event) {
 
 async function onRemove(m: OrgMember) {
   if (orgId.value == null) return
+  if (!canRemove(m)) return
   if (!window.confirm(`Retirer ${m.firstName} ${m.lastName} de l'organisation ?`)) return
   await removeMember(orgId.value, m.id)
   await load()
@@ -228,5 +235,4 @@ async function onRemove(m: OrgMember) {
 
 onMounted(load)
 </script>
-
 

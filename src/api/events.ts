@@ -64,6 +64,8 @@ export interface Event {
   createdAt?: string | null
   updatedAt?: string | null
   hasImage?: boolean | null
+  /** Nombre d'invités enregistrés pour l'événement. */
+  guestCount: number
   weddingDetails?: WeddingDetails | null
   sessions?: EventSession[] | null
 }
@@ -178,6 +180,7 @@ export function parseEvent(json: Record<string, unknown>): Event {
     createdAt: json.createdAt ? String(json.createdAt) : null,
     updatedAt: json.updatedAt ? String(json.updatedAt) : null,
     hasImage: json.hasImage != null ? Boolean(json.hasImage) : null,
+    guestCount: Number(json.guestCount ?? 0),
     weddingDetails: details,
     sessions: Array.isArray(json.sessions) ? (json.sessions as EventSession[]) : null,
   }

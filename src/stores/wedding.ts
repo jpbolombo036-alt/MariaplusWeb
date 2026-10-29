@@ -3,6 +3,7 @@ import { listEvents, type Event } from '../api/events'
 import { pickDefaultEventId } from '../utils/eventStatus'
 
 const STORAGE_KEY = 'mp_active_event'
+let loadPromise: Promise<void> | null = null
 
 /**
  * Store partagé de l'événement actif : la sidebar, le dashboard et les écrans
@@ -39,27 +40,35 @@ export const useWeddingStore = defineStore('wedding', {
     },
     async load(force = false) {
       if (this.loaded && !force) return
+      if (loadPromise && !force) return loadPromise
+
       this.loading = true
-      try {
-        this.weddings = await listEvents()
-        const saved = sessionStorage.getItem(STORAGE_KEY)
-        const savedId = saved ? Number(saved) : null
-        // Cascade intelligente : le choix de session n'est honoré que s'il
-        // existe encore et n'est ni passé ni annulé ; sinon on prend
-        // l'événement à venir le plus pertinent — jamais un événement passé
-        // par défaut (sauf si tous le sont).
-        this.activeId = pickDefaultEventId(this.weddings, savedId)
-        if (this.activeId != null) {
-          try {
-            sessionStorage.setItem(STORAGE_KEY, String(this.activeId))
-          } catch {
-            /* stockage indisponible */
+      loadPromise = (async () => {
+        try {
+          this.weddings = await listEvents()
+          const saved = sessionStorage.getItem(STORAGE_KEY)
+          const savedId = saved ? Number(saved) : null
+          // Cascade intelligente : le choix de session n'est honoré que s'il
+          // existe encore et n'est ni passé ni annulé ; sinon on prend
+          // l'événement à venir le plus pertinent — jamais un événement passé
+          // par défaut (sauf si tous le sont).
+          this.activeId = pickDefaultEventId(this.weddings, savedId)
+          if (this.activeId != null) {
+            try {
+              sessionStorage.setItem(STORAGE_KEY, String(this.activeId))
+            } catch {
+              /* stockage indisponible */
+            }
           }
+          this.loaded = true
+        } finally {
+          this.loading = false
         }
-        this.loaded = true
-      } finally {
-        this.loading = false
-      }
+      })().finally(() => {
+        loadPromise = null
+      })
+
+      return loadPromise
     },
   },
 })
