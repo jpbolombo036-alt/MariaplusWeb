@@ -103,11 +103,13 @@
                   :class="l.status === 'DELIVERED' || l.status === 'READ' ? 'text-green-600' : l.status === 'SENT' ? 'text-primary' : l.status === 'FAILED' ? 'text-error' : 'text-on-surface-variant'">
               {{ statusIcon(l.status) }}
             </span>
-            <div class="min-w-0">
-              <p class="font-medium text-on-surface">{{ guestNameFor(l) }}</p>
-              <p class="text-[11px] text-on-surface-variant">{{ statusLabel(l.status) }}</p>
-              <p v-if="l.errorMessage" class="text-error truncate" :title="l.errorMessage">{{ l.errorMessage }}</p>
-            </div>
+<div class="min-w-0">
+               <p class="font-medium text-on-surface">{{ guestNameFor(l) }}</p>
+               <p class="text-[11px] text-on-surface-variant">{{ statusLabel(l.status) }}</p>
+               <p v-if="l.errorMessage" class="text-error truncate" :title="l.errorMessage + (l.errorCode ? ' [code ' + l.errorCode + ']' : '')">
+                 {{ l.errorMessage }}<span v-if="l.errorCode" class="text-[10px] opacity-70"> [{{ l.errorCode }}]</span>
+               </p>
+             </div>
           </div>
         </div>
 

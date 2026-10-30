@@ -217,6 +217,8 @@ export interface NotificationLog {
   channel: string
   status: string
   errorMessage?: string | null
+  /** Code d'erreur Meta (0 = inconnu) : diagnostic pour les échecs WhatsApp. */
+  errorCode?: number
   createdAt?: string | null
 }
 
@@ -254,6 +256,7 @@ function parseLog(json: Record<string, unknown>): NotificationLog {
     channel: String(json.channel ?? 'WHATSAPP'),
     status: String(json.status ?? ''),
     errorMessage: json.errorMessage ? String(json.errorMessage) : null,
+    errorCode: json.errorCode != null ? Number(json.errorCode) : 0,
     createdAt: json.createdAt ? String(json.createdAt) : null,
   }
 }

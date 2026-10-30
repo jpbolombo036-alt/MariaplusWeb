@@ -125,10 +125,12 @@
           </div>
         </div>
         <ul v-if="failedLogs.length" class="mt-4 space-y-1.5 max-h-40 overflow-y-auto">
-          <li v-for="l in failedLogs" :key="l.id" class="text-xs text-on-surface-variant flex gap-2">
-            <span class="material-symbols-outlined text-[15px] text-error shrink-0">error</span>
-            <span class="truncate"><b class="text-on-surface">{{ guestNameFor(l) }}</b> — {{ l.errorMessage || 'échec' }}</span>
-          </li>
+<li v-for="l in failedLogs" :key="l.id" class="text-xs text-on-surface-variant flex gap-2">
+             <span class="material-symbols-outlined text-[15px] text-error shrink-0">error</span>
+             <span class="truncate" :title="l.errorMessage || 'échec'">
+               <b class="text-on-surface">{{ guestNameFor(l) }}</b> — {{ l.errorMessage || 'échec' }}<span v-if="l.errorCode" class="text-[10px] opacity-70"> [{{ l.errorCode }}]</span>
+             </span>
+           </li>
         </ul>
       </div>
       <p v-if="!finishedSending" class="mt-3 text-xs text-on-surface-variant text-center">Vous pouvez fermer la page, l'envoi se poursuit en arrière-plan.</p>
