@@ -77,7 +77,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { Perm } from '../../permissions'
 import { addMember } from '../../api/organization'
-import { listEvents, type Event } from '../../api/events'
+import { listAllEvents, type Event } from '../../api/events'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -96,7 +96,7 @@ const form = reactive({
 })
 
 onMounted(async () => {
-  weddings.value = await listEvents(undefined, 0, 100)
+  weddings.value = await listAllEvents()
   if (weddings.value.length) {
     form.eventId = weddings.value[0].id
   }

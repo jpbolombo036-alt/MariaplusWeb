@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
-import { listEvents, type Event } from '../api/events'
+import { listAllEvents, type Event } from '../api/events'
 import { pickDefaultEventId } from '../utils/eventStatus'
+import { invalidateStoreRequests, storeRequestState } from './requestState'
 
 const STORAGE_KEY = 'mp_active_event'
-let loadPromise: Promise<void> | null = null
 
 /**
  * Store partagé de l'événement actif : la sidebar, le dashboard et les écrans
@@ -30,6 +30,15 @@ export const useWeddingStore = defineStore('wedding', {
     },
   },
   actions: {
+    reset() {
+      invalidateStoreRequests(this)
+      this.$reset()
+      try {
+        sessionStorage.removeItem(STORAGE_KEY)
+      } catch {
+        /* stockage indisponible */
+      }
+    },
     setActive(id: number) {
       this.activeId = id
       try {
@@ -39,14 +48,23 @@ export const useWeddingStore = defineStore('wedding', {
       }
     },
     async load(force = false) {
+      const request = storeRequestState(this)
+      if (request.promise && !force) return request.promise
       if (this.loaded && !force) return
-      if (loadPromise && !force) return loadPromise
 
+      const revision = ++request.revision
       this.loading = true
-      loadPromise = (async () => {
+      request.promise = (async () => {
         try {
-          this.weddings = await listEvents()
-          const saved = sessionStorage.getItem(STORAGE_KEY)
+          const weddings = await listAllEvents()
+          if (request.revision !== revision) return
+          this.weddings = weddings
+          let saved: string | null = null
+          try {
+            saved = sessionStorage.getItem(STORAGE_KEY)
+          } catch {
+            /* stockage indisponible */
+          }
           const savedId = saved ? Number(saved) : null
           // Cascade intelligente : le choix de session n'est honoré que s'il
           // existe encore et n'est ni passé ni annulé ; sinon on prend
@@ -61,14 +79,17 @@ export const useWeddingStore = defineStore('wedding', {
             }
           }
           this.loaded = true
+        } catch (error) {
+          if (request.revision === revision) throw error
         } finally {
-          this.loading = false
+          if (request.revision === revision) {
+            this.loading = false
+            request.promise = null
+          }
         }
-      })().finally(() => {
-        loadPromise = null
-      })
+      })()
 
-      return loadPromise
+      return request.promise
     },
   },
 })

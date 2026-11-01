@@ -1,5 +1,6 @@
 import { http, decodeMap, decodeList } from './http'
 import { ApiConfig } from './config'
+import { collectAllPages } from './pagination'
 
 export interface Guest {
   id: number
@@ -48,9 +49,16 @@ function parseCategory(json: Record<string, unknown>): GuestCategory {
 }
 
 export async function listGuests(eventId: number): Promise<Guest[]> {
-  const res = await http.get(ApiConfig.weddingGuestsPath(eventId), { params: { size: 200 } })
-  const json = decodeMap(res.data)
-  return decodeList(json.content).map((e) => parseGuest(e as Record<string, unknown>))
+  return collectAllPages(async (page) => {
+    const res = await http.get(ApiConfig.weddingGuestsPath(eventId), { params: { page, size: 200 } })
+    const json = decodeMap(res.data)
+    return {
+      content: decodeList(json.content).map((e) => parseGuest(e as Record<string, unknown>)),
+      currentPage: json.currentPage ?? json.number,
+      totalPages: json.totalPages,
+      totalElements: json.totalElements,
+    }
+  }, (guest) => guest.id)
 }
 
 /** Page paginée renvoyée par le backend (PageResponse). */

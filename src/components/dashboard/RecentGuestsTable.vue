@@ -35,7 +35,8 @@
             <td class="px-6 py-4 text-slate-500 text-[13px] whitespace-nowrap">{{ r.group || '—' }}</td>
             <td class="px-6 py-4 text-slate-700 text-[13px] whitespace-nowrap">{{ r.people ?? 0 }}</td>
             <td class="px-6 py-4 hidden sm:table-cell">
-              <StatusBadge :status="r.status ?? 'PENDING'" :dot="true" />
+              <StatusBadge v-if="r.status" :status="r.status" :dot="true" />
+              <span v-else class="text-slate-400">—</span>
             </td>
             <td class="px-6 py-4 text-right">
               <button class="text-slate-400 hover:text-primary p-1.5 rounded-lg hover:bg-slate-100 transition-colors" title="Voir dans la liste des invités" @click="goGuests">

@@ -5,6 +5,12 @@ node_modules/
 dist/
 dist-ssr/
 
+# Test reports and local browser artifacts
+test-results/
+playwright-report/
+.playwright-cli/
+output/playwright/
+
 # Env local (ne pas commiter)
 .env
 .env.local

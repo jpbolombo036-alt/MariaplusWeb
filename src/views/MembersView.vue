@@ -152,7 +152,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { Perm } from '../permissions'
 import { listMembers, removeMember, updateMemberWedding, type OrgMember } from '../api/organization'
-import { listEvents, type Event as EventModel } from '../api/events'
+import { listAllEvents, type Event as EventModel } from '../api/events'
 import { initialsOf } from '../utils/initials'
 
 const auth = useAuthStore()
@@ -203,7 +203,7 @@ function weddingName(id: number): string {
 async function load() {
   loading.value = true
   try {
-    weddings.value = await listEvents(undefined, 0, 100)
+    weddings.value = await listAllEvents()
     if (orgId.value != null) {
       members.value = await listMembers(orgId.value)
     }

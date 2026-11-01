@@ -1,5 +1,6 @@
 import { http, decodeMap, decodeList } from './http'
 import { ApiConfig } from './config'
+import { collectAllPages } from './pagination'
 
 export interface WeddingDetails {
   id?: number
@@ -192,6 +193,22 @@ export async function listEvents(type?: string, page = 0, size = 25): Promise<Ev
   const res = await http.get(ApiConfig.eventsPath, { params })
   const json = decodeMap(res.data)
   return decodeList(json.content).map((e) => parseEvent(e as Record<string, unknown>))
+}
+
+/** Complete collection for selectors and screens that filter events locally. */
+export async function listAllEvents(type?: string): Promise<Event[]> {
+  return collectAllPages(async (page) => {
+    const params: Record<string, unknown> = { page, size: 200 }
+    if (type) params.type = type
+    const res = await http.get(ApiConfig.eventsPath, { params })
+    const json = decodeMap(res.data)
+    return {
+      content: decodeList(json.content).map((e) => parseEvent(e as Record<string, unknown>)),
+      currentPage: json.currentPage ?? json.number,
+      totalPages: json.totalPages,
+      totalElements: json.totalElements,
+    }
+  }, (event) => event.id)
 }
 
 export async function getEvent(id: number): Promise<Event> {

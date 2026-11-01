@@ -95,14 +95,28 @@ function chipClass(w: Event): string {
 }
 
 function pick(id: number) {
-  const previous = weddingStore.activeId
+  const route = router.currentRoute.value
   weddingStore.setActive(id)
   open.value = false
   emit('select')
-  if (previous && previous !== id && router.currentRoute.value.path.startsWith(`/dashboard/events/${previous}`)) {
-    const base = `/dashboard/events/${previous}`
-    const rest = router.currentRoute.value.path.slice(base.length)
-    router.push(`/dashboard/events/${id}${rest}`)
+  if (!route.name || !route.matched.some((record) => record.name === 'event-detail' || record.name === 'event-edit')) return
+  if (Number(route.params.id) === id) return
+
+  // Un invité, une catégorie ou une table appartient à l'ancien événement.
+  // Leur écran d'édition ne peut pas être transporté vers le nouvel événement.
+  const lists: Record<string, string> = {
+    'event-guests-edit': 'event-guests',
+    'event-categories-edit': 'event-categories',
+    'event-tables-edit': 'event-tables',
   }
+  const query = { ...route.query }
+  for (const key of ['guestId', 'tableId', 'categoryId', 'invitationId']) delete query[key]
+
+  router.push({
+    name: lists[String(route.name)] || route.name,
+    params: { id },
+    query,
+    hash: route.hash,
+  })
 }
 </script>

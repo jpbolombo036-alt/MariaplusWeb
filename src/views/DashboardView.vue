@@ -26,7 +26,7 @@
         <!-- Ligne cartes stats -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
           <StatCard label="Total Invités" :value="guestsTotal" icon="group" tone="primary" />
-          <StatCard label="Invitations envoyées" :value="invitedTotal" :total="guestsTotal" icon="mail" tone="primary" :progress="inviteProgress" />
+          <StatCard label="Invitations créées" :value="invitedTotal" :total="guestsTotal" icon="mail" tone="primary" :progress="inviteProgress" />
           <StatCard label="Check-ins" :value="checkedIn" :total="expectedGuests" icon="person_check" tone="success" :progress="checkinProgress" />
           <StatCard label="Taux de réponse" :value="responseRate + '%'" icon="poll" tone="attention" :progress="responseRate" />
         </div>
@@ -62,9 +62,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { getDashboard, getUpcomingSession, getRecentActivity, type Dashboard, type UpcomingSession, type ActivityItem } from '../api/dashboard'
-import { listGuests, type Guest } from '../api/guests'
+import { listGuestsPage, type Guest } from '../api/guests'
+import { listRsvps, type RsvpRow } from '../api/rsvp'
+import { apiErrorMessage } from '../api/http'
+import { Perm } from '../permissions'
 import { useWeddingStore } from '../stores/wedding'
 import EventSelector from '../components/dashboard/EventSelector.vue'
 import StatCard from '../components/dashboard/StatCard.vue'
@@ -98,6 +101,8 @@ const auth = useAuthStore()
 const weddingStore = useWeddingStore()
 const dashboard = ref<Dashboard | null>(null)
 const guests = ref<Guest[]>([])
+// null signifie que les réponses ne sont pas accessibles ou n'ont pas été chargées.
+const rsvps = ref<RsvpRow[] | null>(null)
 const upcoming = ref<UpcomingSession | null>(null)
 const activity = ref<ActivityItem[]>([])
 const loading = ref(true)
@@ -115,9 +120,7 @@ const eventSubtitle = computed(() => {
   parts.push(statusLabel(ev.status) || 'Brouillon')
   return parts.join(' • ')
 })
-const notifications = computed(() => 3)
-
-const guestsTotal = computed(() => guests.value.length)
+const guestsTotal = computed(() => dashboard.value?.guests.total ?? 0)
 const invitedTotal = computed(() => dashboard.value?.invitations.total ?? 0)
 const accepted = computed(() => dashboard.value?.invitations.accepted ?? 0)
 // Le backend nomme `pending` le nombre d'invitations sans réponse
@@ -137,14 +140,17 @@ const responseRate = computed(() => {
   return Math.round(dashboard.value?.invitations.responseRate ?? 0)
 })
 
+const rsvpByGuest = computed(() =>
+  new Map(rsvps.value?.map((rsvp) => [rsvp.guestId, rsvp]) ?? []),
+)
 const guestRows = computed<GuestRow[]>(() =>
-  guests.value.slice(0, 5).map((g) => ({
+  guests.value.map((g) => ({
     id: g.id,
     name: fullName(g.firstName, g.lastName),
     initials: initialsOf(g.firstName, g.lastName),
     group: null,
     people: g.allowedCompanions != null ? g.allowedCompanions + 1 : 1,
-    status: 'ACCEPTED',
+    status: rsvps.value === null ? null : rsvpByGuest.value.get(g.id)?.status || 'PENDING',
   })),
 )
 
@@ -162,26 +168,44 @@ const activityRows = computed<ActivityRow[]>(() =>
   }),
 )
 
-async function loadData() {
+let loadSequence = 0
+
+function clearData() {
+  dashboard.value = null
+  guests.value = []
+  rsvps.value = null
+  upcoming.value = null
+  activity.value = []
+}
+
+async function loadData(activeId: number) {
+  const sequence = ++loadSequence
   loading.value = true
   error.value = ''
+  clearData()
   try {
-    const activeId = weddingStore.active?.id
-    if (!activeId) return
     const results = await Promise.allSettled([
       getDashboard(activeId),
-      listGuests(activeId),
+      listGuestsPage(activeId, { size: 5 }),
       getUpcomingSession(activeId),
       getRecentActivity(activeId, 5),
+      auth.can([Perm.rsvpView])
+        ? listRsvps(activeId)
+        : Promise.resolve(null),
     ])
-    dashboard.value = results[0].status === 'fulfilled' ? results[0].value : null
-    guests.value = results[1].status === 'fulfilled' ? results[1].value : []
+    if (sequence !== loadSequence) return
+    // Sans statistiques, afficher des zéros ferait passer une erreur réseau
+    // pour un événement vide. Les autres cartes restent facultatives.
+    if (results[0].status === 'rejected') throw results[0].reason
+    dashboard.value = results[0].value
+    guests.value = results[1].status === 'fulfilled' ? results[1].value.content : []
     upcoming.value = results[2].status === 'fulfilled' ? results[2].value : null
     activity.value = results[3].status === 'fulfilled' ? results[3].value : []
-  } catch (e: any) {
-    error.value = e?.message || 'Erreur de chargement'
+    rsvps.value = results[4].status === 'fulfilled' ? results[4].value : null
+  } catch (e: unknown) {
+    if (sequence === loadSequence) error.value = apiErrorMessage(e)
   } finally {
-    loading.value = false
+    if (sequence === loadSequence) loading.value = false
   }
 }
 
@@ -227,11 +251,19 @@ onMounted(() => {
 })
 
 watch(
-  () => weddingStore.activeId,
-  (nv) => {
-    if (nv) void loadData()
-    else if (weddingStore.loaded) loading.value = false
+  () => [weddingStore.activeId, weddingStore.loaded] as const,
+  ([id, loaded]) => {
+    if (id) void loadData(id)
+    else {
+      ++loadSequence
+      clearData()
+      loading.value = !loaded
+    }
   },
   { immediate: true },
 )
+
+onBeforeUnmount(() => {
+  ++loadSequence
+})
 </script>

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios'
+import axios, { AxiosInstance, AxiosError, CanceledError } from 'axios'
 import { ApiConfig } from './config'
 import { useNotificationStore } from '../stores/notifications'
 
@@ -9,6 +9,8 @@ declare module 'axios' {
      * (l'appelant décide de la suite — ex. vérifier qu'un lien public est ouvrable).
      */
     skipNotification?: boolean
+    /** Session qui a émis la requête, conservée lors d'une nouvelle tentative. */
+    _authSessionRevision?: number
   }
 }
 
@@ -24,16 +26,26 @@ export interface AuthTokens {
 // Seul l'access token est conservé, en mémoire vive (jamais persisté) : à
 // chaque rechargement de page, restore() le régénère via le cookie de refresh.
 let accessToken: string | null = null
+let authSessionRevision = 0
+let refreshRequest: {
+  revision: number
+  promise: Promise<string>
+  controller: AbortController
+} | null = null
 
 export function setTokens(t: AuthTokens) {
+  authSessionRevision++
+  refreshRequest?.controller.abort()
+  refreshRequest = null
   accessToken = t.accessToken
 }
 
 export function clearTokens() {
+  authSessionRevision++
+  refreshRequest?.controller.abort()
+  refreshRequest = null
   accessToken = null
 }
-
-let refreshPromise: Promise<string> | null = null
 
 export const http: AxiosInstance = axios.create({
   baseURL: `${ApiConfig.baseUrl}/`,
@@ -45,6 +57,10 @@ export const http: AxiosInstance = axios.create({
 })
 
 http.interceptors.request.use((config) => {
+  if (config._authSessionRevision != null && config._authSessionRevision !== authSessionRevision) {
+    throw new CanceledError('La session a changé.', config)
+  }
+  config._authSessionRevision = authSessionRevision
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`
   }
@@ -61,20 +77,24 @@ function extractMessage(error: AxiosError): string {
   return error.message || 'Une erreur est survenue.'
 }
 
-// Le endpoint refresh attend un corps brut = refresh token (rotation).
-async function doRefresh(): Promise<string> {
+// Le refresh token est envoyé par le cookie HttpOnly, comme dans restore().
+async function doRefresh(revision: number, signal: AbortSignal): Promise<string> {
   const res = await axios.post(
     `${ApiConfig.baseUrl}${ApiConfig.authRefresh}`,
     {},
-    { withCredentials: true },
+    { withCredentials: true, signal },
   )
+  if (revision !== authSessionRevision) {
+    throw new CanceledError('La session a changé.')
+  }
   const data = (typeof res.data === 'string' ? JSON.parse(res.data) : res.data) as Record<string, unknown>
   const nextAuth: AuthTokens = {
     accessToken: String(data.accessToken ?? ''),
     refreshToken: '',
     expiresIn: Number(data.expiresIn ?? 900),
   }
-  setTokens(nextAuth)
+  // Renouveler le JWT conserve la session des autres requêtes en attente.
+  accessToken = nextAuth.accessToken
   return nextAuth.accessToken
 }
 
@@ -88,19 +108,28 @@ http.interceptors.response.use(
     const isAuthEndpoint = url.includes(ApiConfig.authLogin) || url.includes(ApiConfig.authRegister) || isRefreshPath
 
     if (status === 401 && original && !original._retry && !isAuthEndpoint) {
+      const revision = original._authSessionRevision
+      if (revision !== authSessionRevision) return Promise.reject(error)
       original._retry = true
       try {
-        if (!refreshPromise) {
-          refreshPromise = doRefresh().finally(() => {
-            refreshPromise = null
+        if (!refreshRequest || refreshRequest.revision !== revision) {
+          const controller = new AbortController()
+          const promise: Promise<string> = doRefresh(revision, controller.signal).finally(() => {
+            if (refreshRequest?.promise === promise) refreshRequest = null
           })
+          refreshRequest = { revision, promise, controller }
         }
-        const token = await refreshPromise
+        const token = await refreshRequest.promise
+        if (revision !== authSessionRevision) {
+          throw new CanceledError('La session a changé.', original)
+        }
         original.headers.Authorization = `Bearer ${token}`
         return http(original)
       } catch (e) {
-        clearTokens()
-        window.dispatchEvent(new CustomEvent('mp:session-expired'))
+        if (revision === authSessionRevision) {
+          clearTokens()
+          window.dispatchEvent(new CustomEvent('mp:session-expired'))
+        }
         return Promise.reject(e)
       }
     }

@@ -15,7 +15,7 @@
         <form @submit.prevent="submitCreate" class="space-y-5">
           <label class="block">
             <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Invité *</span>
-            <select v-model="selectedGuestId" required class="input">
+            <select v-model="selectedGuestId" required class="input" :disabled="submitting">
               <option :value="null" disabled>Sélectionner un invité</option>
               <option v-for="g in guests" :key="g.id" :value="g.id">{{ g.firstName }} {{ g.lastName }}</option>
             </select>
@@ -23,7 +23,7 @@
 
           <label class="block">
             <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Table (optionnel)</span>
-            <select v-model="selectedTableId" class="input" :disabled="tables.length === 0">
+            <select v-model="selectedTableId" class="input" :disabled="submitting || tables.length === 0">
               <option :value="null">Aucune table</option>
               <option v-for="t in tables" :key="t.id" :value="t.id" :disabled="t.remainingCapacity < 1">
                 {{ t.name }} ({{ t.remainingCapacity }} place(s) libre(s))
@@ -46,7 +46,7 @@
           <div class="flex justify-end gap-3 pt-2">
             <button type="button" @click="$router.back()" class="px-4 h-10 text-slate-500 text-[13px] font-medium hover:text-slate-700 transition-colors">Annuler</button>
             <button type="submit" :disabled="submitting" class="px-5 h-10 rounded-lg bg-primary text-white text-[13px] font-bold shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all disabled:opacity-60">
-              {{ submitting ? 'Création…' : 'Créer' }}
+              {{ submitting ? 'Enregistrement…' : invitationCreated ? 'Terminer' : 'Créer' }}
             </button>
           </div>
         </form>
@@ -72,6 +72,11 @@ const selectedGuestId = ref<number | null>(null)
 const selectedTableId = ref<number | null>(null)
 const submitting = ref(false)
 const errorMsg = ref('')
+// Une création réussie ne doit pas être rejouée si seul le placement a échoué.
+const createdInvitationGuestIds = ref(new Set<number>())
+const invitationCreated = computed(() =>
+  selectedGuestId.value != null && createdInvitationGuestIds.value.has(selectedGuestId.value),
+)
 
 /** Table actuelle de l'invité sélectionné (null = pas encore placé). */
 const guestCurrentTable = computed(() => {
@@ -95,29 +100,37 @@ onMounted(async () => {
 })
 
 async function submitCreate() {
-  if (!selectedGuestId.value) return
+  if (submitting.value || !selectedGuestId.value) return
+  // Conserver le même invité et la même table pendant les deux appels réseau.
+  const guestId = selectedGuestId.value
+  const tableId = selectedTableId.value
   submitting.value = true
   errorMsg.value = ''
   try {
-    await createInvitation(id, selectedGuestId.value)
+    if (!createdInvitationGuestIds.value.has(guestId)) {
+      await createInvitation(id, guestId)
+      createdInvitationGuestIds.value.add(guestId)
+    }
 
     // Placement optionnel : si l'invité a déjà une table différente → déplacement,
     // sinon (jamais placé) → affectation simple. Même table → aucun appel.
-    const tableId = selectedTableId.value
     if (tableId) {
-      const existing = assignments.value.find((x) => x.guestId === selectedGuestId.value)
+      const existing = assignments.value.find((x) => x.guestId === guestId)
       if (existing) {
         if (existing.tableId !== tableId) {
           await moveAssignment(id, existing.assignmentId, tableId)
         }
       } else {
-        await assignGuest(id, tableId, selectedGuestId.value)
+        await assignGuest(id, tableId, guestId)
       }
     }
 
     window.history.length > 1 ? window.history.back() : window.location.href = `/dashboard/events/${id}/invitations`
   } catch (e: any) {
-    errorMsg.value = e?.response?.data?.error || e?.message || 'Erreur lors de la création de l’invitation.'
+    const message = e?.response?.data?.error || e?.message || 'Erreur lors de la création de l’invitation.'
+    errorMsg.value = createdInvitationGuestIds.value.has(guestId)
+      ? `L’invitation a été créée, mais le placement a échoué. Réessayez pour terminer le placement. ${message}`
+      : message
   } finally {
     submitting.value = false
   }

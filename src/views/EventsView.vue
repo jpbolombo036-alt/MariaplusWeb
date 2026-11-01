@@ -145,7 +145,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { listEvents, loadEventImage, type Event } from '../api/events'
+import { listAllEvents, loadEventImage, type Event } from '../api/events'
 import PermGuard from '../components/common/PermGuard.vue'
 import StatusBadge from '../components/common/StatusBadge.vue'
 import CreateEventDialog from '../components/events/CreateEventDialog.vue'
@@ -281,7 +281,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    events.value = await listEvents()
+    events.value = await listAllEvents()
     // Charge les photos de couverture uploadées (une requête blob par événement)
     const withImage = events.value.filter((e) => e.hasImage)
     await Promise.allSettled(withImage.map(async (e) => {
