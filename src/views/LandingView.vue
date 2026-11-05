@@ -22,7 +22,7 @@
     </a>
 
     <!-- ===== NAVBAR ===== -->
-    <header class="sticky top-0 z-50 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/50">
+    <header class="sticky top-0 z-50 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/50" @keydown.esc="closeMobileMenu">
       <div class="max-w-content mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         <RouterLink to="/" class="flex items-center gap-2 group">
           <span class="w-9 h-9 rounded-xl overflow-hidden ring-1 ring-primary/20 grid place-items-center group-hover:scale-105 transition-transform">
@@ -40,17 +40,30 @@
         <div class="flex items-center gap-3">
           <button
             class="w-10 h-10 rounded-full grid place-items-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
-            title="Thème sombre / clair"
+            type="button"
+            :aria-label="themeStore.dark ? 'Activer le mode clair' : 'Activer le mode sombre'"
+            :aria-pressed="themeStore.dark"
             @click="themeStore.toggle()"
           >
-            <span class="material-symbols-outlined text-[20px]">{{ themeStore.dark ? 'light_mode' : 'dark_mode' }}</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[20px]">{{ themeStore.dark ? 'light_mode' : 'dark_mode' }}</span>
           </button>
           <RouterLink to="/login"
-            class="px-5 h-10 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
+            class="hidden md:inline-flex px-5 h-10 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold items-center gap-1.5 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
             Se connecter <span class="material-symbols-outlined text-base">arrow_forward</span>
           </RouterLink>
+          <button ref="mobileMenuButton" type="button" class="md:hidden w-10 h-10 rounded-full grid place-items-center hover:bg-primary/10"
+            :aria-label="mobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'"
+            :aria-expanded="mobileMenuOpen" aria-controls="landing-mobile-menu" @click="mobileMenuOpen = !mobileMenuOpen">
+            <span aria-hidden="true" class="material-symbols-outlined">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
+          </button>
         </div>
       </div>
+      <nav v-if="mobileMenuOpen" id="landing-mobile-menu" aria-label="Navigation mobile" class="md:hidden px-4 py-4 border-t border-outline-variant bg-surface-container-lowest flex flex-col gap-1">
+        <RouterLink v-for="section in mobileSections" :key="section.hash" :to="{ path: '/', hash: section.hash }"
+          class="px-3 py-3 rounded-lg text-sm font-medium hover:bg-primary/10" @click="closeMobileMenu">{{ section.label }}</RouterLink>
+        <RouterLink to="/login" class="px-3 py-3 rounded-lg text-sm font-semibold text-primary" @click="closeMobileMenu">Se connecter</RouterLink>
+        <RouterLink to="/login?mode=register" class="px-3 py-3 rounded-lg text-sm font-semibold text-primary" @click="closeMobileMenu">Créer mon espace</RouterLink>
+      </nav>
     </header>
 
     <!-- ===== HERO ===== -->
@@ -83,9 +96,9 @@
         </p>
 
         <div class="mt-10 flex flex-wrap justify-center gap-4">
-          <a href="/login" class="group px-8 h-12 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white font-semibold inline-flex items-center gap-2 shadow-xl shadow-primary/30 hover:shadow-primary/45 hover:-translate-y-0.5 transition-all">
+          <RouterLink to="/login?mode=register" class="group px-8 h-12 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white font-semibold inline-flex items-center gap-2 shadow-xl shadow-primary/30 hover:shadow-primary/45 hover:-translate-y-0.5 transition-all">
             Commencer gratuitement <span class="material-symbols-outlined text-lg group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
-          </a>
+          </RouterLink>
           <a href="#comment" class="px-8 h-12 rounded-full border-2 border-primary/30 text-primary font-semibold inline-flex items-center gap-2 bg-primary-light/30 hover:bg-primary-light/60 transition-colors">
             <span class="material-symbols-outlined text-lg">play_circle</span> Découvrir
           </a>
@@ -172,7 +185,7 @@
         <span class="material-symbols-outlined text-5xl mb-4 relative">celebration</span>
         <h2 class="text-3xl md:text-4xl font-extrabold relative">Prêt à célébrer en toute sérénité ?</h2>
         <p class="mt-4 text-white/80 max-w-xl mx-auto relative">Rejoignez EventiaEasy et prenez le contrôle de vos événements dès aujourd'hui.</p>
-        <RouterLink to="/login" class="mt-8 inline-flex items-center gap-2 px-8 h-12 rounded-full bg-white text-primary-dark font-bold shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all relative">
+        <RouterLink to="/login?mode=register" class="mt-8 inline-flex items-center gap-2 px-8 h-12 rounded-full bg-white text-primary-dark font-bold shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all relative">
           Créer mon espace <span class="material-symbols-outlined">arrow_forward</span>
         </RouterLink>
 
@@ -224,11 +237,24 @@
 
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useThemeStore } from '../stores/theme'
 import { ApiConfig } from '../api/config'
 
 const themeStore = useThemeStore()
+const mobileMenuOpen = ref(false)
+const mobileMenuButton = ref<HTMLButtonElement | null>(null)
+const mobileSections = [
+  { label: 'Accueil', hash: '' },
+  { label: 'Fonctionnalités', hash: '#fonctionnalites' },
+  { label: 'Comment ça marche', hash: '#comment' },
+  { label: 'Témoignages', hash: '#temoignages' },
+  { label: 'Contact', hash: '#contact' },
+]
+function closeMobileMenu() {
+  mobileMenuOpen.value = false
+  mobileMenuButton.value?.focus()
+}
 
 // Lien WhatsApp (wa.me) : ouvre la conversation avec le numéro de la
 // plateforme. Message d'accueil pré-rempli ; masqué si non configuré.

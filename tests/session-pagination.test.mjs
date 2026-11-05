@@ -12,6 +12,8 @@ const { listGuests, listGuestsPage } = await import('../src/api/guests.ts')
 const { useAuthStore } = await import('../src/stores/auth.ts')
 const { useWeddingStore } = await import('../src/stores/wedding.ts')
 const { usePlatformStore } = await import('../src/stores/platform.ts')
+const { getPublicGallery } = await import('../src/api/gallery.ts')
+const { useNotificationStore } = await import('../src/stores/notifications.ts')
 
 function deferred() {
   let resolve
@@ -90,6 +92,62 @@ beforeEach(() => {
   }
   axios.defaults.adapter = denyNetwork
   http.defaults.adapter = denyNetwork
+})
+
+describe('Event changes and optional galleries', () => {
+  test('successful writes identify their event; reads, scans and failed writes do not invalidate it', async () => {
+    const changes = []
+    window.addEventListener('mp:event-changed', (event) => changes.push(event.detail.eventId))
+    mockHttp(async () => ({}))
+    await http.post('/api/events/42/guests', { firstName: 'Test' })
+    await http.post('/api/events/42/invitations', { guestId: 1 })
+    await http.post('/api/checkins', { weddingId: 42, numberOfAttendees: 1 })
+    await http.get('/api/events/42/dashboard')
+    await http.post('/api/checkins/scan', { weddingId: 42 })
+    await http.post('/auth/login', {})
+    assert.deepEqual(changes, [42, 42, 42])
+    http.defaults.adapter = async () => { throw new Error('Simulated failure') }
+    await assert.rejects(http.delete('/api/events/42/guests/1'))
+    assert.deepEqual(changes, [42, 42, 42])
+  })
+
+  test('cancelling a check-in refreshes the active event when the response has no event id', async () => {
+    const changes = []
+    window.addEventListener('mp:event-changed', (event) => changes.push(event.detail.eventId))
+    mockHttp(async () => ({}))
+    await http.delete('/api/checkins/123')
+    assert.deepEqual(changes, [null])
+  })
+
+  test('a missing public gallery returns null without an error notification', async () => {
+    http.defaults.adapter = async (config) => {
+      throw new AxiosError('Not found', 'ERR_BAD_REQUEST', config, undefined, {
+        ...response(config, { error: 'Galerie indisponible' }), status: 404,
+      })
+    }
+    assert.equal(await getPublicGallery('test-token'), null)
+    assert.deepEqual(useNotificationStore().items, [])
+  })
+
+  test('a gallery service failure is still reported', async () => {
+    const notifications = useNotificationStore()
+    const messages = []
+    notifications.push = (message) => { messages.push(message); return 1 }
+    http.defaults.adapter = async (config) => {
+      throw new AxiosError('Service failure', 'ERR_BAD_RESPONSE', config, undefined, {
+        ...response(config, { error: 'Service temporairement indisponible' }), status: 503,
+      })
+    }
+    await assert.rejects(getPublicGallery('test-token'))
+    assert.deepEqual(messages, ['Service temporairement indisponible'])
+  })
+
+  test('disabled and empty-response galleries are not displayed', async () => {
+    mockHttp(async () => ({ enabled: false, photos: [{ id: 1 }] }))
+    assert.equal(await getPublicGallery('test-token'), null)
+    http.defaults.adapter = async (config) => ({ ...response(config, ''), status: 204 })
+    assert.equal(await getPublicGallery('test-token'), null)
+  })
 })
 
 describe('Complete collections and explicit pages', () => {
@@ -437,6 +495,7 @@ describe('Refresh requests across account boundaries', () => {
     window.addEventListener('mp:session-expired', () => { expirations++ })
     axios.defaults.adapter = async (config) => {
       assert.ok(config.url.endsWith('/auth/refresh'))
+      assert.equal(config.headers['X-Client-Platform'], 'web')
       refreshCalls++
       refreshStarted.resolve()
       await refresh.promise

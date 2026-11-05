@@ -9,4 +9,16 @@ export async function updateGallery(id:number,payload:Record<string,unknown>){re
 export async function uploadGalleryPhoto(id:number,file:File,categoryId:number|null){const f=new FormData();f.append('file',file);if(categoryId!=null)f.append('guestCategoryId',String(categoryId));return parsePhoto(decodeMap((await http.post(`${ApiConfig.weddingGalleryPath(id)}/photos`,f,{headers:{'Content-Type':'multipart/form-data'}})).data))}
 export async function deleteGalleryPhoto(id:number,photoId:number){await http.delete(`${ApiConfig.weddingGalleryPath(id)}/photos/${photoId}`)}
 export async function loadGalleryPhotoImage(eventId:number, photoId:number): Promise<string> { const res=await http.get(`${ApiConfig.weddingGalleryPath(eventId)}/photos/${photoId}/image`,{responseType:'blob'}); return URL.createObjectURL(res.data as Blob) }
-export async function getPublicGallery(token:string){return parse((await http.get(`${ApiConfig.publicInvitationsPath}/${token}/gallery`)).data)}
+export async function getPublicGallery(token: string): Promise<Gallery | null> {
+  try {
+    const response = await http.get(`${ApiConfig.publicInvitationsPath}/${token}/gallery`, {
+      silentStatuses: [404],
+    })
+    if (response.status === 204 || !response.data) return null
+    const gallery = parse(response.data)
+    return gallery.enabled ? gallery : null
+  } catch (error: any) {
+    if (error?.response?.status === 404) return null
+    throw error
+  }
+}

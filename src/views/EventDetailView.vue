@@ -120,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getEvent, updateEventStatus, loadEventImage, absolutePhotoUrl, type Event } from '../api/events'
 import { getDashboard, type Dashboard } from '../api/dashboard'
@@ -136,6 +136,31 @@ const stats = ref<Dashboard | null>(null)
 const loading = ref(true)
 
 const eventId = Number(route.params.id)
+let statsRevision = 0
+let statsTimer: ReturnType<typeof setTimeout> | undefined
+let disposed = false
+
+async function refreshStats() {
+  const revision = ++statsRevision
+  try {
+    const dashboard = await getDashboard(eventId)
+    if (!disposed && revision === statsRevision) stats.value = dashboard
+  } catch { /* conserver les derniers chiffres ; le client HTTP signale l'échec */ }
+}
+
+function scheduleStatsRefresh() {
+  clearTimeout(statsTimer)
+  statsTimer = setTimeout(() => { void refreshStats() }, 100)
+}
+
+function onEventChanged(event: globalThis.Event) {
+  const changedId = (event as CustomEvent<{ eventId: number | null }>).detail.eventId
+  if (changedId === null || changedId === eventId) scheduleStatsRefresh()
+}
+
+// Un retour sur un onglet prend aussi en compte les réponses RSVP externes.
+watch(() => route.fullPath, scheduleStatsRefresh)
+onMounted(() => window.addEventListener('mp:event-changed', onEventChanged))
 
 /* --- Carrousel photos : couverture / couple / marié / mariée --- */
 const carouselEl = ref<HTMLElement | null>(null)
@@ -187,9 +212,8 @@ function stopAutoplay() {
 onMounted(load)
 async function load() {
   try {
-    const [loadedEvent, dashboard] = await Promise.all([getEvent(eventId), getDashboard(eventId)])
+    const [loadedEvent] = await Promise.all([getEvent(eventId), refreshStats()])
     event.value = loadedEvent
-    stats.value = dashboard
     if (event.value?.hasImage) {
       coverUrl.value = await loadEventImage(eventId)
     }
@@ -200,7 +224,14 @@ async function load() {
     loading.value = false
   }
 }
-onBeforeUnmount(stopAutoplay)
+onBeforeUnmount(() => {
+  disposed = true
+  statsRevision++
+  clearTimeout(statsTimer)
+  window.removeEventListener('mp:event-changed', onEventChanged)
+  stopAutoplay()
+  if (coverUrl.value) URL.revokeObjectURL(coverUrl.value)
+})
 
 const statusUpdating = ref(false)
 const statusError = ref('')

@@ -90,9 +90,8 @@
               WhatsApp a accepté {{ batch?.sentCount }} message(s), mais aucune livraison n'est confirmée.
             </p>
             <p class="text-on-surface-variant mt-1">
-              Vos invités ne les ont donc pas reçus. Cause la plus fréquente : la facturation Meta est en
-              défaut (messagerie en pause) ou le webhook Meta n'est pas abonné. Régularisez la facture
-              dans Meta Business Suite, puis relancez l'envoi.
+              La réception n’est pas encore confirmée. Vérifiez le suivi de livraison avant de relancer
+              l’envoi pour éviter les doublons.
             </p>
           </div>
         </div>

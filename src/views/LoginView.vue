@@ -91,8 +91,9 @@
                 />
                 <button type="button" @click="showPwd = !showPwd"
                   class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors"
-                  :title="showPwd ? 'Masquer' : 'Afficher'">
-                  <span class="material-symbols-outlined text-[19px]">{{ showPwd ? 'visibility_off' : 'visibility' }}</span>
+                  :aria-label="showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                  :aria-pressed="showPwd">
+                  <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showPwd ? 'visibility_off' : 'visibility' }}</span>
                 </button>
               </div>
             </label>
@@ -156,8 +157,9 @@
                       placeholder="8 caractères minimum" />
                     <button type="button" @click="showRegPwd = !showRegPwd"
                       class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors"
-                      :title="showRegPwd ? 'Masquer' : 'Afficher'">
-                      <span class="material-symbols-outlined text-[19px]">{{ showRegPwd ? 'visibility_off' : 'visibility' }}</span>
+                      :aria-label="showRegPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                      :aria-pressed="showRegPwd">
+                      <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showRegPwd ? 'visibility_off' : 'visibility' }}</span>
                     </button>
                   </div>
                   <!-- Jauge de robustesse -->
@@ -178,8 +180,9 @@
                       placeholder="••••••••" />
                     <button type="button" @click="showRegConfirm = !showRegConfirm"
                       class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors"
-                      :title="showRegConfirm ? 'Masquer' : 'Afficher'">
-                      <span class="material-symbols-outlined text-[19px]">{{ showRegConfirm ? 'visibility_off' : 'visibility' }}</span>
+                      :aria-label="showRegConfirm ? 'Masquer la confirmation du mot de passe' : 'Afficher la confirmation du mot de passe'"
+                      :aria-pressed="showRegConfirm">
+                      <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showRegConfirm ? 'visibility_off' : 'visibility' }}</span>
                     </button>
                   </div>
                   <span v-if="confirmState === 'mismatch'" class="block mt-1.5 text-[12px] text-error inline-flex items-center gap-1">
@@ -253,7 +256,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -265,7 +268,17 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
-const mode = ref<'login' | 'register'>('login')
+const mode = ref<'login' | 'register'>(route.query.mode === 'register' ? 'register' : 'login')
+watch(() => route.query.mode, (value) => {
+  mode.value = value === 'register' ? 'register' : 'login'
+  error.value = ''
+})
+watch(mode, (value) => {
+  error.value = ''
+  if (value !== (route.query.mode === 'register' ? 'register' : 'login')) {
+    void router.replace({ query: { ...route.query, mode: value === 'register' ? 'register' : undefined } })
+  }
+})
 const showPwd = ref(false)
 const showRegPwd = ref(false)
 const showRegConfirm = ref(false)
