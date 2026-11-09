@@ -127,9 +127,13 @@ export function extractPublicToken(value: string): string {
   const raw = (value || '').trim()
   if (!raw) return ''
   const byQuery = raw.match(/[?&](?:token|publicToken)=([^&#]+)/i)
-  if (byQuery?.[1]) return decodeURIComponent(byQuery[1])
+  if (byQuery?.[1]) {
+    try { return decodeURIComponent(byQuery[1]) } catch { return '' }
+  }
   const byPath = raw.match(/\/invitations?\/([^/?#]+)/i)
-  if (byPath?.[1]) return decodeURIComponent(byPath[1])
+  if (byPath?.[1]) {
+    try { return decodeURIComponent(byPath[1]) } catch { return '' }
+  }
   return ''
 }
 

@@ -13,17 +13,17 @@
 
       <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
         <form @submit.prevent="submitCreate" class="space-y-5">
-          <label class="block">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Invité *</span>
-            <select v-model="selectedGuestId" required class="input" :disabled="submitting">
+          <div class="block">
+            <label for="invitation-guest" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Invité *</label>
+            <select id="invitation-guest" v-model="selectedGuestId" required class="input" :disabled="submitting">
               <option :value="null" disabled>Sélectionner un invité</option>
               <option v-for="g in guests" :key="g.id" :value="g.id">{{ g.firstName }} {{ g.lastName }}</option>
             </select>
-          </label>
+          </div>
 
-          <label class="block">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Table (optionnel)</span>
-            <select v-model="selectedTableId" class="input" :disabled="submitting || tables.length === 0">
+          <div class="block">
+            <label for="invitation-table" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Table (optionnel)</label>
+            <select id="invitation-table" v-model="selectedTableId" class="input" :disabled="submitting || tables.length === 0">
               <option :value="null">Aucune table</option>
               <option v-for="t in tables" :key="t.id" :value="t.id" :disabled="t.remainingCapacity < 1">
                 {{ t.name }} ({{ t.remainingCapacity }} place(s) libre(s))
@@ -39,7 +39,7 @@
                   : `Cet invité est actuellement à la table « ${guestCurrentTable} ». Choisir une autre table le déplacera.`
               }}
             </span>
-          </label>
+          </div>
 
           <p v-if="errorMsg" class="text-[13px] text-error font-medium">{{ errorMsg }}</p>
 

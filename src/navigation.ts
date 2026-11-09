@@ -1,4 +1,4 @@
-import { Perm } from './permissions'
+import { hasAny, Perm } from './permissions'
 
 export type NavSection = 'overview' | 'guests' | 'categories' | 'invitations' | 'rsvp' | 'checkin' | 'tables' | 'internal-events' | 'statistics'
 
@@ -51,6 +51,6 @@ export function navTo(entry: NavEntry, activeWeddingId?: number | null): string 
 }
 
 export function filterNav(myPerms: string[]): NavEntry[] {
-  return navEntries.filter((e) => !e.perm || e.perm.some((p) => myPerms.includes(p)))
+  return navEntries.filter((e) => !e.perm || hasAny(myPerms, ...e.perm))
 }
 

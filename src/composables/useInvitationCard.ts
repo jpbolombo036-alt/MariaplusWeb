@@ -1,6 +1,5 @@
 import { nextTick, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import QRCode from 'qrcode'
-import html2canvas from 'html2canvas'
 import { uploadCardImage, type PublicInvitation } from '../api/publicInvitation'
 import { absoluteUrl, useInvitationPresentation } from '../components/public-invitation/presentation'
 
@@ -79,6 +78,8 @@ export function useInvitationCard(inv: Ref<PublicInvitation | null>, renderEleme
       } catch {
         /* polices indisponibles : repli silencieux sur les polices système */
       }
+      // Le moteur de rendu n'est téléchargé que pour une carte confirmée.
+      const { default: html2canvas } = await import('html2canvas')
       const canvas = await html2canvas(element, {
         width: 852,
         height: 1280,

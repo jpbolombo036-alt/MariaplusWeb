@@ -230,12 +230,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   listInvitations, createInvitation, sendInvitation, resendInvitation, cancelInvitation, deleteInvitation,
-  getQr, rotateQr, inviteUrlFromPayload, extractPublicToken, type Invitation,
+  getQr, rotateQr, type Invitation,
 } from '../../api/invitations'
 import { listGuests, type Guest } from '../../api/guests'
-import { publicInvitationExists } from '../../api/publicInvitation'
+import { getInvitationLink } from '../../api/invitationLinks'
 import { apiErrorMessage } from '../../api/http'
-import { decodeQrPayload } from '../../utils/qr'
 import { withTimeout } from '../../utils/withTimeout'
 import PermGuard from '../../components/common/PermGuard.vue'
 import StatusBadge from '../../components/common/StatusBadge.vue'
@@ -346,17 +345,7 @@ const whatsappShareHref = computed(() =>
  * afin de ne jamais proposer un lien cassé.
  */
 async function linkFromQr(i: Invitation): Promise<string> {
-  const qr = await getQr(id, i.id)
-  if (!qr.dataUri) return ''
-  // Décodage et vérification bornés dans le temps : le décodeur QR (image) et le
-  // sondage réseau ne doivent jamais laisser le bouton sans réaction.
-  const payload = await withTimeout(decodeQrPayload(qr.dataUri), 5000, '')
-  if (!payload) return ''
-  const url = inviteUrlFromPayload(payload)
-  const token = extractPublicToken(url)
-  if (!url || !token) return ''
-  const exists = await withTimeout(publicInvitationExists(token), 5000, false)
-  return exists ? url : ''
+  return getInvitationLink(id, i.id)
 }
 
 /**
@@ -368,9 +357,12 @@ async function resolveLink(i: Invitation): Promise<string> {
   if (known) return known
   linkBusy.value = i.id
   try {
-    const url = await withTimeout(linkFromQr(i), 12000, '')
+    const url = await withTimeout(linkFromQr(i), 25000, '')
     if (url) links.value[i.id] = url
     return url
+  } catch (error) {
+    notifications.push(`Impossible de récupérer le lien : ${apiErrorMessage(error)}`, 'error')
+    return ''
   } finally {
     linkBusy.value = null
   }
@@ -389,8 +381,7 @@ async function openLink(i: Invitation) {
     return
   }
   notifications.push(
-    "Lien introuvable pour cette invitation : le serveur n'a renvoyé aucune URL publique. " +
-      'Vérifiez la configuration du backend (URL publique du front) puis réessayez.',
+    "Le QR n'a pas pu être décodé ou l'invitation publique n'est pas accessible. Réessayez ou ouvrez l'aperçu QR.",
     'error',
     8000,
   )
@@ -407,8 +398,7 @@ async function openWhatsapp(i: Invitation) {
   const url = await resolveLink(i)
   if (!url) {
     notifications.push(
-      "Lien introuvable pour cette invitation : vérifiez l'URL publique du front " +
-        '(VITE_PUBLIC_BASE_URL) configurée côté serveur, puis réessayez.',
+      "Le QR n'a pas pu être décodé ou l'invitation publique n'est pas accessible. Réessayez ou ouvrez l'aperçu QR.",
       'error',
       8000,
     )
@@ -437,7 +427,7 @@ async function submit(i: Invitation, mode: 'send' | 'resend') {
     }
     // Aucun lien dans la réponse : on tente de le reconstruire (QR) au lieu de ne
     // rien afficher — c'était le comportement silencieux qui « perdait » le lien.
-    const fallback = await withTimeout(linkFromQr(i), 12000, '')
+    const fallback = await withTimeout(linkFromQr(i), 25000, '')
     if (fallback) {
       links.value[i.id] = fallback
       openShare(fallback, result.emailSent || false)
@@ -461,7 +451,7 @@ async function submit(i: Invitation, mode: 'send' | 'resend') {
     // email alors que l'invitation a été envoyée via WhatsApp en masse). Dans ce
     // cas on récupère le lien public (QR, lecture seule) pour ne pas laisser
     // l'organisateur sans solution, puis on explique le refus.
-    const fallback = await withTimeout(linkFromQr(i), 12000, '')
+    const fallback = await withTimeout(linkFromQr(i), 25000, '')
     if (fallback) {
       links.value[i.id] = fallback
       openShare(fallback, false)
@@ -507,6 +497,8 @@ async function showQr(i: Invitation) {
 async function rotate() {
   if (!qrInv.value) return
   const q = await rotateQr(id, qrInv.value.id)
+  // Une rotation révoque aussi tout lien déjà conservé dans le cache local.
+  delete links.value[qrInv.value.id]
   qrDataUri.value = q.dataUri
   await load()
 }

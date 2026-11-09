@@ -1,12 +1,11 @@
 // URL de base de l'API.
 //
-// - Par défaut : production (Railway) — https://mariageplus-production-a657.up.railway.app
+// - Par défaut : même origine que le frontend (proxy Vite/Vercel vers Railway).
 // - Développement local : surcharger au build/run via VITE_API_BASE_URL,
 //   ex. `VITE_API_BASE_URL=http://localhost:8000 npm run dev`
 // NB : le protocole https:// est OBLIGATOIRE — sans schéma, axios traiterait
 // la valeur comme un chemin relatif et les requêtes partiraient vers le
 // serveur frontend (localhost:3000 en dev) au lieu du backend → 404.
-const DEFAULT_BASE_URL = 'https://mariageplus-production-a657.up.railway.app'
 
 // Numéro WhatsApp de contact PAR DÉFAUT de la plateforme (bouton flottant de
 // la landing). Public par nature : c'est un lien wa.me affiché sur la page
@@ -16,9 +15,10 @@ const DEFAULT_BASE_URL = 'https://mariageplus-production-a657.up.railway.app'
 // ni espaces).
 const DEFAULT_WHATSAPP_CONTACT = '243847381745'
 
-function baseUrl(): string {
-  const fromEnv = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
-  let raw = fromEnv.trim() || DEFAULT_BASE_URL
+export function resolveApiBaseUrl(fromEnv: string | undefined, origin: string): string {
+  // Le cookie HttpOnly /auth reste ainsi first-party, sans stockage JS du token.
+  // Une URL explicite reste possible pour une API locale ou un autre hébergement.
+  let raw = fromEnv?.trim() || origin
   // Sécurité : si l'URL est saisie sans protocole (ex. "mon-api.up.railway.app"),
   // axios la traiterait comme un chemin relatif → requêtes envoyées au serveur
   // frontend (localhost:3000 en dev) au lieu du backend → 404.
@@ -27,7 +27,7 @@ function baseUrl(): string {
 }
 
 export const ApiConfig = {
-  baseUrl: baseUrl(),
+  baseUrl: resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL, typeof window === 'undefined' ? '' : window.location.origin),
 
   // Auth (sans préfixe /api)
   authLogin: '/auth/login',

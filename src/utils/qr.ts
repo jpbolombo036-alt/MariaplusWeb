@@ -11,10 +11,26 @@
 export async function decodeQrPayload(dataUri: string): Promise<string> {
   if (!dataUri) return ''
   try {
-    const { BrowserMultiFormatReader } = await import('@zxing/browser')
-    const reader = new BrowserMultiFormatReader()
-    const result = await reader.decodeFromImageUrl(dataUri)
-    return result?.getText() ?? ''
+    // Le backend génère des QR avec une marge d'un seul module. Ajouter une
+    // zone blanche évite de dépendre de la détection d'un bord trop serré.
+    const { BrowserQRCodeReader } = await import('@zxing/browser')
+    const image = new Image()
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve()
+      image.onerror = () => reject(new Error('QR illisible'))
+      image.src = dataUri
+    })
+    const reader = new BrowserQRCodeReader()
+    const canvas = document.createElement('canvas')
+    const padding = Math.max(32, Math.ceil(image.naturalWidth / 8))
+    canvas.width = image.naturalWidth + padding * 2
+    canvas.height = image.naturalHeight + padding * 2
+    const context = canvas.getContext('2d')
+    if (!context) return ''
+    context.fillStyle = '#ffffff'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(image, padding, padding)
+    return reader.decodeFromCanvas(canvas).getText()
   } catch {
     // QR non décodable (image non chargée, format inattendu…) : l'appelant décide.
     return ''

@@ -154,9 +154,12 @@ import { createEvent, uploadEventDressImage, uploadEventPhoto, uploadEventImage 
 import DressCodeField from '../../components/events/DressCodeField.vue'
 import ImageCropModal from '../../components/common/ImageCropModal.vue'
 import { useAuthStore } from '../../stores/auth'
+import { useNotificationStore } from '../../stores/notifications'
+import { eventSetupWarning, runEventSetup, type EventSetupTask } from '../../utils/eventSetup'
 
 const auth = useAuthStore()
 const router = useRouter()
+const notifications = useNotificationStore()
 const form = reactive({
   name: '',
   type: 'WEDDING',
@@ -303,27 +306,21 @@ async function submitCreate() {
     payload.organizationId = auth.user.organizationId
   }
   const created = await createEvent(payload)
-  // Upload des photos choisies (la création reste valide même si un upload échoue)
-  if (coverFile.value) {
-    try {
-      await uploadEventImage(created.id, coverFile.value)
-    } catch { /* ignore : photo non bloquante */ }
-  }
-  if (dressFile.value) {
-    try {
-      await uploadEventDressImage(created.id, dressFile.value)
-    } catch { /* ignore : photo non bloquante */ }
-  }
+  const tasks: EventSetupTask[] = []
+  const cover = coverFile.value
+  const dress = dressFile.value
+  if (cover) tasks.push({ label: 'photo de couverture', run: () => uploadEventImage(created.id, cover) })
+  if (dress) tasks.push({ label: 'image de la tenue', run: () => uploadEventDressImage(created.id, dress) })
   if (form.type === 'WEDDING') {
     for (const p of photoFields) {
       const file = photoState[p.kind].file
       if (file) {
-        try {
-          await uploadEventPhoto(created.id, p.kind, file)
-        } catch { /* ignore : photo non bloquante */ }
+        tasks.push({ label: p.label, run: () => uploadEventPhoto(created.id, p.kind, file) })
       }
     }
   }
+  const failures = await runEventSetup(tasks)
+  if (failures.length) notifications.push(eventSetupWarning(failures), 'info', 12000)
   router.push(`/dashboard/events/${created.id}`)
 }
 </script>

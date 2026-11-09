@@ -56,10 +56,13 @@ import { reactive, ref } from 'vue'
 import { createEvent, uploadEventDressImage, uploadEventImage, uploadEventPhoto, type Event as EventModel } from '../../api/events'
 import DressCodeField from './DressCodeField.vue'
 import { useAuthStore } from '../../stores/auth'
+import { useNotificationStore } from '../../stores/notifications'
+import { eventSetupWarning, runEventSetup, type EventSetupTask } from '../../utils/eventSetup'
 import ImageCropModal from '../common/ImageCropModal.vue'
 
 const emit = defineEmits<{ (e: 'close'): void; (e: 'created', w: EventModel): void }>()
 const auth = useAuthStore()
+const notifications = useNotificationStore()
 const form = reactive({ groomFirstName: '', groomLastName: '', brideFirstName: '', brideLastName: '', description: '', message: '', dressColors: [] as string[] })
 /** Photo du pagne choisie avant la création : uploadée juste après (l'ID n'existe pas encore). */
 const dressFile = ref<File | null>(null)
@@ -101,6 +104,7 @@ function clearPhoto() {
 }
 
 async function submit() {
+  if (loading.value) return
   loading.value = true
   error.value = ''
   try {
@@ -114,14 +118,16 @@ async function submit() {
       dressColors: form.dressColors,
       organizationId: auth.isSuperAdmin && auth.user?.organizationId ? auth.user.organizationId : undefined,
     })
-    if (photoFile.value) {
-      try { await uploadEventImage(w.id, photoFile.value); await uploadEventPhoto(w.id, 'couple', photoFile.value) }
-      catch { /* la création reste valide même si l'upload échoue */ }
+    const tasks: EventSetupTask[] = []
+    const photo = photoFile.value
+    const dress = dressFile.value
+    if (photo) {
+      tasks.push({ label: 'photo de couverture', run: () => uploadEventImage(w.id, photo) })
+      tasks.push({ label: 'photo du couple', run: () => uploadEventPhoto(w.id, 'couple', photo) })
     }
-    if (dressFile.value) {
-      try { await uploadEventDressImage(w.id, dressFile.value) }
-      catch { /* la création reste valide même si l'upload échoue */ }
-    }
+    if (dress) tasks.push({ label: 'image de la tenue', run: () => uploadEventDressImage(w.id, dress) })
+    const failures = await runEventSetup(tasks)
+    if (failures.length) notifications.push(eventSetupWarning(failures), 'info', 12000)
     emit('created', w)
   } catch (e: any) {
     error.value = e?.response?.data?.error || 'Création impossible'

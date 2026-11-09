@@ -357,6 +357,7 @@ import { createWeddingEvent } from '../../api/weddingEvents'
 import ImageCropModal from '../../components/common/ImageCropModal.vue'
 import { useAuthStore } from '../../stores/auth'
 import { useNotificationStore } from '../../stores/notifications'
+import { eventSetupWarning, runEventSetup, type EventSetupTask } from '../../utils/eventSetup'
 /* ---------- Visuels (couverture 16:9 + photos 1:1, avec recadrage) ---------- */
 const photoFields: { kind: EventPhotoKind; label: string }[] = [
   { kind: 'groom', label: 'Photo du marié' },
@@ -466,6 +467,7 @@ function addSession() {
 
 /* ---------- Création ---------- */
 async function submitCreate() {
+  if (loading.value) return
   if (!validateInfos()) return
   loading.value = true
   error.value = ''
@@ -499,35 +501,39 @@ async function submitCreate() {
     }
     const created = await createEvent(payload)
 
-    // Visuels (non bloquant)
-    if (coverFile.value) {
-      try { await uploadEventImage(created.id, coverFile.value) } catch { /* ignore */ }
-    }
-    if (dressFile.value) {
-      try { await uploadEventDressImage(created.id, dressFile.value) } catch { /* ignore */ }
-    }
+    const tasks: EventSetupTask[] = []
+    const cover = coverFile.value
+    const dress = dressFile.value
+    if (cover) tasks.push({ label: 'photo de couverture', run: () => uploadEventImage(created.id, cover) })
+    if (dress) tasks.push({ label: 'image de la tenue', run: () => uploadEventDressImage(created.id, dress) })
     if (form.type === 'WEDDING') {
       for (const p of photoFields) {
         const file = photoState[p.kind].file
-        if (file) { try { await uploadEventPhoto(created.id, p.kind as EventPhotoKind, file) } catch { /* ignore */ } }
+        if (file) tasks.push({ label: p.label, run: () => uploadEventPhoto(created.id, p.kind, file) })
       }
     }
     // Programme (non bloquant) — date héritée de l'événement, ordre d'affichage
     for (let i = 0; i < sessions.value.length; i++) {
       const s = sessions.value[i]
-      try {
-        await createWeddingEvent(created.id, {
+      tasks.push({
+        label: `étape du programme « ${s.name} »`,
+        run: () => createWeddingEvent(created.id, {
           name: s.name,
           type: s.type,
           eventDate: form.eventDate || null,
           startTime: s.startTime || null,
           endTime: s.endTime || null,
           displayOrder: i + 1,
-        })
-      } catch { /* ignore : le programme n'est pas bloquant */ }
+        }),
+      })
     }
 
-    notifications.push('Événement créé 🎉 Prochaine étape : ajoutez vos invités.', 'success')
+    const failures = await runEventSetup(tasks)
+    if (failures.length) {
+      notifications.push(eventSetupWarning(failures), 'info', 12000)
+    } else {
+      notifications.push('Événement créé 🎉 Prochaine étape : ajoutez vos invités.', 'success')
+    }
     router.push(`/dashboard/events/${created.id}`)
   } catch (e: any) {
     error.value = e?.response?.data?.error || e?.response?.data?.message || 'Création impossible'

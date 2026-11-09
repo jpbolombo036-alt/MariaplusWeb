@@ -14,6 +14,106 @@ const { useWeddingStore } = await import('../src/stores/wedding.ts')
 const { usePlatformStore } = await import('../src/stores/platform.ts')
 const { getPublicGallery } = await import('../src/api/gallery.ts')
 const { useNotificationStore } = await import('../src/stores/notifications.ts')
+const { filterNav, navEntries } = await import('../src/navigation.ts')
+const { eventSetupWarning, runEventSetup } = await import('../src/utils/eventSetup.ts')
+const { getInvitationLink } = await import('../src/api/invitationLinks.ts')
+const { extractPublicToken } = await import('../src/api/invitations.ts')
+const { resolveApiBaseUrl } = await import('../src/api/config.ts')
+
+describe('First-party session configuration', () => {
+  test('uses the frontend origin by default and preserves explicit API overrides', () => {
+    assert.equal(resolveApiBaseUrl(undefined, 'https://front.example.test'), 'https://front.example.test')
+    assert.equal(resolveApiBaseUrl('  ', 'https://front.example.test'), 'https://front.example.test')
+    assert.equal(resolveApiBaseUrl('http://localhost:8000/', 'https://front.example.test'), 'http://localhost:8000')
+    assert.equal(resolveApiBaseUrl('api.example.test', 'https://front.example.test'), 'https://api.example.test')
+  })
+
+  test('restores a session using the cookie contract then loads the authenticated profile', async () => {
+    const calls = []
+    mockHttp(async (config) => {
+      calls.push(config.url)
+      assert.equal(config.withCredentials, true)
+      assert.equal(config.headers.get('X-Client-Platform'), 'web')
+      if (config.url === '/auth/refresh') {
+        assert.equal(config.data, '{}')
+        return { accessToken: 'restored-token', expiresIn: 900 }
+      }
+      assert.equal(config.url, '/auth/me')
+      assert.equal(config.headers.get('Authorization'), 'Bearer restored-token')
+      return user(1)
+    })
+    const auth = useAuthStore()
+    await auth.restore()
+    assert.equal(auth.isAuthenticated, true)
+    assert.equal(auth.restored, true)
+    assert.deepEqual(calls, ['/auth/refresh', '/auth/me'])
+  })
+})
+
+describe('Generated invitation links (report of November 5)', () => {
+  test('resolves a QR-only response without sending the generated invitation', async () => {
+    window.location = { origin: 'https://front.example.test' }
+    const calls = []
+    mockHttp(async (config) => {
+      calls.push([config.method, config.url])
+      if (config.url === '/api/events/8/invitations/32/qr') return { qrDataUri: 'data:image/png;base64,fixture' }
+      assert.equal(config.url, '/api/public/invitations/generated-token-32')
+      return { status: 'GENERATED' }
+    })
+    const url = await getInvitationLink(8, 32, async (image) => {
+      assert.equal(image, 'data:image/png;base64,fixture')
+      return 'generated-token-32'
+    })
+    assert.equal(url, 'https://front.example.test/invitations/generated-token-32')
+    assert.deepEqual(calls.map(([method]) => method), ['get', 'get'])
+  })
+
+  test('does not expose an unavailable invitation or an unreadable QR', async () => {
+    window.location = { origin: 'https://front.example.test' }
+    mockHttp(async (config) => {
+      if (config.url.endsWith('/qr')) return { qrDataUri: 'fixture' }
+      throw new Error('Public invitation unavailable')
+    })
+    assert.equal(await getInvitationLink(8, 32, async () => 'generated-token-32'), '')
+    assert.equal(await getInvitationLink(8, 32, async () => ''), '')
+    assert.equal(extractPublicToken('/invitations/%broken'), '')
+  })
+})
+
+describe('Navigation permissions', () => {
+  test('the global permission exposes all navigation entries', () => {
+    assert.deepEqual(filterNav(['SUPER_ADMIN_GLOBAL']), navEntries)
+  })
+
+  test('ordinary permissions only expose authorized sections', () => {
+    assert.deepEqual(filterNav(['GUEST_VIEW']).map((entry) => entry.label), [
+      'Mes événements', 'Invités', 'Catégories',
+    ])
+    assert.deepEqual(filterNav([]), [])
+    assert.deepEqual(filterNav(['UNKNOWN_PERMISSION']), [])
+  })
+})
+
+describe('Optional event setup', () => {
+  test('reports failures and continues remaining tasks in order', async () => {
+    const calls = []
+    const failures = await runEventSetup([
+      { label: 'couverture', run: async () => { calls.push('cover'); throw new Error('upload failed') } },
+      { label: 'couple', run: async () => { calls.push('couple') } },
+      { label: 'programme', run: () => { calls.push('session'); throw new Error('session failed') } },
+    ])
+    assert.deepEqual(calls, ['cover', 'couple', 'session'])
+    assert.deepEqual(failures, ['couverture', 'programme'])
+    assert.equal(eventSetupWarning(failures), "Événement créé, mais certains éléments n'ont pas pu être enregistrés : couverture, programme. Vous pouvez réessayer depuis la fiche de l'événement.")
+  })
+
+  test('successful and empty setups produce no warning', async () => {
+    assert.deepEqual(await runEventSetup([]), [])
+    const failures = await runEventSetup([{ label: 'photo', run: async () => ({ id: 1 }) }])
+    assert.deepEqual(failures, [])
+    assert.equal(eventSetupWarning(failures), '')
+  })
+})
 
 function deferred() {
   let resolve

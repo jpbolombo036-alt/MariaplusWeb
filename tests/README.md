@@ -12,6 +12,17 @@ npm.cmd run test:unit
 
 Cette suite utilise `node:test` et le chargeur TypeScript local de `tests/support/register-typescript.mjs`.
 
+Elle vérifie également le filtrage de navigation (dont `SUPER_ADMIN_GLOBAL`) et
+les étapes facultatives après création d'un événement : poursuite des imports
+après un échec, liste exacte des éléments non enregistrés et absence
+d'avertissement lorsque toutes les étapes réussissent.
+
+Les tests unitaires couvrent aussi la configuration API de même origine, la
+restauration cookie puis `/auth/me`, et la récupération en lecture seule du lien
+d'une invitation dont la réponse QR contient uniquement `qrDataUri`.
+`report-regressions.spec.ts` vérifie les libellés de connexion, l'assistance de
+récupération et le décodage réel des QR à faible marge (URL et jeton).
+
 ## Tests navigateur
 
 Les dépendances du projet et le navigateur Chromium de Playwright doivent déjà être installés. Pour lancer tous les scénarios :

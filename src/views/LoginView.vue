@@ -68,24 +68,24 @@
             </div>
 
             <form class="space-y-4" @submit.prevent="onSubmit">
-            <label class="block">
-              <span class="text-sm font-medium text-on-surface mb-1 block">Email</span>
+            <div class="block">
+              <label for="login-email" class="text-sm font-medium text-on-surface mb-1 block">Email</label>
               <div class="relative">
-                <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">mail</span>
+                <span aria-hidden="true" class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">mail</span>
                 <input
-                  v-model="email" type="email" required autocomplete="email"
+                  id="login-email" v-model="email" type="email" required autocomplete="email"
                   class="w-full h-11 pl-11 pr-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary/20 text-body-lg transition-all"
                   placeholder="vous@exemple.com"
                 />
               </div>
-            </label>
+            </div>
 
-            <label class="block">
-              <span class="text-sm font-medium text-on-surface mb-1 block">Mot de passe</span>
+            <div class="block">
+              <label for="login-password" class="text-sm font-medium text-on-surface mb-1 block">Mot de passe</label>
               <div class="relative">
-                <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">lock</span>
+                <span aria-hidden="true" class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">lock</span>
                 <input
-                  v-model="password" :type="showPwd ? 'text' : 'password'" required autocomplete="current-password"
+                  id="login-password" v-model="password" :type="showPwd ? 'text' : 'password'" required autocomplete="current-password"
                   class="w-full h-11 pl-11 pr-11 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary/20 text-body-lg transition-all"
                   placeholder="••••••••"
                 />
@@ -96,7 +96,15 @@
                   <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showPwd ? 'visibility_off' : 'visibility' }}</span>
                 </button>
               </div>
-            </label>
+            </div>
+
+            <div class="text-right">
+              <button type="button" class="text-sm font-semibold text-primary hover:underline" :aria-expanded="recoveryOpen" aria-controls="password-recovery" @click="recoveryOpen = !recoveryOpen">Mot de passe oublié ?</button>
+            </div>
+            <div v-if="recoveryOpen" id="password-recovery" class="rounded-xl border border-outline-variant p-4 text-sm" role="status">
+              <p>La réinitialisation automatique n'est pas encore disponible. Contactez l'assistance pour récupérer l'accès à votre compte. Ne communiquez jamais votre mot de passe.</p>
+              <a :href="recoverySupportUrl" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block font-semibold text-primary hover:underline">Contacter l'assistance</a>
+            </div>
 
             <button
               type="submit" :disabled="loading"
@@ -259,12 +267,15 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { ApiConfig } from '../api/config'
 
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
 const email = ref('')
+const recoveryOpen = ref(false)
+const recoverySupportUrl = `https://wa.me/${ApiConfig.whatsappContactNumber}?text=${encodeURIComponent("Bonjour, j'ai besoin d'aide pour récupérer l'accès à mon compte EventiaEasy.")}`
 const password = ref('')
 const loading = ref(false)
 const error = ref('')

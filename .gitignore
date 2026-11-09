@@ -4,6 +4,7 @@ node_modules/
 # Build
 dist/
 dist-ssr/
+vite.config.*.timestamp-*.mjs
 
 # Test reports and local browser artifacts
 test-results/
