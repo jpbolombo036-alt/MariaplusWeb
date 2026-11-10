@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import QRCode from 'qrcode'
+import { readFileSync } from 'node:fs'
 import { mockApi } from './support/e2e-api'
 
 test('connexion : noms de champs exacts et assistance de récupération honnête', async ({ page }) => {
@@ -25,5 +26,25 @@ for (const payload of ['generated-token-32', 'https://front.example.test/invitat
     }, dataUri)
     expect(decoded).toBe(payload)
     expect(network.unexpectedRequests).toEqual([])
+  })
+}
+
+for (const payload of [
+  'generated-token-32',
+  'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG',
+  '1x0YJ--c_pgz-dmIs9rrvk_aioy7StjAXIEcVFTxRfg',
+  'jAgq89XXi5i8wAvSb65RMD8j-6J3tOBgLL9-Xpuo7CI',
+  'uiSv8Kai3yIS23VidjU_0XF1b6W-zkL6TDw9xQMzubM',
+]) {
+  test(`QR backend Java UTF-8 : ${payload}`, async ({ page }) => {
+    await mockApi(page, async () => false)
+    const image = `data:image/png;base64,${readFileSync(new URL(`./fixtures/backend-qr/${payload}.png`, import.meta.url)).toString('base64')}`
+    await page.goto('/login')
+    const decoded = await page.evaluate(async (dataUri) => {
+      const modulePath = '/src/utils/qr.ts'
+      const { decodeQrPayload } = await import(modulePath)
+      return decodeQrPayload(dataUri)
+    }, image)
+    expect(decoded).toBe(payload)
   })
 }
