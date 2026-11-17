@@ -1,0 +1,73 @@
+modules:
+  - name: api-http-client
+    kind: utility
+    source_loc: src/api/http.ts:1
+    used_by_units: [login, dashboard, event-list, event-create, event-overview, event-edit, guest-management, category-management, invitation-management, invitation-send, rsvp, checkin, table-management, drink-management, gallery, internal-events, statistics, profile, organization-members, platform-settings, admin-users, admin-organizations, admin-events, admin-drink-catalog, public-invitation, agent-checkin]
+    fields:
+      - name: http
+        type: AxiosInstance
+      - name: apiErrorMessage
+        type: "(error: unknown) => string"
+      - name: decodeMap
+        type: "(data: unknown) => Record<string, unknown>"
+      - name: decodeList
+        type: "(data: unknown) => unknown[]"
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Shared Axios instance centralizes base URL, credentials, platform header, authentication refresh, and API error notifications."
+  - name: api-config
+    kind: config
+    source_loc: src/api/config.ts:1
+    used_by_units: [login, dashboard, event-list, event-create, event-overview, event-edit, guest-management, category-management, invitation-management, invitation-send, rsvp, checkin, table-management, drink-management, gallery, internal-events, statistics, profile, organization-members, platform-settings, admin-users, admin-organizations, admin-events, admin-drink-catalog, public-invitation, agent-checkin]
+    fields:
+      - name: baseUrl
+        type: string
+      - name: eventsPath
+        type: string
+      - name: publicInvitationsPath
+        type: string
+      - name: checkinsPath
+        type: string
+    god_class: false
+    split_candidate: false
+    migration_strategy: copy
+    notes: "Central endpoint paths and public client configuration; consumed by API modules."
+  - name: auth-store
+    kind: store
+    source_loc: src/stores/auth.ts:1
+    used_by_units: [login, dashboard, event-list, event-create, event-overview, event-edit, invitation-management, invitation-send, profile, organization-members, platform-settings, admin-overview, admin-users, admin-organizations, admin-events, admin-drink-catalog, agent-checkin]
+    fields:
+      - name: user
+        type: "AuthUser | null"
+      - name: isAuthenticated
+        type: boolean
+      - name: permissions
+        type: "string[]"
+      - name: login
+        type: "(email: string, password: string) => Promise<void>"
+      - name: restore
+        type: "() => Promise<void>"
+      - name: logout
+        type: "() => Promise<void>"
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Shared authentication/session lifecycle and permission state."
+  - name: notification-store
+    kind: store
+    source_loc: src/stores/notifications.ts:1
+    used_by_units: [login, event-create, event-edit, invitation-management, invitation-send, profile, organization-members, platform-settings, agent-checkin]
+    fields:
+      - name: items
+        type: "Notification[]"
+      - name: push
+        type: "(message: string, type?: NotificationType, duration?: number) => number"
+      - name: remove
+        type: "(id: number) => void"
+      - name: clear
+        type: "() => void"
+    god_class: false
+    split_candidate: false
+    migration_strategy: copy
+    notes: "Global toast state consumed by the application root and feature screens."

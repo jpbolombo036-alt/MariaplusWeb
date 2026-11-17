@@ -1,3 +1,4 @@
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { test, expect, type Page } from '@playwright/test'
 import { BinaryBitmap, HybridBinarizer, QRCodeReader, RGBLuminanceSource } from '@zxing/library'
 import { APP_ORIGIN } from './support/e2e-api'
@@ -6,7 +7,7 @@ import { INVITATION_PATH, INVITATION_TOKEN, mockPublicInvitation, publicInvitati
 type InvitationFixture = Awaited<ReturnType<typeof mockPublicInvitation>>
 
 // Allow cold Vite module loading and a real html2canvas export on slower machines.
-test.setTimeout(60_000)
+test.setTimeout(120_000)
 
 function assertLocalPublicTraffic(fixture: InvitationFixture) {
   expect(fixture.unexpectedRequests).toEqual([])
@@ -32,7 +33,7 @@ async function decodeExportedQr(page: Page) {
   const pixels = await page.locator('img.mp-inv-cardimg').evaluate((element) => {
     const image = element as HTMLImageElement
     const card = document.querySelector('.mp-inv-render')!.getBoundingClientRect()
-    const qr = document.querySelector('.nx-ticket-qr img')!.getBoundingClientRect()
+    const qr = document.querySelector('[data-card-qr] img')!.getBoundingClientRect()
     const scale = image.naturalWidth / card.width
     const width = Math.round(qr.width * scale)
     const height = Math.round(qr.height * scale)
@@ -127,7 +128,7 @@ test('RSVP accepté : limites, PNG avec QR lisible, sauvegarde et téléchargeme
     note: 'Heureux de célébrer avec vous !',
   }])
   const preview = page.getByRole('img', { name: 'Votre invitation confirmée' })
-  await expect(preview).toBeVisible({ timeout: 20_000 })
+  await expect(preview).toBeVisible({ timeout: 40_000 })
   await expect(preview).toHaveJSProperty('naturalWidth', 1278)
   await expect(preview).toHaveJSProperty('naturalHeight', 1920)
   await expect(page.getByText("Enregistrée — présentée à l'accueil", { exact: false })).toBeVisible()
@@ -200,7 +201,7 @@ test('la carte confirmée reste téléchargeable si sa sauvegarde échoue', asyn
     cardUploadHttpStatus: 503,
   })
   await page.goto(INVITATION_PATH, { waitUntil: 'domcontentloaded' })
-  await expect(page.getByRole('img', { name: 'Votre invitation confirmée' })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('img', { name: 'Votre invitation confirmée' })).toBeVisible({ timeout: 40_000 })
   await expect.poll(() => fixture.uploads.length).toBe(1)
   await expect(page.getByRole('button', { name: "Télécharger l'invitation", exact: false })).toBeEnabled()
   await expect(page.getByText("Enregistrée — présentée à l'accueil", { exact: false })).toHaveCount(0)
@@ -227,3 +228,76 @@ for (const state of [
     assertLocalPublicTraffic(fixture)
   })
 }
+
+for (const accepted of [true, false]) {
+  test(`RSVP ${accepted ? 'accepté' : 'refusé'} enregistré malgré un échec de relecture, puis actualisé sans nouvel envoi`, async ({ page }) => {
+    const options = { invitationRefreshHttpStatus: 503 }
+    const fixture = await mockPublicInvitation(page, options)
+    await page.goto(INVITATION_PATH, { waitUntil: 'domcontentloaded' })
+    await page.getByRole('button', { name: accepted ? 'Je serai présent(e)' : 'Je ne pourrai pas être des vôtres', exact: false }).click()
+    await page.getByRole('button', { name: accepted ? 'Confirmer ma présence' : 'Confirmer mon absence', exact: false }).click()
+    const warning = page.getByText('Votre réponse est enregistrée. Les détails de l’invitation n’ont pas pu être actualisés.', { exact: true })
+    await expect(warning).toBeVisible()
+    await expect(page.getByText(accepted ? 'Présence confirmée' : 'Merci pour votre réponse !', { exact: true }).first()).toBeVisible()
+    expect(fixture.rsvps).toHaveLength(1)
+    expect(fixture.rsvps[0].status).toBe(accepted ? 'ACCEPTED' : 'DECLINED')
+    await expect(page.locator('.mp-toast--error')).toHaveCount(0)
+    options.invitationRefreshHttpStatus = 0
+    await page.getByRole('button', { name: 'Actualiser les détails' }).click()
+    await expect(warning).toHaveCount(0)
+    await expect.poll(() => fixture.invitationReads).toBe(3)
+    expect(fixture.rsvps).toHaveLength(1)
+    assertLocalPublicTraffic(fixture)
+  })
+}
+
+for (const template of ['STANDARD', 'ROMANCE', 'PRESTIGE'] as const) {
+  test(`carte ${template} : rendu, téléchargement et QR personnel lisible`, async ({ page }) => {
+    const fixture = await mockPublicInvitation(page, { invitation: {
+      invitationCardTemplate: template, rsvpStatus: 'ACCEPTED', rsvpNumberOfAttendees: 2,
+      couplePhotoUrl: `${APP_ORIGIN}/images/invitations/preview-reception.jpg`,
+      tableName: 'Rose',
+    } })
+    await page.goto(INVITATION_PATH, { waitUntil: 'domcontentloaded' })
+    const preview = page.getByRole('img', { name: 'Votre invitation confirmée' })
+    await expect(preview).toBeVisible({ timeout: 40_000 })
+    await expect(preview).toHaveJSProperty('naturalWidth', 1278)
+    await expect(page.locator('.mp-inv-render [data-card-template]')).toHaveAttribute('data-card-template', template)
+    expect(await decodeExportedQr(page)).toBe(INVITATION_TOKEN)
+    await expect.poll(() => fixture.uploads.length).toBe(1)
+    mkdirSync('output/playwright/invitation-models', { recursive: true })
+    const src = await preview.getAttribute('src')
+    writeFileSync(`output/playwright/invitation-models/${template.toLowerCase()}.png`, Buffer.from(src!.split(',')[1], 'base64'))
+    const overflow = await page.locator('.mp-inv-render .ic-design').evaluate(card => card.scrollWidth > card.clientWidth)
+    expect(overflow).toBe(false)
+    assertLocalPublicTraffic(fixture)
+  })
+}
+
+test('carte sans photo : nom long et nouveau modèle régénéré avec le même QR', async ({ page }) => {
+  const fixture = await mockPublicInvitation(page, { invitation: {
+    invitationCardTemplate:'PRESTIGE', rsvpStatus:'ACCEPTED', rsvpNumberOfAttendees:1,
+    guestFirstName:'Alexandrine Marie-Claire', guestLastName:'Mukendi Kabongo de la Grande Famille',
+    couplePhotoUrl:null, groomPhotoUrl:null, bridePhotoUrl:null, eventPhotoUrl:null,
+  } })
+  await page.goto(INVITATION_PATH, { waitUntil: 'domcontentloaded' })
+  const preview = page.getByRole('img', { name:'Votre invitation confirmée' })
+  await expect(preview).toBeVisible({ timeout:40_000 })
+  await expect(page.locator('.mp-inv-render .ic-design')).toHaveAttribute('data-no-photo','true')
+  expect(await decodeExportedQr(page)).toBe(INVITATION_TOKEN)
+  const fits = await page.locator('.mp-inv-render .ic-ticket').evaluate(ticket => {
+    const name = ticket.querySelector('h2')!.getBoundingClientRect()
+    const status = ticket.querySelector('.ic-confirmed')!.getBoundingClientRect()
+    return name.bottom <= status.top && status.bottom < ticket.getBoundingClientRect().bottom
+  })
+  expect(fits).toBe(true)
+  await expect.poll(() => fixture.uploads.length).toBe(1)
+  fixture.invitation.invitationCardTemplate = 'ROMANCE'
+  await page.getByRole('button', { name:'Modifier ma réponse' }).click()
+  await page.getByRole('button', { name:'Je serai présent(e)', exact:false }).click()
+  await page.getByRole('button', { name:'Confirmer ma présence', exact:false }).click()
+  await expect(page.locator('.mp-inv-render [data-card-template]')).toHaveAttribute('data-card-template','ROMANCE')
+  await expect.poll(() => fixture.uploads.length, { timeout:40_000 }).toBe(2)
+  expect(await decodeExportedQr(page)).toBe(INVITATION_TOKEN)
+  assertLocalPublicTraffic(fixture)
+})

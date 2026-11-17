@@ -1,0 +1,339 @@
+
+--- PAGE 1 ---
+EventiaEasy — Rapport de tests et envois WhatsApp
+Application :
+ 
+https://eventiaeasy.vercel.app/
+Date des tests :
+ 31 octobre 2026
+Document :
+ rapport général et résultats des deux tentatives WhatsApp réunis.
+Les constats décrivent la version testée le 31 octobre 2026. Aucun nouveau contrôle de l’application n’a été effectué
+pour produire ce document.
+1. Résultat général
+Le parcours de création d’un brouillon, ajout d’un invité, génération d’une invitation, réponse RSVP, contrôle des entrées
+et placement à table a fonctionné.
+Les principaux problèmes constatés concernent la restauration de session, les liens du menu liés à l’événement actif, les
+compteurs de l’en-tête et la galerie facultative. Les deux tentatives d’envoi WhatsApp ont échoué avec le code 132012,
+y compris après ajout d’une photo.
+2. Périmètre et méthode
+Tests fonctionnels sur le site déployé, dans Chromium automatisé :
+Ordinateur : 1440 × 1000 pixels.
+Affichages mobiles simulés : 390 × 844 et 320 × 740 pixels.
+Compte de test fourni par le propriétaire.
+Contrôles publics, connexion, création d’un événement de test et parcours invité.
+Deux envois WhatsApp ciblés, demandés explicitement par le propriétaire.
+Aucun mot de passe ni identifiant de connexion n’est reproduit dans ce rapport. Les tests ne constituent pas une
+validation exhaustive ni un audit de sécurité.
+3. Anomalies à corriger
+EE-01 — Session perdue au rechargement
+Priorité : P1, élevée.
+Reproduction :
+1. 
+Se connecter au compte de test.
+2. 
+Accéder au tableau de bord ou à la liste des événements.
+3. 
+Recharger la page.
+Observé :
+ retour vers la connexion, notamment 
+/login?redirect=/dashboard/events
+. Une nouvelle connexion
+suivie immédiatement du rechargement du tableau de bord a reproduit le défaut, avec retour vers 
+/login?
+redirect=/dashboard
+, sans attendre l’expiration de la session.
+
+--- PAGE 2 ---
+La requête suivante reçoit HTTP 404 : 
+POST https://mariageplus-production-
+a657.up.railway.app/auth/refresh
+La réutilisation de l’état du navigateur dans un nouveau contexte avait également renvoyé vers la connexion peu après
+une connexion réussie.
+Attendu :
+ une session valide doit survivre au rechargement ou être renouvelée correctement. La protection des pages
+fonctionne ; la restauration de la session échoue dans les tests.
+À vérifier :
+ cohérence de la route et de la méthode de renouvellement entre frontend et backend ; émission et
+transmission du cookie de renouvellement entre les domaines Vercel et Railway. Aucun cookie n’était présent dans le
+contexte connecté. Cette observation ne suffit pas à attribuer seule le défaut au cookie : le résultat réseau établi est
+l’erreur 404.
+EE-02 — Menu latéral conservant l’événement précédent
+Priorité : P1, élevée.
+Reproduction :
+1. 
+Se connecter avec un événement déjà sélectionné.
+2. 
+Créer un autre événement.
+3. 
+Comparer le lien « Invités » du menu et celui des onglets du nouvel événement.
+Observé :
+ dans la fiche de l’événement de test 
+/dashboard/events/1000007
+, l’onglet local « Invités » pointe vers
+/dashboard/events/1000007/guests
+. Le menu latéral et la navigation inférieure mobile pointent encore vers
+/dashboard/events/1000005/guests
+. Un décalage similaire a été observé pour les catégories et d’autres liens.
+Impact :
+ les deux navigations proposent des contextes différents. L’utilisateur peut passer involontairement à
+l’événement précédent. Aucune donnée d’un événement préexistant n’a été modifiée pour vérifier ce point.
+Attendu :
+ synchroniser l’événement actif avec la route courante et la création d’un événement, ou rendre explicite le
+contexte du menu. Une source commune d’identifiant devrait alimenter les liens concernés.
+EE-03 — Compteurs restant à zéro après les ajouts
+Priorité : P2, moyenne.
+Reproduction :
+ créer un événement, ajouter un invité, créer son invitation et enregistrer les entrées, sans quitter la fiche
+de l’événement.
+Observé :
+ l’en-tête conserve « 0 invités », « 0 invitations » et « 0 présents », alors que les vues détaillées affichent un
+invité, une invitation et trois personnes entrées. Le décalage persiste après un changement d’onglet dans cette fiche.
+Attendu :
+ actualiser les statistiques ou invalider leur cache après les opérations concernées. Distinguer clairement le
+nombre d’invités du nombre de personnes, accompagnants compris.
+EE-04 — Notification « Galerie indisponible »
+Priorité : P2, moyenne.
+
+--- PAGE 3 ---
+Reproduction :
+ ouvrir le lien public de l’invitation de test, créée pour un événement sans photo ni galerie ajoutée.
+Observé :
+ une notification « Galerie indisponible » apparaît. La requête 
+GET /api/public/invitations/<jeton-
+de-test>/gallery
+ vers le backend Railway reçoit HTTP 404. Résultat reproduit au rechargement. Le reste de
+l’invitation et le RSVP fonctionnent.
+Attendu :
+ une galerie facultative absente doit produire un état vide discret. Si le service est prévu, aligner les routes du
+frontend et du backend et distinguer absence de galerie et panne du service.
+4. Améliorations du parcours public
+EE-05 — Appels à l’inscription ouvrant la connexion
+« Commencer gratuitement » et « Créer mon espace » ouvrent 
+/login
+ avec « Bon retour parmi nous » et la connexion
+active. L’inscription nécessite un clic supplémentaire sur « Créer un compte ».
+Recommandation :
+ ouvrir directement le formulaire d’inscription depuis ces deux appels à l’action. Conserver la
+connexion pour « Se connecter ».
+EE-06 — Récupération du mot de passe non proposée
+Aucun lien ni bouton « Mot de passe oublié » n’est visible sur l’écran de connexion testé. Cela ne prouve pas l’absence
+d’une procédure de support externe.
+Recommandation :
+ proposer une récupération autonome avec une confirmation qui ne révèle pas l’existence du
+compte.
+EE-07 — Navigation de l’accueil masquée sur petit écran
+À 320 pixels de largeur, les liens « Fonctionnalités », « Comment ça marche », « Témoignages » et « Contact » sont
+masqués dans l’en-tête. Aucun bouton de menu ne les remplace ; le seul bouton de l’en-tête est celui du thème. Le
+contenu reste accessible par défilement.
+Recommandation :
+ proposer une navigation mobile permettant d’atteindre directement les sections.
+EE-08 — Noms techniques de certains boutons
+Sur les écrans publics, l’arbre d’accessibilité expose notamment le bouton de thème comme 
+dark_mode
+ et celui
+d’affichage du mot de passe comme 
+visibility
+. Ces noms ne décrivent pas l’action en français.
+Recommandation :
+ utiliser des noms accessibles tels que « Activer le mode sombre » et « Afficher le mot de passe »,
+adaptés à l’état, et masquer les icônes décoratives aux lecteurs d’écran. Le contrôle du nombre de personnes du RSVP
+dispose, lui, de noms explicites.
+5. Vérifications réussies
+Vérification
+Résultat observé
+Disponibilité
+Accueil et connexion accessibles en HTTPS
+
+--- PAGE 4 ---
+Vérification
+Résultat observé
+Navigation sur ordinateur
+Ancres des fonctionnalités, étapes, témoignages et contact atteintes
+Thème
+Bascule sombre fonctionnelle et choix conservé au rechargement de l’accueil
+Connexion vide ou email mal formé
+Validation du navigateur bloquant la soumission
+Identifiants invalides
+Une tentative renvoie HTTP 401 et « Email ou mot de passe incorrect »
+Compte valide
+Tableau de bord accessible
+Protection du tableau de bord
+Sans session, redirection vers la connexion
+Affichage du mot de passe
+Bascule fonctionnelle du type du champ
+Inscription
+Champs vides bloqués ; mots de passe différents signalés ; bouton désactivé
+Événement
+Parcours Informations, Visuels, Programme et Publication ; brouillon enregistré
+Invité
+Ajout d’un invité fictif avec deux accompagnants
+Invitation
+Génération et récupération du lien sans envoi lors du contrôle initial
+QR code
+Aperçu affiché dans l’espace organisateur
+RSVP mobile
+Acceptation pour trois personnes ; augmentation bloquée au maximum autorisé
+Suivi organisateur
+Une réponse acceptée pour trois personnes affichée
+Entrées
+Recherche par lien d’invitation et trois validations unitaires fonctionnelles
+Capacité atteinte
+« DÉJÀ ENREGISTRÉ », zéro place restante et bouton de validation retiré
+Table
+Création de trois places et affectation de l’invité avec ses accompagnants
+Occupation
+Table complète, 3/3 personnes et 100 % d’occupation
+Téléchargement d’invitation
+PNG obtenu et ouvert localement, 1278 × 1920 pixels
+Largeur mobile
+Aucun débordement du document constaté sur les pages et largeurs contrôlées
+Langue HTML
+Document public déclaré en français
+Le contrôle des largeurs concerne l’accueil à 390 et 320 pixels, la connexion et l’inscription à 320 pixels, l’invitation et la
+vue des tables à 390 pixels. L’absence de débordement du document ne valide pas chaque composant.
+L’émulation mobile sous Chromium ne remplace pas des essais sur de vrais appareils Android et iPhone.
+6. Données créées pour les tests
+À la fin du contrôle initial, un brouillon non publié avait été conservé pour permettre la reproduction. Le propriétaire a
+ensuite publié cet événement, ajouté un numéro avant le premier test WhatsApp et une photo avant le second.
+Événement : 
+TEST QA — parcours application — 31-10-2026
+, identifiant 
+1000007
+.
+Date de l’événement fictif : 15 janvier 2027, de 18 h à 20 h.
+Invité : 
+TEST INVITE QA
+, initialement sans email ni téléphone, avec deux accompagnants.
+Une invitation générée, réponse acceptée pour trois personnes, trois entrées enregistrées.
+Table : 
+TABLE TEST QA
+, trois places occupées par ce groupe.
+Lors du contrôle initial, aucun email ni message WhatsApp ou Facebook n’a été envoyé. Les deux tentatives WhatsApp
+suivantes ont été demandées explicitement par le propriétaire et sont décrites ci-dessous.
+Les données des événements préexistants n’ont pas été modifiées. Les connexions peuvent avoir créé des entrées
+normales dans le journal d’activité.
+
+--- PAGE 5 ---
+7. Premier test WhatsApp — sans photo
+Date :
+ 31 octobre 2026, demande lancée à 08 h 17 UTC.
+Destinataire :
+ TEST INVITE QA, numéro ajouté par le propriétaire, se terminant par 1745.
+Élément
+Résultat
+Événement
+1000007
+Invitation
+29
+Lot d’envoi
+46
+Canal
+WHATSAPP
+Ciblage
+Une seule invitation
+Acceptation initiale
+HTTP 202, état PENDING
+État final du traitement
+COMPLETED, avec un échec individuel
+Envoyés
+0
+Livrés
+0
+Échecs
+1
+Ignorés
+0
+Erreur renvoyée :
+Échec d’envoi WhatsApp : header: Format mismatch, expected IMAGE, received UNKNOWN
+Code : 132012
+Le traitement s’est terminé environ 80 secondes après sa création. L’état 
+COMPLETED
+ signifie que le traitement du lot est
+terminé ; il ne signifie pas que le message a été envoyé. Le journal individuel porte l’état 
+FAILED
+.
+Lors de ce premier test, 
+GET /api/events/1000007/image
+ a également renvoyé HTTP 404 et l’aperçu présentait un
+emplacement d’image vide. Cette observation était une piste ; elle ne suffisait pas à établir la cause exacte de l’erreur
+132012.
+L’action générique « Envoyer » a aussi été ouverte pendant l’exploration : elle a affiché le partage du lien, « Email envoyé
+: Non » et le statut général « Envoyée ». Ce statut général ne constitue pas une preuve de réussite WhatsApp. Le bilan
+ci-dessus repose sur le lot spécifique WHATSAPP et son journal.
+Le numéro, le contenu de l’invitation et les paramètres du modèle n’ont pas été modifiés pendant ce contrôle. Une seule
+tentative WhatsApp a été déclenchée lors de ce premier test.
+8. Second test WhatsApp — après ajout d’une photo
+Date :
+ 31 octobre 2026.
+Demande acceptée :
+ 08:29:03 UTC.
+Échec enregistré :
+ 08:30:08 UTC.
+La photo ajoutée par le propriétaire était visible et chargée dans la couverture de l’événement et dans l’aperçu d’envoi.
+Les deux images de l’aperçu avaient des dimensions naturelles de 405 × 227 pixels. Aucune erreur de chargement de
+cette photo n’a été relevée lors du second test.
+
+--- PAGE 6 ---
+Une seule nouvelle tentative a été déclenchée vers le même invité.
+Élément
+Résultat
+Événement
+1000007
+Invitation
+29
+Nouveau lot d’envoi
+47
+État final
+COMPLETED, avec un échec individuel
+Envoyés
+0
+Livrés
+0
+Échecs
+1
+Ignorés
+0
+Même erreur :
+Échec d’envoi WhatsApp : header: Format mismatch, expected IMAGE, received UNKNOWN
+Code : 132012
+L’ajout de la photo sur le site n’a donc pas résolu le problème. La présence d’une photo dans le navigateur ne prouve
+pas sa transmission correcte au fournisseur WhatsApp.
+9. Vérifications techniques recommandées pour WhatsApp
+Le modèle utilisé attend un en-tête de type 
+IMAGE
+, tandis que les paramètres reçus ne correspondent pas à ce format.
+La cause précise dans le code n’a pas été établie.
+À contrôler :
+1. 
+Le modèle réellement sélectionné et le type d’en-tête approuvé.
+2. 
+La construction du composant d’en-tête 
+image
+ dans la demande WhatsApp.
+3. 
+L’identifiant de média ou l’URL d’image HTTPS fournis et leur accessibilité pour le fournisseur.
+4. 
+Le blocage explicite de l’envoi si un média requis manque ou est invalide.
+5. 
+La distinction entre le statut général d’une invitation, l’expédition par canal et la livraison effective.
+Après correction, une nouvelle tentative devra vérifier l’envoi puis la livraison. Aucun succès d’envoi ni réception sur le
+téléphone n’a été établi par les deux tests décrits.
+10. Limites et priorités
+Non vérifiés : scan physique avec caméra, livraison des emails, import Excel et ses erreurs, annulation et modification
+complète d’événements, gestion des rôles, isolation entre organisations, paiements éventuels, concurrence multi-
+appareils, réseau hors ligne, charge, accessibilité complète et compatibilité Safari/Firefox.
+Priorités :
+1. 
+Corriger la restauration de session et la cohérence des liens de l’événement actif.
+2. 
+Corriger les paramètres d’en-tête image du modèle WhatsApp.
+3. 
+Actualiser les compteurs après chaque opération.
+4. 
+Traiter correctement une galerie facultative absente.
+
+--- PAGE 7 ---
+5. 
+Améliorer l’inscription, la récupération de mot de passe et la navigation mobile.
+Aucun code de l’application n’a été modifié pendant ces contrôles.

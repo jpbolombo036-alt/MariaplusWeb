@@ -12,50 +12,58 @@
       </div>
 
       <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-        <form @submit.prevent="submit" class="space-y-5">
-          <div class="grid grid-cols-2 gap-4">
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Prénom *</span>
-              <input v-model="form.firstName" required type="text" placeholder="Prénom" class="input" />
-            </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Nom *</span>
-              <input v-model="form.lastName" required type="text" placeholder="Nom" class="input" />
-            </label>
-          </div>
+        <p v-if="loading" role="status" class="mb-4 text-sm text-slate-500">Chargement de l’invité…</p>
+        <div v-if="loadError" role="alert" class="mb-4 text-sm text-red-700">
+          <p>{{ loadError }}</p>
+          <button type="button" class="mt-2 underline" @click="load">Réessayer</button>
+        </div>
+        <p v-if="saveError" role="alert" class="mb-4 text-sm text-red-700">{{ saveError }}</p>
+        <form @submit.prevent="submit">
+          <fieldset :disabled="loading || saving || !ready" class="space-y-5">
+            <div class="grid grid-cols-2 gap-4">
+              <label class="block">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Prénom *</span>
+                <input v-model="form.firstName" required type="text" placeholder="Prénom" class="input" />
+              </label>
+              <label class="block">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Nom *</span>
+                <input v-model="form.lastName" required type="text" placeholder="Nom" class="input" />
+              </label>
+            </div>
 
-          <label class="block">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Email</span>
-            <input v-model="form.email" type="email" placeholder="email@exemple.com" class="input" />
-            <!-- Le backend n'envoie/relance par email que si l'invité en a un ;
-                 sans email, l'invitation peut tout de même être envoyée en masse
-                 par WhatsApp, puis le lien copié depuis l'onglet Invitations. -->
-            <span class="block text-[11px] text-slate-400 mt-1">Requis pour envoyer ou relancer l’invitation par email.</span>
-          </label>
-
-          <label class="block">
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Téléphone</span>
-            <input v-model="form.phone" placeholder="+33 …" class="input" />
-          </label>
-
-          <div class="grid grid-cols-2 gap-4">
             <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Catégorie</span>
-              <select v-model="form.categoryId" class="input">
-                <option :value="null">Aucune</option>
-                <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-              </select>
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Email</span>
+              <input v-model="form.email" type="email" placeholder="email@exemple.com" class="input" />
+              <!-- Le backend n'envoie/relance par email que si l'invité en a un ;
+                   sans email, l'invitation peut tout de même être envoyée en masse
+                   par WhatsApp, puis le lien copié depuis l'onglet Invitations. -->
+              <span class="block text-[11px] text-slate-400 mt-1">Requis pour envoyer ou relancer l’invitation par email.</span>
             </label>
-            <label class="block">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Accompagnants</span>
-              <input v-model.number="form.allowedCompanions" type="number" min="0" placeholder="0" class="input" />
-            </label>
-          </div>
 
-          <div class="flex justify-end gap-3 pt-2">
-            <button type="button" @click="$router.back()" class="px-4 h-10 text-slate-500 text-[13px] font-medium hover:text-slate-700 transition-colors">Annuler</button>
-            <button type="submit" class="px-5 h-10 rounded-lg bg-primary text-white text-[13px] font-bold shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">{{ isEdit ? 'Enregistrer' : 'Ajouter' }}</button>
-          </div>
+            <label class="block">
+              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Téléphone</span>
+              <input v-model="form.phone" placeholder="+33 …" class="input" />
+            </label>
+
+            <div class="grid grid-cols-2 gap-4">
+              <label class="block">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Catégorie</span>
+                <select v-model="form.categoryId" class="input">
+                  <option :value="null">Aucune</option>
+                  <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Accompagnants</span>
+                <input v-model.number="form.allowedCompanions" type="number" min="0" placeholder="0" class="input" />
+              </label>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+              <button type="button" @click="$router.back()" class="px-4 h-10 text-slate-500 text-[13px] font-medium hover:text-slate-700 transition-colors">Annuler</button>
+              <button type="submit" :disabled="loading || saving || !ready" class="px-5 h-10 rounded-lg bg-primary text-white text-[13px] font-bold shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all">{{ saving ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Ajouter' }}</button>
+            </div>
+          </fieldset>
         </form>
       </div>
     </div>
@@ -65,6 +73,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { apiErrorMessage } from '../../api/http'
 import { createGuest, updateGuest, listGuests, listCategories, type Guest, type GuestCategory } from '../../api/guests'
 
 const route = useRoute()
@@ -72,6 +81,11 @@ const id = Number(route.params.id)
 const guestId = route.params.guestId != null ? Number(route.params.guestId) : null
 const isEdit = computed(() => guestId != null)
 const categories = ref<GuestCategory[]>([])
+const loading = ref(true)
+const saving = ref(false)
+const ready = ref(false)
+const loadError = ref('')
+const saveError = ref('')
 const form = reactive({
   firstName: '',
   lastName: '',
@@ -81,24 +95,43 @@ const form = reactive({
   allowedCompanions: 0,
 })
 
-onMounted(async () => {
-  const [cats, guests] = await Promise.all([
-    listCategories(id),
-    isEdit.value ? listGuests(id) : Promise.resolve<Guest[] | null>(null),
-  ])
-  categories.value = cats
-  const g = guests?.find((x) => x.id === guestId)
-  if (g) {
-    form.firstName = g.firstName
-    form.lastName = g.lastName
-    form.email = g.email ?? ''
-    form.phone = g.phone ?? ''
-    form.categoryId = g.categoryId ?? null
-    form.allowedCompanions = g.allowedCompanions ?? 0
+onMounted(load)
+async function load() {
+  if (saving.value) return
+  loading.value = true
+  ready.value = false
+  loadError.value = ''
+  try {
+    const [cats, guests] = await Promise.all([
+      listCategories(id),
+      isEdit.value ? listGuests(id) : Promise.resolve<Guest[] | null>(null),
+    ])
+    categories.value = cats
+    const g = guests?.find((x) => x.id === guestId)
+    if (isEdit.value && !g) {
+      loadError.value = 'Cet invité est introuvable.'
+      return
+    }
+    if (g) {
+      form.firstName = g.firstName
+      form.lastName = g.lastName
+      form.email = g.email ?? ''
+      form.phone = g.phone ?? ''
+      form.categoryId = g.categoryId ?? null
+      form.allowedCompanions = g.allowedCompanions ?? 0
+    }
+    ready.value = true
+  } catch (error) {
+    loadError.value = apiErrorMessage(error)
+  } finally {
+    loading.value = false
   }
-})
+}
 
 async function submit() {
+  if (loading.value || saving.value || !ready.value) return
+  saving.value = true
+  saveError.value = ''
   const payload = {
     firstName: form.firstName,
     lastName: form.lastName,
@@ -107,12 +140,17 @@ async function submit() {
     categoryId: form.categoryId,
     allowedCompanions: form.allowedCompanions,
   }
-  if (isEdit.value && guestId != null) {
-    await updateGuest(id, guestId, payload)
-  } else {
-    await createGuest(id, payload)
+  try {
+    if (isEdit.value && guestId != null) {
+      await updateGuest(id, guestId, payload)
+    } else {
+      await createGuest(id, payload)
+    }
+    window.history.length > 1 ? window.history.back() : window.location.href = `/dashboard/events/${id}/guests`
+  } catch (error) {
+    saveError.value = apiErrorMessage(error)
+    saving.value = false
   }
-  window.history.length > 1 ? window.history.back() : window.location.href = `/dashboard/events/${id}/guests`
 }
 </script>
 

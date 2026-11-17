@@ -1,0 +1,388 @@
+units:
+  - name: landing
+    trigger: page
+    trigger_detail: "GET /"
+    source_anchors:
+      - path: src/views/LandingView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+  - name: login
+    trigger: page
+    trigger_detail: "GET /login"
+    source_anchors:
+      - path: src/views/LoginView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user, isAuthenticated, login]
+  - name: dashboard
+    trigger: page
+    trigger_detail: "GET /dashboard"
+    source_anchors:
+      - path: src/views/DashboardView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user, permissions]
+  - name: event-list
+    trigger: page
+    trigger_detail: "GET /dashboard/events"
+    source_anchors:
+      - path: src/views/EventsView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user, permissions]
+  - name: event-create
+    trigger: page
+    trigger_detail: "GET /dashboard/events/new"
+    source_anchors:
+      - path: src/views/forms/EventWizard.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user]
+  - name: event-overview
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id (overview child route)"
+    source_anchors:
+      - path: src/views/EventDetailView.vue
+      - path: src/views/event/OverviewTab.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user, permissions]
+  - name: event-edit
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/edit"
+    source_anchors:
+      - path: src/views/forms/EventEditForm.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user]
+  - name: guest-management
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/guests[/*]"
+    source_anchors:
+      - path: src/views/event/GuestsTab.vue
+      - path: src/views/forms/GuestsForm.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: category-management
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/categories[/*]"
+    source_anchors:
+      - path: src/views/event/CategoriesTab.vue
+      - path: src/views/forms/CategoriesForm.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: invitation-management
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/invitations[ and /new]"
+    source_anchors:
+      - path: src/views/event/InvitationsTab.vue
+      - path: src/views/forms/InvitationsForm.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user, permissions]
+      - module: notification-store
+        used_fields: [items, push]
+  - name: invitation-send
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/invitations/send"
+    source_anchors:
+      - path: src/views/event/SendInvitationsView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user, permissions]
+      - module: notification-store
+        used_fields: [items, push]
+  - name: rsvp
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/rsvp"
+    source_anchors:
+      - path: src/views/event/RsvpTab.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: checkin
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/checkin"
+    source_anchors:
+      - path: src/views/event/CheckinTab.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: table-management
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/tables[/*]"
+    source_anchors:
+      - path: src/views/event/TablesTab.vue
+      - path: src/views/forms/TablesForm.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: drink-management
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/drinks"
+    source_anchors:
+      - path: src/views/event/DrinksTab.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: gallery
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/gallery"
+    source_anchors:
+      - path: src/views/event/GalleryTab.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: internal-events
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/internal-events[ and /new]"
+    source_anchors:
+      - path: src/views/event/WeddingEventsTab.vue
+      - path: src/views/forms/EventForm.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: statistics
+    trigger: page
+    trigger_detail: "GET /dashboard/events/:id/statistics"
+    source_anchors:
+      - path: src/views/event/StatisticsTab.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: profile
+    trigger: page
+    trigger_detail: "GET /dashboard/profile"
+    source_anchors:
+      - path: src/views/ProfileView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user, logout]
+  - name: organization-members
+    trigger: page
+    trigger_detail: "GET /dashboard/members[ and /new]"
+    source_anchors:
+      - path: src/views/MembersView.vue
+      - path: src/views/forms/MembersForm.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user, permissions]
+  - name: platform-settings
+    trigger: page
+    trigger_detail: "GET /dashboard/settings"
+    source_anchors:
+      - path: src/views/SettingsView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+      - module: auth-store
+        used_fields: [user, isAuthenticated]
+  - name: admin-overview
+    trigger: page
+    trigger_detail: "GET /dashboard/admin"
+    source_anchors:
+      - path: src/views/admin/AdminOverviewView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+  - name: admin-users
+    trigger: page
+    trigger_detail: "GET /dashboard/admin/users"
+    source_anchors:
+      - path: src/views/admin/AdminUsersView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: admin-organizations
+    trigger: page
+    trigger_detail: "GET /dashboard/admin/organizations"
+    source_anchors:
+      - path: src/views/admin/AdminOrganizationsView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: admin-events
+    trigger: page
+    trigger_detail: "GET /dashboard/admin/events"
+    source_anchors:
+      - path: src/views/admin/AdminEventsView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: admin-drink-catalog
+    trigger: page
+    trigger_detail: "GET /dashboard/admin/drink-catalog"
+    source_anchors:
+      - path: src/views/admin/AdminDrinkCatalogView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: public-invitation
+    trigger: page
+    trigger_detail: "GET /invitations/:token"
+    source_anchors:
+      - path: src/views/PublicInvitationView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]
+  - name: agent-checkin
+    trigger: page
+    trigger_detail: "GET /agent/checkin/:id"
+    source_anchors:
+      - path: src/views/agent/AgentCheckinView.vue
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: api-http-client
+        used_fields: [http]
+      - module: api-config
+        used_fields: [baseUrl]

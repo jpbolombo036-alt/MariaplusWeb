@@ -1,0 +1,16 @@
+unit: gallery
+side_effects:
+  - source_loc: src/views/event/GalleryTab.vue:3
+    effect: "Uploads and deletes event gallery photos and updates gallery visibility."
+    must_preserve: true
+  - source_loc: src/views/event/GalleryTab.vue:5
+    effect: "Creates and revokes browser object URLs for loaded gallery images."
+    must_preserve: true
+branches:
+  - source_loc: src/views/event/GalleryTab.vue:3
+    condition: "A photo image fails to load."
+    behavior: "Continue loading remaining photos."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

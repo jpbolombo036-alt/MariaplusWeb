@@ -1,0 +1,16 @@
+unit: event-overview
+side_effects:
+  - source_loc: src/views/event/OverviewTab.vue:137
+    effect: "Loads event dashboard statistics and scheduled event entries."
+    must_preserve: true
+  - source_loc: src/stores/wedding.ts:64
+    effect: "Reads the previously selected event ID from sessionStorage when loading event context."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:106
+    condition: "No authenticated session is available."
+    behavior: "Redirect to login."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

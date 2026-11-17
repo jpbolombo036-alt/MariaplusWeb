@@ -1,0 +1,19 @@
+unit: admin-drink-catalog
+side_effects:
+  - source_loc: src/views/admin/AdminDrinkCatalogView.vue:136
+    effect: "Loads catalog drinks."
+    must_preserve: true
+  - source_loc: src/views/admin/AdminDrinkCatalogView.vue:168
+    effect: "Saves catalog drink changes."
+    must_preserve: true
+  - source_loc: src/views/admin/AdminDrinkCatalogView.vue:219
+    effect: "Uploads a catalog drink photo selected by the administrator."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:75
+    condition: "User is not SUPER_ADMIN."
+    behavior: "Redirect admin route to /dashboard."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

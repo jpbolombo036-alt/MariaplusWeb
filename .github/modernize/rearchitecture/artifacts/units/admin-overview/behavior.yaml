@@ -1,0 +1,10 @@
+unit: admin-overview
+side_effects: []
+branches:
+  - source_loc: src/router/index.ts:68
+    condition: "Route is under /dashboard/admin."
+    behavior: "Allow only SUPER_ADMIN users; redirect other authenticated users to /dashboard."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: event-loop

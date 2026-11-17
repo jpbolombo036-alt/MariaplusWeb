@@ -1,3 +1,4 @@
+import { resolveCardTemplate, type InvitationCardTemplate } from '../models/invitationCard'
 import { http, decodeMap, decodeList } from './http'
 import { ApiConfig } from './config'
 import { collectAllPages } from './pagination'
@@ -38,6 +39,7 @@ export interface EventSession {
 }
 
 export interface Event {
+  invitationCardTemplate?: InvitationCardTemplate
   id: number
   organizationId: number
   name: string
@@ -74,7 +76,7 @@ export interface Event {
 /** Charge la photo de couverture en blob URL (null si 404 = pas de photo). */
 export async function loadEventImage(eventId: number): Promise<string | null> {
   try {
-    const res = await http.get(`${ApiConfig.eventsPath}/${eventId}/image`, { responseType: 'blob' })
+    const res = await http.get(`${ApiConfig.eventsPath}/${eventId}/image`, { responseType: 'blob', silentStatuses: [404] })
     return URL.createObjectURL(res.data as Blob)
   } catch {
     return null
@@ -96,7 +98,7 @@ export async function deleteEventImage(eventId: number): Promise<void> {
 /** Charge la photo du pagne / tissu en blob URL (null si 404 = pas de photo). */
 export async function loadEventDressImage(eventId: number): Promise<string | null> {
   try {
-    const res = await http.get(`${ApiConfig.eventsPath}/${eventId}/dress-image`, { responseType: 'blob' })
+    const res = await http.get(`${ApiConfig.eventsPath}/${eventId}/dress-image`, { responseType: 'blob', silentStatuses: [404] })
     return URL.createObjectURL(res.data as Blob)
   } catch {
     return null
@@ -156,6 +158,7 @@ export function parseEvent(json: Record<string, unknown>): Event {
   return {
     id: Number(json.id ?? 0),
     organizationId: Number(json.organizationId ?? 0),
+    invitationCardTemplate: resolveCardTemplate(json.invitationCardTemplate),
     name: String(json.name ?? ''),
     type: String(json.type ?? 'OTHER'),
     description: json.description ? String(json.description) : null,
@@ -278,6 +281,7 @@ export async function createEvent(payload: Record<string, unknown>): Promise<Eve
   if (payload.latitude !== undefined) eventPayload.latitude = payload.latitude
   if (payload.longitude !== undefined) eventPayload.longitude = payload.longitude
   if (payload.mapUrl !== undefined) eventPayload.mapUrl = payload.mapUrl
+  if (payload.invitationCardTemplate !== undefined) eventPayload.invitationCardTemplate = resolveCardTemplate(payload.invitationCardTemplate)
   if (payload.dressColors !== undefined) eventPayload.dressColors = payload.dressColors
   const res = await http.post(ApiConfig.eventsPath, eventPayload)
   return parseEvent(decodeMap(res.data))
@@ -303,6 +307,7 @@ export async function updateEvent(id: number, payload: Record<string, unknown>):
   if (payload.latitude !== undefined) eventPayload.latitude = payload.latitude
   if (payload.longitude !== undefined) eventPayload.longitude = payload.longitude
   if (payload.mapUrl !== undefined) eventPayload.mapUrl = payload.mapUrl
+  if (payload.invitationCardTemplate !== undefined) eventPayload.invitationCardTemplate = resolveCardTemplate(payload.invitationCardTemplate)
   if (payload.dressColors !== undefined) eventPayload.dressColors = payload.dressColors
   if (Object.keys(weddingDetails).length > 0) eventPayload.weddingDetails = weddingDetails
   const res = await http.put(`${ApiConfig.eventsPath}/${id}`, eventPayload)

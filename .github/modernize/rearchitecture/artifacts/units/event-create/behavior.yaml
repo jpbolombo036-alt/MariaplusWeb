@@ -1,0 +1,18 @@
+unit: event-create
+side_effects:
+  - source_loc: src/views/forms/EventWizard.vue:468
+    effect: "Creates an event and uploads selected event/dress imagery and schedule data."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:123
+    condition: "A non-superadmin requests event creation while platform event creation is disabled."
+    behavior: "Redirect to the event list."
+    must_preserve: true
+error_paths:
+  - source_loc: src/views/forms/EventWizard.vue:468
+    trigger: "Event creation or image upload fails."
+    outcome: "Do not report successful completion; surface the screen's error notification."
+    contract: "API operation rejects."
+    must_preserve: true
+concurrency:
+  model: async

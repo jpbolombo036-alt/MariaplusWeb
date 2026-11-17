@@ -1,0 +1,19 @@
+unit: organization-members
+side_effects:
+  - source_loc: src/views/MembersView.vue:203
+    effect: "Loads organization members and event data for member assignment."
+    must_preserve: true
+  - source_loc: src/views/MembersView.vue:228
+    effect: "Removes a member after the applicable confirmation flow."
+    must_preserve: true
+  - source_loc: src/views/forms/MembersForm.vue:105
+    effect: "Adds a member to the current organization."
+    must_preserve: true
+branches:
+  - source_loc: src/views/MembersView.vue:188
+    condition: "Current account role and target member determine removal eligibility."
+    behavior: "Show removal only when canRemove evaluates true."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

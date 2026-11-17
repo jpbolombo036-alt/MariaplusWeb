@@ -1,0 +1,237 @@
+--- PAGE 1 ---
+EventiaEasy — résultats des tests du 5 novembre 2026
+1
+EventiaEasy — Rapport comparatif des
+tests
+Application :
+ https://eventiaeasy.vercel.app/
+Nouveau contrôle :
+ 5 novembre 2026
+Référence de comparaison :
+ contrôle du 31 octobre 2026
+Résultat
+Plusieurs corrections sont confirmées : navigation entre événements, compteurs, accès direct à
+l'inscription, menu mobile et noms des boutons contrôlés. Les imports Excel et CSV, les réponses RSVP, les
+limites d'entrée et le placement à table fonctionnent dans les scénarios testés.
+Deux points déjà signalés restent présents : la session ne se restaure pas correctement, et la récupération
+de mot de passe n'est pas proposée sur l'écran de connexion. Un blocage supplémentaire a été constaté
+lors de la récupération du lien d'une nouvelle invitation générée dans un événement en brouillon. Il ne
+concerne pas tous les liens : celui d'une invitation déjà envoyée dans l'événement publié contrôlé
+fonctionne.
+Les essais ont été réalisés avec Chromium automatisé sur ordinateur et en affichages mobiles simulés à
+390 et 320 pixels. Les opérations de gestion ont utilisé un nouvel événement isolé et des invités fictifs
+sans coordonnées. Aucun nouveau message WhatsApp ni email n'a été envoyé pendant cette reprise.
+Comparaison des huit constats précédents
+Référence
+Résultat au 5 novembre
+EE-01 — Session perdue au
+rechargement
+Persistant.
+ Le rechargement renvoie à la connexion. Pendant une autre
+opération, une expiration produit HTTP 401 puis un renouvellement refusé avec
+HTTP 404 et « Refresh token invalide ».
+EE-02 — Menu lié à l'ancien
+événement
+Corrigé sur les scénarios testés.
+ Les liens suivent le nouvel événement après
+création, puis le passage à l'événement publié et le retour à l'événement isolé.
+EE-03 — Compteurs non
+actualisés
+Corrigé sur les opérations testées.
+ Ajout, imports, création d'invitation,
+entrées et suppression mettent les compteurs à jour ; état final : trois invités, une
+invitation, deux personnes présentes.
+EE-04 — Notification « Galerie
+indisponible »
+Ancien défaut visible non reproduit.
+ La notification n'apparaît ni
+immédiatement ni 900 ms après rechargement ; le RSVP est préservé. L'appel de
+galerie vide répond encore HTTP 404 : comportement API à clarifier.
+EE-05 — Inscription ouvrant la
+connexion
+Corrigé.
+ « Commencer gratuitement » et « Créer mon espace » ouvrent
+directement le formulaire d'inscription avec 
+mode=register
+.
+EE-06 — Mot de passe oublié
+absent
+Persistant sur l'écran testé.
+ Aucun lien ou bouton de récupération visible ;
+une éventuelle procédure de support externe n'a pas été vérifiée.
+EE-07 — Navigation mobile
+absente
+Corrigé aux deux largeurs testées.
+ Le menu s'ouvre et permet d'atteindre les
+sections, la connexion et l'inscription.
+EE-08 — Noms techniques des
+boutons
+Corrigé pour les boutons vérifiés.
+ Le thème et l'affichage du mot de passe
+ont des noms français adaptés à l'état. Certains noms de champs exposent
+encore des icônes décoratives ; l'accessibilité complète n'est pas validée.
+
+--- PAGE 2 ---
+EventiaEasy — résultats des tests du 5 novembre 2026
+2
+Défauts restant à traiter
+Priorité élevée — Restauration et renouvellement de session
+Après connexion, le rechargement du tableau de bord redirige vers 
+/login?redirect=/dashboard
+. Une
+expiration pendant un contrôle a également provoqué une réponse HTTP 401, suivie d'un appel à
+/auth/refresh
+ refusé avec HTTP 404 et le corps 
+« Refresh token invalide »
+. L'utilisateur doit se
+reconnecter.
+Cette réponse applicative montre que le point de renouvellement est traité : 
+il ne faut pas conclure que
+sa route est absente à partir du code 404
+. La cause précise du jeton invalide, de son absence ou de
+sa transmission reste à déterminer. Vérifier la restauration de session, l'émission et la transmission du
+jeton, puis le renouvellement après expiration.
+La première tentative CSV touchée par cet incident n'est pas une preuve de défaut du format CSV : le
+même contrôle a réussi après reconnexion.
+Priorité moyenne — Récupération du lien d'une nouvelle invitation
+Dans le nouvel événement 
+1000008
+, conservé en 
+brouillon
+, l'invitation 
+32
+ est au statut 
+GENERATED
+. Le
+bouton de récupération du lien ne fournit aucune URL publique et affiche :
+Lien introuvable pour cette invitation : le serveur n'a renvoyé aucune URL publique. Vérifiez la
+configuration du backend (URL publique du front) puis réessayez.
+L'appel QR répond HTTP 200 mais renvoie uniquement le champ 
+qrDataUri
+. L'aperçu QR fonctionne. Pour
+poursuivre le contrôle, le QR de notre invitation a été décodé localement et son lien a été ouvert : 
+le RSVP
+a donc été validé par ce parcours alternatif, pas par un partage de lien réussi depuis ce
+bouton
+.
+À l'inverse, la récupération du lien de l'invitation 
+31
+, déjà envoyée dans l'événement 
+1000007 publié
+,
+fonctionne. Le périmètre établi est ce cas de nouvelle invitation dans un brouillon ; il n'est pas démontré
+que le statut brouillon soit la cause. Vérifier le contrat de réponse attendu entre le bouton et le backend.
+Autres points
+La récupération de mot de passe reste à ajouter ou à rendre accessible depuis la connexion. Pour une
+galerie facultative vide, le défaut de notification n'est plus reproduit, mais le HTTP 404 doit être distingué
+explicitement d'une panne du service. Les noms de champs accessibles peuvent encore contenir « Email
+mail » ou « Mot de passe lock… » : masquer les icônes décoratives aux lecteurs d'écran.
+Parcours de gestion vérifiés
+Événement et invités.
+ Un formulaire d'événement vide ne dépasse pas l'étape Informations ; un
+mariage sans noms des mariés reste également bloqué à cette étape. Le nouvel événement isolé a été
+créé. Un invité manuel a été ajouté et modifié ; sa catégorie sélectionnée est retrouvée après sauvegarde.
+La suppression de l'invité fictif TEST BETA a été vérifiée et le compteur a diminué.
+Imports et export.
+ L'import XLSX valide a ajouté deux invités sans erreur ; le CSV valide a ajouté un
+invité sans erreur après reconnexion. Un fichier sans prénom est rejeté ligne 2 avec « Le prénom est
+requis » ; un nombre négatif d'accompagnants est rejeté avec le message correspondant. Aucune de ces
+lignes invalides n'apparaît dans la liste ou l'export. Le bilan applicatif affiche correctement les erreurs
+même lorsque la réponse HTTP est 200.
+L'export rempli est un véritable classeur XLSX lisible : quatre invités avant la suppression de TEST BETA,
+identifiants uniques, valeurs numériques entières préservées, champ actif booléen et catégorie
+correctement restituée. Le lecteur local signale seulement l'absence d'un style par défaut ; les données
+
+--- PAGE 3 ---
+EventiaEasy — résultats des tests du 5 novembre 2026
+3
+restent lisibles et cohérentes.
+Invitation et RSVP.
+ Une invitation a été générée, son compteur actualisé et son QR affiché. Après accès
+par le lien décodé du QR, un refus a été enregistré, puis modifié en acceptation pour deux personnes.
+L'organisateur retrouve l'acceptation, les deux personnes et le message saisi. Le bouton d'augmentation
+est désactivé au plafond autorisé de deux personnes.
+Tables et entrées.
+ Une table d'une place bloque correctement l'affectation d'un groupe de deux. Après
+sauvegarde effective de sa capacité à deux places, ce même groupe est placé : table pleine, occupation
+100 %. Une lecture intermédiaire faite avant la fin du chargement n'a pas été retenue comme un défaut
+de sauvegarde.
+La recherche d'invitation et les deux validations unitaires d'entrée fonctionnent. À deux entrées, il reste
+zéro place et aucun bouton ne permet d'en valider une troisième. Un code invalide affiche « Invitation
+introuvable ». La table affectée apparaît dans le suivi des entrées.
+Pages publiques et mobile
+Les quatre ancres de l'accueil fonctionnent sur ordinateur. Le thème change effectivement les couleurs et
+conserve le choix après rechargement. Les champs requis et l'email mal formé sont contrôlés localement ;
+à l'inscription, des mots de passe différents sont signalés et bloquent la soumission, et un mot de passe de
+cinq caractères est invalidé pour un minimum de huit.
+Aucun débordement du document n'a été constaté sur l'accueil, la connexion, l'inscription et la gestion des
+invités aux largeurs vérifiées. Les quatorze contrôles publics se sont terminés sans exception JavaScript,
+erreur HTTP ou requête de mutation observée. Ces résultats ne constituent pas une validation de chaque
+composant ni un audit complet d'accessibilité.
+Données conservées et limites
+Le brouillon 
+TEST QA — contrôles du 05-11-2026
+, identifiant 
+1000008
+, est conservé avec trois invités
+fictifs sans email ni téléphone, une catégorie, une invitation acceptée pour deux personnes, une table de
+deux places pleine et deux personnes enregistrées à l'entrée. Les événements préexistants ont été
+consultés pour comparer la navigation et un lien déjà envoyé ; leurs données n'ont pas été modifiées.
+La livraison WhatsApp réussie et confirmée par le propriétaire plus tôt le 5 novembre appartient au
+contrôle précédent. Aucun nouvel envoi externe n'a été déclenché pendant les tests de ce rapport. Aucun
+code de l'application n'a été modifié.
+Restent non validés : rôles et isolation entre organisations, charge, concurrence entre appareils, réseau
+hors ligne, caméra physique et navigateurs autres que Chromium. Les affichages mobiles ont été simulés ;
+l'inscription complète côté serveur n'a pas été testée. Le téléchargement d'invitation et la suppression
+complète d'un événement n'ont pas été contrôlés à nouveau dans cette reprise.
+Nouveau test WhatsApp — 5 novembre
+2026
+Résultat : envoi et livraison confirmés par le service.
+Élément
+Résultat
+Événement
+TEST QA — parcours application — 31-10-2026, identifiant 1000007
+Nouvel invité de test
+TEST WHATSAPP 05-11-2026, identifiant 79
+
+--- PAGE 4 ---
+EventiaEasy — résultats des tests du 5 novembre 2026
+4
+Élément
+Résultat
+Nouvelle invitation
+31
+Lot d'envoi
+53
+Nombre de destinataires
+1, au même numéro se terminant par 1745
+Envoyés
+1
+Livrés
+1
+Échecs
+0
+Ignorés
+0
+Journal individuel
+DELIVERED, aucun message d'erreur
+La photo de l'événement se charge dans l'aperçu. L'erreur 132012 observée le 31 octobre n'apparaît plus
+sur ce nouvel essai. La livraison a été confirmée dans les données de suivi du service puis dans l'interface,
+où la nouvelle invitation est affichée « Délivrée ». Cela confirme la livraison signalée par le service, pas la
+lecture du message par le destinataire.
+Limitation du réenvoi constatée
+L'ancienne invitation 29 était déjà affichée « Délivrée ». La tentative ciblée de réenvoi, avec resend=true,
+a été rejetée avant création de lot : HTTP 400, « Aucune invitation à envoyer pour ce critère ». Cette
+demande rejetée n'a pas constitué un nouvel envoi WhatsApp.
+Pour réaliser un test complet sans modifier l'ancienne invitation, un invité et une invitation clairement
+nommés pour le test ont été créés dans le même événement, au même numéro. Une seule demande
+d'envoi a été déclenchée pour cette nouvelle invitation, ciblant uniquement son identifiant 31. Les autres
+invités n'ont pas été sélectionnés.
+Le nouvel invité et son invitation sont conservés dans l'événement pour permettre la vérification.
+Preuves
+• Données du test : whatsapp-2026-11-05-resultat.json.
+• Capture de l'état « Délivrée » : whatsapp-2026-11-05-05-livraison-confirmee.png.
+• Rejet du réenvoi initial : whatsapp-2026-11-05-reenvoi-bloque.json.
+Aucun autre parcours de l'application n'a été validé à nouveau pendant cet essai.
+Ce document décrit les contrôles du 5 novembre 2026 et leur comparaison avec les tests du 31 octobre.
+Sa préparation ne constitue pas un nouveau test de l’application.

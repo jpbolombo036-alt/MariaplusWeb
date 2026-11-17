@@ -1,0 +1,13 @@
+unit: invitation-send
+side_effects:
+  - source_loc: src/views/event/SendInvitationsView.vue:408
+    effect: "Starts bulk invitation sending and retrieves batch status and notification logs."
+    must_preserve: true
+branches:
+  - source_loc: src/views/event/SendInvitationsView.vue:408
+    condition: "A bulk-send batch is in progress."
+    behavior: "Retrieve batch progress/log data for display."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

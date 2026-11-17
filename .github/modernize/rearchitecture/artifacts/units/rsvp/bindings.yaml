@@ -1,0 +1,15 @@
+unit: rsvp
+bindings:
+  - type: route-declaration
+    name: "GET /dashboard/events/:id/rsvp"
+    source_loc: src/router/index.ts:49
+    target: RsvpTab
+    must_appear_in_target: true
+    notes: "Event-scoped response list."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL for RSVP and guest reads."

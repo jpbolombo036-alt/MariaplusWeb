@@ -1,0 +1,15 @@
+unit: profile
+bindings:
+  - type: route-declaration
+    name: "GET /dashboard/profile"
+    source_loc: src/router/index.ts:62
+    target: ProfileView
+    must_appear_in_target: true
+    notes: "Authenticated account profile."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL for profile and avatar API requests."

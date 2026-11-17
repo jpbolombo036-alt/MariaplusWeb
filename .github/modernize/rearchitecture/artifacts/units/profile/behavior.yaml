@@ -1,0 +1,19 @@
+unit: profile
+side_effects:
+  - source_loc: src/views/ProfileView.vue:298
+    effect: "Updates the current user's profile and supports avatar upload/removal."
+    must_preserve: true
+  - source_loc: src/views/ProfileView.vue:356
+    effect: "Submits a password change request."
+    must_preserve: true
+  - source_loc: src/views/ProfileView.vue:377
+    effect: "Logs the user out and clears account-scoped state."
+    must_preserve: true
+branches:
+  - source_loc: src/views/ProfileView.vue:212
+    condition: "Avatar exists or user selects a new avatar."
+    behavior: "Load, crop/upload, or remove the avatar."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

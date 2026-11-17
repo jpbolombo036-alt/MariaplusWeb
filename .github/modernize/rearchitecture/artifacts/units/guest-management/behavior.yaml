@@ -1,0 +1,21 @@
+unit: guest-management
+side_effects:
+  - source_loc: src/views/event/GuestsTab.vue:260
+    effect: "Imports guest records from a user-selected file and reports import results."
+    must_preserve: true
+  - source_loc: src/api/guests.ts:136
+    effect: "Exports the event guest list as an XLSX blob."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:41
+    condition: "Route has no guest ID."
+    behavior: "Create a guest; with a guest ID, load and update that guest."
+    must_preserve: true
+error_paths:
+  - source_loc: src/api/guests.ts:155
+    trigger: "Guest import request fails."
+    outcome: "Reject the operation; do not treat the file as imported."
+    contract: "Import returns imported/skipped counts and row errors on success."
+    must_preserve: true
+concurrency:
+  model: async

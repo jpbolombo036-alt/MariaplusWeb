@@ -1,0 +1,15 @@
+unit: landing
+bindings:
+  - type: route-declaration
+    name: "GET /"
+    source_loc: src/router/index.ts:22
+    target: LandingView
+    must_appear_in_target: true
+    notes: "Public lazy-loaded route."
+runtime_config:
+  - key: VITE_WHATSAPP_CONTACT
+    source_loc: src/api/config.ts:72
+    source: env
+    default_value: "Platform contact number in src/api/config.ts"
+    must_appear_in_target: true
+    notes: "Controls the public contact link."

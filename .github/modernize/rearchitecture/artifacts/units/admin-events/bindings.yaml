@@ -1,0 +1,15 @@
+unit: admin-events
+bindings:
+  - type: route-declaration
+    name: "GET /dashboard/admin/events"
+    source_loc: src/router/index.ts:74
+    target: AdminEventsView
+    must_appear_in_target: true
+    notes: "Child route of the SUPER_ADMIN admin shell."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL for event and organization administration APIs."

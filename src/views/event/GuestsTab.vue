@@ -48,6 +48,11 @@
 
     <p v-if="loading" class="text-slate-400 py-6 text-center text-sm">Chargement…</p>
 
+    <div v-else-if="loadError" role="alert" class="bg-white border border-red-200 rounded-xl p-5 text-sm text-red-700">
+      <p>{{ loadError }}</p>
+      <button type="button" class="mt-3 font-semibold underline" @click="load">Réessayer</button>
+    </div>
+
     <!-- État vide -->
     <div v-else-if="guests.length === 0" class="bg-white border border-slate-200 rounded-xl py-14 text-center">
       <div class="w-14 h-14 mx-auto rounded-lg bg-slate-50 grid place-items-center mb-4 ring-1 ring-slate-100">
@@ -94,7 +99,7 @@
     </div>
 
     <!-- Mobile : cartes -->
-    <div v-if="!loading && guests.length > 0" class="md:hidden space-y-3">
+    <div v-if="!loading && !loadError && guests.length > 0" class="md:hidden space-y-3">
       <div
         v-for="g in guests"
         :key="g.id"
@@ -139,7 +144,7 @@
     </div>
 
     <!-- Pagination serveur (indispensable au-delà de quelques centaines d'invités) -->
-    <div v-if="!loading && totalPages > 1" class="flex items-center justify-between gap-3 mt-5 bg-white border border-slate-200 rounded-xl px-5 py-3.5 shadow-sm">
+    <div v-if="!loading && !loadError && totalPages > 1" class="flex items-center justify-between gap-3 mt-5 bg-white border border-slate-200 rounded-xl px-5 py-3.5 shadow-sm">
       <button
         :disabled="currentPage === 0"
         class="h-9 px-4 rounded-lg border border-slate-200 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -182,7 +187,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { apiErrorMessage } from '../../api/http'
 import { useRoute } from 'vue-router'
 import { listGuestsPage, deleteGuest, listCategories, exportGuestsExcel, importGuestsExcel, type Guest, type GuestCategory, type GuestImportResult } from '../../api/guests'
 import PermGuard from '../../components/common/PermGuard.vue'
@@ -193,6 +199,8 @@ const guests = ref<Guest[]>([])
 const categories = ref<GuestCategory[]>([])
 const loading = ref(true)
 const query = ref('')
+const loadError = ref('')
+let loadRevision = 0
 
 // Pagination serveur : à 10k invités on ne charge jamais la table entière.
 const PAGE_SIZE = 50
@@ -203,6 +211,9 @@ let searchTimer: number | undefined
 
 // Recherche serveur debouncée (350 ms) — le backend filtre en SQL.
 watch(query, () => {
+  loadRevision++
+  loading.value = true
+  loadError.value = ''
   window.clearTimeout(searchTimer)
   searchTimer = window.setTimeout(() => {
     currentPage.value = 0
@@ -215,19 +226,30 @@ const initials = (g: Guest) => `${g.firstName.charAt(0)}${g.lastName.charAt(0)}`
 const categoryLabel = (cid?: number | null) => categories.value.find((c) => c.id === cid)?.name
 
 onMounted(load)
+onBeforeUnmount(() => {
+  loadRevision++
+  window.clearTimeout(searchTimer)
+})
 async function load() {
+  window.clearTimeout(searchTimer)
+  const revision = ++loadRevision
+  loading.value = true
+  loadError.value = ''
   try {
     const [p, c] = await Promise.all([
       listGuestsPage(id, { page: currentPage.value, size: PAGE_SIZE, search: query.value }),
       categories.value.length ? Promise.resolve(categories.value) : listCategories(id),
     ])
+    if (revision !== loadRevision) return
     guests.value = p.content
     currentPage.value = p.currentPage
     totalPages.value = p.totalPages
     totalElements.value = p.totalElements
     categories.value = c
+  } catch (error) {
+    if (revision === loadRevision) loadError.value = apiErrorMessage(error)
   } finally {
-    loading.value = false
+    if (revision === loadRevision) loading.value = false
   }
 }
 

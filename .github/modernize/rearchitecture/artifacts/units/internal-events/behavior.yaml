@@ -1,0 +1,13 @@
+unit: internal-events
+side_effects:
+  - source_loc: src/views/event/WeddingEventsTab.vue:149
+    effect: "Loads the event schedule and supports removal of schedule entries."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:57
+    condition: "Route selects the schedule create form."
+    behavior: "Create a schedule entry for the route event."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

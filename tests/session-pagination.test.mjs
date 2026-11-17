@@ -596,6 +596,7 @@ describe('Refresh requests across account boundaries', () => {
     axios.defaults.adapter = async (config) => {
       assert.ok(config.url.endsWith('/auth/refresh'))
       assert.equal(config.headers['X-Client-Platform'], 'web')
+      assert.equal(config.timeout, 30000)
       refreshCalls++
       refreshStarted.resolve()
       await refresh.promise
@@ -623,6 +624,19 @@ describe('Refresh requests across account boundaries', () => {
       { url: '/test/two', authorization: 'Bearer renewed-test-token' },
     ])
   })
+})
+
+test('a refresh timeout rejects waiting requests and expires the session', async () => {
+  seedAccount()
+  let expirations = 0
+  window.addEventListener('mp:session-expired', () => { expirations++ })
+  axios.defaults.adapter = async (config) => {
+    assert.equal(config.timeout, 30000)
+    throw new AxiosError('timeout of 30000ms exceeded', 'ECONNABORTED', config)
+  }
+  mockHttp((config) => { throw unauthorized(config) })
+  await assert.rejects(http.get('/test/timeout'), { code: 'ECONNABORTED' })
+  assert.equal(expirations, 1)
 })
 
 describe('Concurrent cached requests', () => {
@@ -759,4 +773,23 @@ describe('Concurrent cached requests', () => {
     assert.deepEqual(secondStore.weddings.map((record) => record.id), [202])
     assert.equal(calls, 2)
   })
+})
+
+test('the event template survives create, update and public invitation contracts', async () => {
+  const { createEvent, updateEvent, parseEvent } = await import('../src/api/events.ts')
+  const { getPublicInvitation } = await import('../src/api/publicInvitation.ts')
+  const { resolveCardTemplate } = await import('../src/models/invitationCard.ts')
+  assert.equal(resolveCardTemplate('UNKNOWN'), 'STANDARD')
+  assert.equal(parseEvent({ id: 8 }).invitationCardTemplate, 'STANDARD')
+  const writes = []
+  mockHttp((config) => {
+    if (config.method === 'get') return { status: 'SENT', invitationCardTemplate: 'ROMANCE' }
+    const body = JSON.parse(config.data)
+    writes.push(body.invitationCardTemplate)
+    return { id: 8, ...body }
+  })
+  assert.equal((await createEvent({ name: 'Reception', type: 'OTHER', invitationCardTemplate: 'PRESTIGE' })).invitationCardTemplate, 'PRESTIGE')
+  assert.equal((await updateEvent(8, { invitationCardTemplate: 'ROMANCE' })).invitationCardTemplate, 'ROMANCE')
+  assert.equal((await getPublicInvitation('public-template-token')).invitationCardTemplate, 'ROMANCE')
+  assert.deepEqual(writes, ['PRESTIGE', 'ROMANCE'])
 })

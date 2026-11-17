@@ -1,0 +1,15 @@
+unit: checkin
+bindings:
+  - type: route-declaration
+    name: "GET /dashboard/events/:id/checkin"
+    source_loc: src/router/index.ts:50
+    target: CheckinTab
+    must_appear_in_target: true
+    notes: "Organizer event check-in screen."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL for check-in API requests."

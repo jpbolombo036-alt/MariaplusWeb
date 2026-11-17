@@ -1,0 +1,21 @@
+unit: checkin
+side_effects:
+  - source_loc: src/views/event/CheckinTab.vue:435
+    effect: "Creates a check-in for the scanned QR token and attendee count."
+    must_preserve: true
+  - source_loc: src/views/event/CheckinTab.vue:282
+    effect: "Loads the current list of present guests."
+    must_preserve: true
+branches:
+  - source_loc: src/views/event/CheckinTab.vue:144
+    condition: "Scan result says canCheckIn is false."
+    behavior: "Do not create a check-in for that scan."
+    must_preserve: true
+error_paths:
+  - source_loc: src/api/checkin.ts:86
+    trigger: "Check-in API rejects the QR token or attendee count."
+    outcome: "Keep the check-in unsuccessful and surface the API failure."
+    contract: "Check-in result is returned only on success."
+    must_preserve: true
+concurrency:
+  model: async

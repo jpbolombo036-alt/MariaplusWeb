@@ -1,0 +1,13 @@
+unit: admin-events
+side_effects:
+  - source_loc: src/views/admin/AdminEventsView.vue:116
+    effect: "Loads events and organizations for administration and filtering."
+    must_preserve: true
+branches:
+  - source_loc: src/views/admin/AdminEventsView.vue:137
+    condition: "Organization filter changes."
+    behavior: "Apply the new organization filter to the event list."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

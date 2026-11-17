@@ -70,6 +70,7 @@ export interface RsvpPayload {
 
 interface FixtureOptions {
   invitation?: Partial<PublicInvitation>
+  invitationRefreshHttpStatus?: number
   invitationHttpStatus?: number
   cardUploadHttpStatus?: number
 }
@@ -103,9 +104,10 @@ export async function mockPublicInvitation(page: Page, options: FixtureOptions =
     }
     if (url.pathname === prefix && request.method() === 'GET') {
       invitationReads++
-      await fulfillJson(route, options.invitationHttpStatus
-        ? { error: 'Invitation indisponible' }
-        : invitation, options.invitationHttpStatus ?? 200)
+      const status = invitationReads > 1 && rsvps.length
+        ? options.invitationRefreshHttpStatus ?? options.invitationHttpStatus
+        : options.invitationHttpStatus
+      await fulfillJson(route, status && status >= 400 ? { error: 'Invitation indisponible' } : invitation, status || 200)
       return true
     }
     if (url.pathname === `${prefix}/drinks` && request.method() === 'GET') {
@@ -140,5 +142,5 @@ export async function mockPublicInvitation(page: Page, options: FixtureOptions =
     return false
   })
 
-  return { ...traffic, rsvps, uploads, apiRequests, pageErrors, get invitationReads() { return invitationReads } }
+  return { ...traffic, invitation, rsvps, uploads, apiRequests, pageErrors, get invitationReads() { return invitationReads } }
 }

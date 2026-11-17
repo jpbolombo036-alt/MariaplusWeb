@@ -1,0 +1,113 @@
+contracts:
+  - name: Authentication session
+    unit: login
+    type: rest
+    stability: must_preserve
+    source_loc: src/api/config.ts:37
+    contract:
+      method: "POST /auth/login, /auth/register, /auth/refresh, /auth/logout; GET /auth/me"
+      path: "/auth/*"
+      request: "JSON login/register payloads; refresh/logout use cookie-backed session"
+      response: "LoginResponse/access token and AuthUser; refresh returns a new access token"
+      error: "HTTP errors; login/register errors are displayed by the screen without global toast"
+      auth: "HttpOnly mp_refresh cookie for refresh; access token held in browser memory"
+    target_contract:
+      method: "Keep the current authentication endpoint paths, JSON shapes, and cookie behavior."
+      notes: "No backend source or target framework is included in this repository."
+    semantic_divergence: []
+  - name: Event resources
+    unit: event-list
+    type: rest
+    stability: must_preserve
+    source_loc: src/api/config.ts:44
+    contract:
+      method: "GET/POST /api/events; GET/PUT/PATCH/DELETE /api/events/{id}[...]"
+      path: "/api/events"
+      request: "Event JSON and paging/filter query parameters"
+      response: "Event resource or paged event collection"
+      error: "HTTP error response surfaced through API helpers/toasts"
+      auth: "Bearer access token; X-Client-Platform: web"
+    target_contract:
+      method: "Retain the event resource paths, request/response field names, and paging semantics."
+      notes: "The frontend treats event resources as the root for wedding-specific screens."
+    semantic_divergence: []
+  - name: Event guest and category resources
+    unit: guest-management
+    type: rest
+    stability: must_preserve
+    source_loc: src/api/config.ts:45
+    contract:
+      method: "GET/POST /api/events/{id}/guests; PUT/DELETE /api/events/{id}/guests/{guestId}; GET/POST /api/events/{id}/guest-categories"
+      path: "/api/events/{id}/guests and /guest-categories"
+      request: "Guest/category JSON; guest import uses multipart file; export returns XLSX"
+      response: "Guest/category resources and paged guest collection"
+      error: "HTTP errors; validation and import row results are handled by the screens"
+      auth: "Bearer access token; permission-aware UI"
+    target_contract:
+      method: "Preserve the current event-scoped guest/category API shape and import/export formats."
+      notes: "Category endpoints are configured in src/api/config.ts alongside guest paths."
+    semantic_divergence: []
+  - name: Invitation and RSVP resources
+    unit: invitation-management
+    type: rest
+    stability: must_preserve
+    source_loc: src/api/config.ts:47
+    contract:
+      method: "Invitation CRUD and delivery APIs under /api/events/{id}/invitations; GET /api/events/{id}/rsvps"
+      path: "/api/events/{id}/invitations"
+      request: "Invitation JSON, batch-send options, RSVP status/attendee/drink payload"
+      response: "Invitation, send batch/log, and RSVP resource shapes"
+      error: "HTTP errors; invitation delivery can report individual/batch outcomes"
+      auth: "Bearer access token; public RSVP is token-addressed without requiring app login"
+    target_contract:
+      method: "Preserve invitation, RSVP, public-token, and bulk-delivery HTTP contracts."
+      notes: "Paths and DTOs are consumed by separate organizer and guest-facing screens."
+    semantic_divergence: []
+  - name: Public invitation
+    unit: public-invitation
+    type: rest
+    stability: frozen
+    source_loc: src/api/config.ts:59
+    contract:
+      method: "GET /api/public/invitations/{token}; POST .../{token}/rsvp; GET .../{token}/drinks; POST .../{token}/card"
+      path: "/api/public/invitations/{token}"
+      request: "Opaque invitation token; RSVP JSON or multipart PNG card upload"
+      response: "PublicInvitation, PublicRsvp, drink list, or card resource"
+      error: "Unavailable/expired invitation is presented as an unavailable state"
+      auth: "Public invitation token"
+    target_contract:
+      method: "Keep the token URL and public invitation/RSVP request and response shapes unchanged."
+      notes: "This guest-facing link is sent externally and is a user-visible wire contract."
+    semantic_divergence: []
+  - name: Check-in
+    unit: checkin
+    type: rest
+    stability: must_preserve
+    source_loc: src/api/config.ts:55
+    contract:
+      method: "POST /api/checkins/scan; POST /api/checkins; DELETE /api/checkins/{id}; GET /api/checkins/event/{eventId}[...]"
+      path: "/api/checkins"
+      request: "QR token, event ID (backend request field weddingId), and attendee count"
+      response: "Scan eligibility, check-in result, present guests, and search results"
+      error: "HTTP errors; non-eligible scan does not create a check-in"
+      auth: "Bearer access token for staff pages"
+    target_contract:
+      method: "Preserve check-in endpoint paths and the request field names consumed by the client."
+      notes: "The client explicitly sends weddingId for the event identifier."
+    semantic_divergence: []
+  - name: Organization and administration
+    unit: admin-users
+    type: rest
+    stability: must_preserve
+    source_loc: src/api/config.ts:61
+    contract:
+      method: "REST resources under /api/users, /api/organizations, /api/roles, /api/permissions, and /api/admin"
+      path: "/api/users and /api/organizations"
+      request: "User/organization JSON, membership/settings updates, and multipart image uploads where applicable"
+      response: "Paged user, organization, and member resources"
+      error: "HTTP errors; admin route is limited in UI to SUPER_ADMIN"
+      auth: "Bearer access token; backend remains authoritative for authorization"
+    target_contract:
+      method: "Keep existing admin API resource paths and response DTOs."
+      notes: "No server or schema definitions are present in this repository."
+    semantic_divergence: []

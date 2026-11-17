@@ -1,0 +1,13 @@
+unit: statistics
+side_effects:
+  - source_loc: src/views/event/StatisticsTab.vue:50
+    effect: "Loads event dashboard statistics for display."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:58
+    condition: "Route selects statistics for an event."
+    behavior: "Request statistics scoped to the route event."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

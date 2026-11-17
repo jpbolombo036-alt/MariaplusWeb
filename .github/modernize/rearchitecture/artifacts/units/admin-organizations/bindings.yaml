@@ -1,0 +1,15 @@
+unit: admin-organizations
+bindings:
+  - type: route-declaration
+    name: "GET /dashboard/admin/organizations"
+    source_loc: src/router/index.ts:73
+    target: AdminOrganizationsView
+    must_appear_in_target: true
+    notes: "Child route of the SUPER_ADMIN admin shell."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL for organization administration APIs."

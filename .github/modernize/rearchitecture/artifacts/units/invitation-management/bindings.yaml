@@ -1,0 +1,15 @@
+unit: invitation-management
+bindings:
+  - type: route-declaration
+    name: "GET /dashboard/events/:id/invitations and /new"
+    source_loc: src/router/index.ts:46
+    target: InvitationsTab and InvitationsForm
+    must_appear_in_target: true
+    notes: "Invitation creation is a separate nested route."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL for invitations, guest, and table API requests."

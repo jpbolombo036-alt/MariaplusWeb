@@ -214,6 +214,7 @@
 
         <!-- ============ ÉTAPE 2 : VISUELS ============ -->
         <div v-else-if="step === 2" class="space-y-6">
+          <InvitationTemplatePicker v-model="form.invitationCardTemplate" :preview="cardPreviewData(form)" :photo-url="photoState.couple.preview || coverPreview" :disabled="loading" />
           <div>
             <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Photo de couverture <span class="text-slate-400 normal-case font-medium">(16:9 — bannière, invitation, WhatsApp)</span></span>
             <div class="flex items-center gap-4">
@@ -352,6 +353,8 @@
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createEvent, uploadEventDressImage, uploadEventPhoto, uploadEventImage, type EventPhotoKind } from '../../api/events'
+import InvitationTemplatePicker from '../../components/events/InvitationTemplatePicker.vue'
+import { cardPreviewData, type InvitationCardTemplate } from '../../models/invitationCard'
 import DressCodeField from '../../components/events/DressCodeField.vue'
 import { createWeddingEvent } from '../../api/weddingEvents'
 import ImageCropModal from '../../components/common/ImageCropModal.vue'
@@ -473,6 +476,7 @@ async function submitCreate() {
   error.value = ''
   try {
     const payload: Record<string, unknown> = {
+      invitationCardTemplate: form.invitationCardTemplate,
       name: form.name,
       type: form.type,
       description: form.description || null,
@@ -500,6 +504,9 @@ async function submitCreate() {
       payload.organizationId = auth.user.organizationId
     }
     const created = await createEvent(payload)
+    if (created.invitationCardTemplate !== form.invitationCardTemplate) {
+      notifications.push('L’événement est créé, mais le modèle choisi n’a pas été enregistré. Vous pouvez le modifier dans les réglages de l’événement.', 'info', 12000)
+    }
 
     const tasks: EventSetupTask[] = []
     const cover = coverFile.value
@@ -572,6 +579,7 @@ function next() {
 
 /* ---------- Formulaire (identique à WeddingForm) ---------- */
 const form = reactive({
+  invitationCardTemplate: 'STANDARD' as InvitationCardTemplate,
   name: '',
   type: 'WEDDING',
   description: '',

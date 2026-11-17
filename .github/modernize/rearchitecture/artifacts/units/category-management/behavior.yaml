@@ -1,0 +1,13 @@
+unit: category-management
+side_effects:
+  - source_loc: src/views/event/CategoriesTab.vue:101
+    effect: "Deletes a selected event guest category."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:44
+    condition: "Route has no category ID."
+    behavior: "Create a category; with a category ID, load and update that category."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

@@ -1,0 +1,145 @@
+--- a/src/main/java/com/mariageplus/dto/event/CreateEventRequest.java
++++ b/src/main/java/com/mariageplus/dto/event/CreateEventRequest.java
+@@ -37,6 +37,9 @@
+ 
+     @Size(max = 2000, message = "Le message d'invitation ne doit pas dépasser 2000 caractères")
+     private String message;
++
++    @Pattern(regexp = "STANDARD|ROMANCE|PRESTIGE", message = "Modèle de carte invalide")
++    private String invitationCardTemplate;
+ 
+     private LocalDate eventDate;
+ 
+--- a/src/main/java/com/mariageplus/dto/event/UpdateEventRequest.java
++++ b/src/main/java/com/mariageplus/dto/event/UpdateEventRequest.java
+@@ -26,6 +26,9 @@
+ 
+     @Size(max = 2000, message = "Le message d'invitation ne doit pas dépasser 2000 caractères")
+     private String message;
++
++    @Pattern(regexp = "STANDARD|ROMANCE|PRESTIGE", message = "Modèle de carte invalide")
++    private String invitationCardTemplate;
+ 
+     private LocalDate eventDate;
+ 
+--- a/src/main/java/com/mariageplus/dto/event/EventResponse.java
++++ b/src/main/java/com/mariageplus/dto/event/EventResponse.java
+@@ -19,6 +19,8 @@
+     private String type;
+     private String description;
+     private String message;
++    private String invitationCardTemplate;
++
+     private LocalDate eventDate;
+     private LocalTime startTime;
+     private LocalTime endTime;
+--- a/src/main/java/com/mariageplus/dto/invitation/PublicInvitationResponse.java
++++ b/src/main/java/com/mariageplus/dto/invitation/PublicInvitationResponse.java
+@@ -14,6 +14,8 @@
+ @NoArgsConstructor
+ @AllArgsConstructor
+ public class PublicInvitationResponse {
++
++    private String invitationCardTemplate;
+ 
+     private String guestFirstName;
+     private String guestLastName;
+--- a/src/main/java/com/mariageplus/entity/Event.java
++++ b/src/main/java/com/mariageplus/entity/Event.java
+@@ -42,6 +42,10 @@
+     /** Petit mot personnalisé de l'organisateur, affiché dans l'email et la page invité. */
+     @Column(length = 2000)
+     private String message;
++
++    @Builder.Default
++    @Column(name = "invitation_card_template", nullable = false, length = 20)
++    private String invitationCardTemplate = "STANDARD";
+ 
+     @Column(name = "event_date")
+     private java.time.LocalDate eventDate;
+--- a/src/main/java/com/mariageplus/service/EventService.java
++++ b/src/main/java/com/mariageplus/service/EventService.java
+@@ -76,6 +76,7 @@
+                 .name(request.getName())
+                 .type(request.getType())
+                 .description(request.getDescription())
++                .invitationCardTemplate(request.getInvitationCardTemplate() == null ? "STANDARD" : request.getInvitationCardTemplate())
+                 .message(request.getMessage())
+                 .eventDate(request.getEventDate())
+                 .startTime(request.getStartTime())
+@@ -571,6 +572,7 @@
+     }
+ 
+     private void applyUpdate(Event event, UpdateEventRequest request) {
++        if (request.getInvitationCardTemplate() != null) event.setInvitationCardTemplate(request.getInvitationCardTemplate());
+         if (request.getName() != null) event.setName(request.getName());
+         if (request.getDescription() != null) event.setDescription(request.getDescription());
+         if (request.getMessage() != null) event.setMessage(request.getMessage());
+--- a/src/main/java/com/mariageplus/service/RsvpService.java
++++ b/src/main/java/com/mariageplus/service/RsvpService.java
+@@ -167,6 +167,7 @@
+                 : (details != null ? details.getDisplayName() : null);
+ 
+         return PublicInvitationResponse.builder()
++                .invitationCardTemplate(event != null && event.getInvitationCardTemplate() != null ? event.getInvitationCardTemplate() : "STANDARD")
+                 .guestFirstName(guest != null ? guest.getFirstName() : null)
+                 .guestLastName(guest != null ? guest.getLastName() : null)
+                 .weddingDisplayName(displayName)
+--- a/src/main/resources/db/migration/V49__invitation_card_template.sql
++++ b/src/main/resources/db/migration/V49__invitation_card_template.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE events ADD COLUMN invitation_card_template VARCHAR(20) NOT NULL DEFAULT 'STANDARD';
++ALTER TABLE events ADD CONSTRAINT chk_event_invitation_card_template CHECK (invitation_card_template IN ('STANDARD', 'ROMANCE', 'PRESTIGE'));
+--- a/src/test/java/com/mariageplus/service/RsvpServiceTest.java
++++ b/src/test/java/com/mariageplus/service/RsvpServiceTest.java
+@@ -67,6 +67,20 @@
+     }
+ 
+     @Test
++    void publicInvitation_exposesEventCardTemplate() {
++        stubGuestAndInvitation();
++        when(eventRepository.findById(1L)).thenReturn(Optional.of(Event.builder()
++                .name("Reception").invitationCardTemplate("PRESTIGE").build()));
++        assertEquals("PRESTIGE", rsvpService.getPublicInvitation("tok").getInvitationCardTemplate());
++    }
++
++    @Test
++    void publicInvitation_usesStandardForMissingEvent() {
++        stubGuestAndInvitation();
++        assertEquals("STANDARD", rsvpService.getPublicInvitation("tok").getInvitationCardTemplate());
++    }
++
++    @Test
+     void getPublicPage_mapsWeddingData_andCapacity() {
+         when(invitationService.resolvePublicInvitation("tok")).thenReturn(invitation);
+         when(guestRepository.findById(7L)).thenReturn(Optional.of(guest));
+--- a/src/test/java/com/mariageplus/dto/InvitationCardTemplateTest.java
++++ b/src/test/java/com/mariageplus/dto/InvitationCardTemplateTest.java
+@@ -0,0 +1,27 @@
++package com.mariageplus.dto;
++
++import com.mariageplus.dto.event.UpdateEventRequest;
++import com.mariageplus.dto.event.CreateEventRequest;
++import jakarta.validation.Validation;
++import org.junit.jupiter.api.Test;
++import static org.junit.jupiter.api.Assertions.*;
++
++class InvitationCardTemplateTest {
++    @Test
++    void validatesTemplateWithoutBreakingPartialUpdates() {
++        try (var factory = Validation.buildDefaultValidatorFactory()) {
++            var validator = factory.getValidator();
++            var request = new UpdateEventRequest();
++            assertTrue(validator.validateProperty(request, "invitationCardTemplate").isEmpty());
++            for (String template : new String[]{"STANDARD", "ROMANCE", "PRESTIGE"}) {
++                request.setInvitationCardTemplate(template);
++                assertTrue(validator.validateProperty(request, "invitationCardTemplate").isEmpty());
++            }
++            request.setInvitationCardTemplate("UNKNOWN");
++            assertFalse(validator.validateProperty(request, "invitationCardTemplate").isEmpty());
++            var creation = new CreateEventRequest();
++            creation.setInvitationCardTemplate("UNKNOWN");
++            assertFalse(validator.validateProperty(creation, "invitationCardTemplate").isEmpty());
++        }
++    }
++}

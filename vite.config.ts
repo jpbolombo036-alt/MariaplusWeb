@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 3000,
+      // Reports and exported cards are not application source; Windows may lock them while writing.
+      watch: { ignored: ['**/output/**', '**/docs/**', '**/test-results/**', '**/playwright-report/**', '**/design-qa.md'] },
       proxy: {
         '/auth': { target, changeOrigin: true },
         '/api': { target, changeOrigin: true },

@@ -1,0 +1,16 @@
+unit: table-management
+side_effects:
+  - source_loc: src/views/event/TablesTab.vue:227
+    effect: "Loads event tables, guests, and table assignments."
+    must_preserve: true
+  - source_loc: src/views/event/TablesTab.vue:271
+    effect: "Moves a guest assignment between tables."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:52
+    condition: "Route is table creation or includes a table ID."
+    behavior: "Create a table or load/update the identified table."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

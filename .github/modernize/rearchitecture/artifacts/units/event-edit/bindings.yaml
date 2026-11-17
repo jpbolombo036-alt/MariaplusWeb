@@ -1,0 +1,15 @@
+unit: event-edit
+bindings:
+  - type: route-declaration
+    name: "GET /dashboard/events/:id/edit"
+    source_loc: src/router/index.ts:61
+    target: EventEditForm
+    must_appear_in_target: true
+    notes: "Route parameter identifies the event."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL used for event reads, updates, and image uploads."

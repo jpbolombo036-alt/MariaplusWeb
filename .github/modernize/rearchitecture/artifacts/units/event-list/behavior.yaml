@@ -1,0 +1,16 @@
+unit: event-list
+side_effects:
+  - source_loc: src/views/EventsView.vue:148
+    effect: "Loads all events and their display images for the event list."
+    must_preserve: true
+  - source_loc: src/stores/wedding.ts:45
+    effect: "Persists the selected event ID in sessionStorage."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:90
+    condition: "The route is not public and no session is authenticated."
+    behavior: "Redirect to login."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

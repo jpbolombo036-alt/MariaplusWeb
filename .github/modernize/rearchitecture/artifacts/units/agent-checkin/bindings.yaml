@@ -1,0 +1,15 @@
+unit: agent-checkin
+bindings:
+  - type: route-declaration
+    name: "GET /agent/checkin/:id"
+    source_loc: src/router/index.ts:82
+    target: AgentCheckinView
+    must_appear_in_target: true
+    notes: "Agent-facing check-in route; router requires an authenticated session."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL for check-in and invitation-card API requests."

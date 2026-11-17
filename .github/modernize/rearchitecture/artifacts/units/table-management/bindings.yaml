@@ -1,0 +1,15 @@
+unit: table-management
+bindings:
+  - type: route-declaration
+    name: "GET /dashboard/events/:id/tables and table create/edit routes"
+    source_loc: src/router/index.ts:51
+    target: TablesTab and TablesForm
+    must_appear_in_target: true
+    notes: "Table assignments are managed from the event seating screen."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL for table, guest, and assignment API requests."

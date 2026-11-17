@@ -1,0 +1,15 @@
+flows:
+  - name: active-event-selection
+    medium: session
+    key: mp_active_event
+    writer:
+      unit: event-list
+      source_loc: src/stores/wedding.ts:45
+    reader:
+      unit: event-overview
+      source_loc: src/stores/wedding.ts:64
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Select an event, navigate to an event page, and reload; verify the selected event remains active when it is still eligible."
+    notes: "The wedding Pinia store writes the selected event ID to sessionStorage and reads it when loading the event list."

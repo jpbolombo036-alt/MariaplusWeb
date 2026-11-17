@@ -79,6 +79,8 @@
             <textarea v-model="form.message" rows="3" placeholder="Message affiché sur l'invitation (optionnel)" class="input resize-none"></textarea>
           </label>
 
+          <InvitationTemplatePicker v-model="form.invitationCardTemplate" :preview="cardPreview" :photo-url="photoState.couple.preview || coverPreview" :published="eventStatus !== 'DRAFT'" :disabled="saving" />
+
           <DressCodeField v-model="form.dressColors" :event-id="id" />
 
           <section class="border-t border-slate-100 pt-5 space-y-5">
@@ -135,17 +137,21 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
+import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { absolutePhotoUrl, deleteEventImage, getEvent, loadEventImage, updateEvent, uploadEventImage, uploadEventPhoto, type EventPhotoKind } from '../../api/events'
+import InvitationTemplatePicker from '../../components/events/InvitationTemplatePicker.vue'
+import { cardPreviewData, type InvitationCardTemplate } from '../../models/invitationCard'
 import DressCodeField from '../../components/events/DressCodeField.vue'
 import ImageCropModal from '../../components/common/ImageCropModal.vue'
 
 const route = useRoute()
+const router = useRouter()
 const id = Number(route.params.id)
 const loading = ref(true)
 const saving = ref(false)
 const saveError = ref('')
+const eventStatus = ref('DRAFT')
 const photoError = ref('')
 const coverInput = ref<HTMLInputElement | null>(null)
 const coverFile = ref<File | null>(null)
@@ -164,6 +170,7 @@ const photoState = reactive<Record<EventPhotoKind, { file: File | null; preview:
 })
 
 const form = reactive({
+  invitationCardTemplate: 'STANDARD' as InvitationCardTemplate,
   name: '',
   eventDate: '',
   startTime: '',
@@ -179,9 +186,13 @@ const form = reactive({
   dressColors: [] as string[],
 })
 
+const cardPreview = computed(() => cardPreviewData(form))
+
 onMounted(async () => {
   try {
     const ev = await getEvent(id)
+    eventStatus.value = ev.status
+    form.invitationCardTemplate = ev.invitationCardTemplate || 'STANDARD'
     form.name = ev.name ?? ''
     form.eventDate = ev.eventDate?.slice(0, 10) ?? ''
     form.startTime = ev.startTime?.slice(0, 5) ?? ''
@@ -274,10 +285,11 @@ function clearCover() {
 }
 
 async function submit() {
+  if (saving.value) return
   saving.value = true
   saveError.value = ''
   try {
-    const payload: Record<string, unknown> = { name: form.name }
+    const payload: Record<string, unknown> = { name: form.name, invitationCardTemplate: form.invitationCardTemplate }
     if (form.eventDate) payload.eventDate = form.eventDate
     if (form.startTime) payload.startTime = form.startTime
     if (form.endTime) payload.endTime = form.endTime
@@ -290,14 +302,17 @@ async function submit() {
     payload.description = form.description || null
     payload.message = form.message || null
     payload.dressColors = form.dressColors
-    await updateEvent(id, payload)
+    const updated = await updateEvent(id, payload)
+    if (updated.invitationCardTemplate !== form.invitationCardTemplate) {
+      throw new Error('Le modèle de carte n’a pas été enregistré. Réessayez ou contactez l’assistance.')
+    }
     if (coverFile.value) await uploadEventImage(id, coverFile.value)
     else if (coverRemoved.value) await deleteEventImage(id)
     for (const photo of photoFields) {
       const file = photoState[photo.kind].file
       if (file) await uploadEventPhoto(id, photo.kind, file)
     }
-    window.history.length > 1 ? window.history.back() : window.location.href = `/dashboard/events/${id}`
+    await router.replace(`/dashboard/events/${id}`)
   } catch (e: any) {
     saveError.value = e?.response?.data?.error || e?.message || "Impossible d'enregistrer l'événement."
   } finally {

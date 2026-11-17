@@ -25,6 +25,8 @@ export function useInvitationRsvp(
   const drinks = ref<{ id: number; name: string; imageUrl?: string | null }[]>([])
   const drinksLoading = ref(false)
   const sending = ref(false)
+  const refreshing = ref(false)
+  const refreshError = ref('')
 
   const initialStatus = inv.value.rsvpStatus
   success.value = initialStatus === 'ACCEPTED' || initialStatus === 'DECLINED' ? initialStatus : ''
@@ -38,6 +40,7 @@ export function useInvitationRsvp(
   )
 
   function editAnswer() {
+    if (sending.value || refreshing.value) return
     success.value = ''
     choice.value = ''
     if (inv.value?.rsvpNumberOfAttendees) {
@@ -71,18 +74,36 @@ export function useInvitationRsvp(
     }
   }
 
+  async function refreshInvitation() {
+    if (refreshing.value) return
+    refreshing.value = true
+    refreshError.value = ''
+    try {
+      updateInvitation(await getPublicInvitation(token, { skipNotification: true }))
+    } catch {
+      refreshError.value = 'Votre réponse est enregistrée. Les détails de l’invitation n’ont pas pu être actualisés.'
+    } finally {
+      refreshing.value = false
+    }
+  }
+
   async function submitAccepted() {
+    if (sending.value || refreshing.value) return
     if (attendees.value < 1 || attendees.value > maxAccepted.value) {
       notifications.push(`Le nombre doit être compris entre 1 et ${maxAccepted.value}.`, 'error')
       return
     }
     sending.value = true
+    const submitted = { attendees: attendees.value, drinks: [...drinkChoices.value], note: note.value.trim() }
     try {
-      await submitPublicRsvp(token, 'ACCEPTED', attendees.value, drinkChoices.value, note.value)
-      updateInvitation(await getPublicInvitation(token))
+      const result = await submitPublicRsvp(token, 'ACCEPTED', submitted.attendees, submitted.drinks, submitted.note)
+      updateInvitation({ ...inv.value, status: result.invitationStatus || inv.value.status,
+        rsvpStatus: 'ACCEPTED', rsvpNumberOfAttendees: result.numberOfAttendees,
+        rsvpDrinkChoices: submitted.drinks, rsvpNote: submitted.note || null })
       success.value = 'ACCEPTED'
       notifications.push('Votre présence a bien été confirmée.', 'success')
       note.value = ''
+      await refreshInvitation()
     } catch (e: any) {
       const msg = String(e?.response?.data?.error || '')
       if (/limit|capacit|maximum|dépass|dépasse|places/i.test(msg)) {
@@ -98,13 +119,18 @@ export function useInvitationRsvp(
   }
 
   async function submitDecline() {
+    if (sending.value || refreshing.value) return
     sending.value = true
+    const submittedNote = note.value.trim()
     try {
-      await submitPublicRsvp(token, 'DECLINED', 0, [], note.value)
-      updateInvitation(await getPublicInvitation(token))
+      const result = await submitPublicRsvp(token, 'DECLINED', 0, [], submittedNote)
+      updateInvitation({ ...inv.value, status: result.invitationStatus || inv.value.status,
+        rsvpStatus: 'DECLINED', rsvpNumberOfAttendees: 0,
+        rsvpDrinkChoices: [], rsvpNote: submittedNote || null })
       success.value = 'DECLINED'
       note.value = ''
       notifications.push('Votre réponse a bien été enregistrée.', 'success')
+      await refreshInvitation()
     } catch (e: any) {
       notifications.push(e?.response ? 'Erreur serveur. Merci de réessayer.' : 'Erreur réseau. Vérifiez votre connexion et réessayez.', 'error')
     } finally {
@@ -119,6 +145,7 @@ export function useInvitationRsvp(
   onMounted(() => { void loadDrinks() })
   return {
     choice, success, attendees, note, drinkChoices, drinks, drinksLoading, sending,
+    refreshing, refreshError, refreshInvitation,
     maxAccepted, guestFullName, successText, editAnswer, toggleDrink, submitAccepted, submitDecline,
   }
 }

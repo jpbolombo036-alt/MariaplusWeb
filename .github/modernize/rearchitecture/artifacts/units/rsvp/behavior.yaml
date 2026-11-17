@@ -1,0 +1,13 @@
+unit: rsvp
+side_effects:
+  - source_loc: src/views/event/RsvpTab.vue:164
+    effect: "Loads RSVP data together with the event guest list for display."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:49
+    condition: "Route selects the RSVP tab."
+    behavior: "Display RSVP responses scoped to the event ID."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

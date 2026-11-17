@@ -1,0 +1,16 @@
+unit: admin-organizations
+side_effects:
+  - source_loc: src/views/admin/AdminOrganizationsView.vue:217
+    effect: "Loads organization data, member data, and organization settings."
+    must_preserve: true
+  - source_loc: src/views/admin/AdminOrganizationsView.vue:229
+    effect: "Toggles organization active state."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:73
+    condition: "User is not SUPER_ADMIN."
+    behavior: "Redirect admin route to /dashboard."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

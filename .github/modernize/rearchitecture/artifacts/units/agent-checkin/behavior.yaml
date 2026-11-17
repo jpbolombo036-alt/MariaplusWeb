@@ -1,0 +1,21 @@
+unit: agent-checkin
+side_effects:
+  - source_loc: src/views/agent/AgentCheckinView.vue:367
+    effect: "Creates a guest check-in through QR scan or selected search result."
+    must_preserve: true
+  - source_loc: src/views/agent/AgentCheckinView.vue:389
+    effect: "Loads the list of guests already present."
+    must_preserve: true
+branches:
+  - source_loc: src/views/agent/AgentCheckinView.vue:368
+    condition: "Input contains a QR token or a search query."
+    behavior: "Use QR scan or guest search flow and present the selected guest's check-in eligibility."
+    must_preserve: true
+error_paths:
+  - source_loc: src/views/agent/AgentCheckinView.vue:325
+    trigger: "Scan/search/check-in request fails."
+    outcome: "Keep the failed action visible to the agent and do not claim check-in success."
+    contract: "Check-in API result is authoritative."
+    must_preserve: true
+concurrency:
+  model: async

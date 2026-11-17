@@ -1,0 +1,18 @@
+unit: event-edit
+side_effects:
+  - source_loc: src/views/forms/EventEditForm.vue:276
+    effect: "Updates an existing event and manages its event/dress image uploads."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:61
+    condition: "Route includes an event ID."
+    behavior: "Load the identified event for editing."
+    must_preserve: true
+error_paths:
+  - source_loc: src/views/forms/EventEditForm.vue:276
+    trigger: "Loading or updating the event fails."
+    outcome: "Keep the operation unsuccessful and present the page's error state."
+    contract: "API operation rejects."
+    must_preserve: true
+concurrency:
+  model: async

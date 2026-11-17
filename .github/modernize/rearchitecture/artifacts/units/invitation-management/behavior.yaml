@@ -1,0 +1,21 @@
+unit: invitation-management
+side_effects:
+  - source_loc: src/views/event/InvitationsTab.vue:317
+    effect: "Loads invitations and guest data for the selected event."
+    must_preserve: true
+  - source_loc: src/views/event/InvitationsTab.vue:426
+    effect: "Sends or resends an invitation and surfaces its delivery outcome."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:47
+    condition: "Route selects invitation creation."
+    behavior: "Create invitation for the selected guest; otherwise show invitation management."
+    must_preserve: true
+error_paths:
+  - source_loc: src/views/event/InvitationsTab.vue:426
+    trigger: "Send/resend request fails."
+    outcome: "Show an API error instead of reporting successful delivery."
+    contract: "API operation rejects."
+    must_preserve: true
+concurrency:
+  model: async

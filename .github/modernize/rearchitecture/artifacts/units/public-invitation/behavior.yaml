@@ -1,0 +1,25 @@
+unit: public-invitation
+side_effects:
+  - source_loc: src/api/publicInvitation.ts:164
+    effect: "Submits guest RSVP status, attendee count, optional drink choices, and optional note."
+    must_preserve: true
+  - source_loc: src/api/publicInvitation.ts:188
+    effect: "Uploads the generated invitation-card image to the public invitation API."
+    must_preserve: true
+branches:
+  - source_loc: src/views/PublicInvitationView.vue:10
+    condition: "Invitation is loading, unavailable, or loaded."
+    behavior: "Render loading, unavailable, or invitation content state."
+    must_preserve: true
+  - source_loc: src/views/PublicInvitationView.vue:56
+    condition: "RSVP has been accepted and invitation data exists."
+    behavior: "Render the official invitation card."
+    must_preserve: true
+error_paths:
+  - source_loc: src/composables/usePublicInvitation.ts:25
+    trigger: "Public invitation token cannot be loaded."
+    outcome: "Show the unavailable invitation state."
+    contract: "Public route remains accessible without app authentication."
+    must_preserve: true
+concurrency:
+  model: async

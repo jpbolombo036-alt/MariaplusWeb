@@ -1,0 +1,15 @@
+unit: event-overview
+bindings:
+  - type: route-declaration
+    name: "GET /dashboard/events/:id"
+    source_loc: src/router/index.ts:35
+    target: EventDetailView
+    must_appear_in_target: true
+    notes: "The wrapper hosts nested event routes; the default child is the overview."
+runtime_config:
+  - key: VITE_API_BASE_URL
+    source_loc: src/api/config.ts:20
+    source: env
+    default_value: "Production API base URL"
+    must_appear_in_target: true
+    notes: "Base URL used by event and dashboard API requests."

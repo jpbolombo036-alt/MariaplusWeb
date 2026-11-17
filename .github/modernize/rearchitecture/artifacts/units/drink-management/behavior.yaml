@@ -1,0 +1,16 @@
+unit: drink-management
+side_effects:
+  - source_loc: src/views/event/DrinksTab.vue:209
+    effect: "Loads drink availability and associated RSVP/guest drink selections."
+    must_preserve: true
+  - source_loc: src/api/availableDrinks.ts:37
+    effect: "Updates an event's available-drink setting."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:54
+    condition: "The active event has configured drink choices."
+    behavior: "Display event-level availability and responses."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: async

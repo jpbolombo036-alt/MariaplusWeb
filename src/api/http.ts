@@ -84,7 +84,7 @@ async function doRefresh(revision: number, signal: AbortSignal): Promise<string>
   const res = await axios.post(
     `${ApiConfig.baseUrl}${ApiConfig.authRefresh}`,
     {},
-    { withCredentials: true, signal, headers: { 'X-Client-Platform': 'web' } },
+    { withCredentials: true, signal, timeout: 30000, headers: { 'X-Client-Platform': 'web' } },
   )
   if (revision !== authSessionRevision) {
     throw new CanceledError('La session a changé.')

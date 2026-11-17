@@ -1,0 +1,18 @@
+unit: dashboard
+side_effects:
+  - source_loc: src/views/DashboardView.vue:181
+    effect: "Loads dashboard data and guest/RSVP/activity summaries for the selected event."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:106
+    condition: "The visitor has no restored authenticated session."
+    behavior: "Redirect to login and retain the requested URL in the redirect query."
+    must_preserve: true
+error_paths:
+  - source_loc: src/views/DashboardView.vue:181
+    trigger: "Dashboard API request fails."
+    outcome: "Show an API error message rather than treating the request as successful."
+    contract: "API error message from apiErrorMessage."
+    must_preserve: true
+concurrency:
+  model: async

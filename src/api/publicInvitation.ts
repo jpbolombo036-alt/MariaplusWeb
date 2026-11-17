@@ -1,8 +1,12 @@
+import { resolveCardTemplate, type InvitationCardTemplate } from '../models/invitationCard'
 import { http, decodeMap, decodeList } from './http'
 import { ApiConfig } from './config'
 import type { DressCodeOption as DressColorOption } from './events'
 
 export interface PublicInvitation {
+  invitationCardTemplate?: InvitationCardTemplate
+  tableName?: string | null
+  eventType?: string | null
   guestFirstName?: string | null
   guestLastName?: string | null
   weddingDisplayName?: string | null
@@ -66,10 +70,13 @@ export interface PublicDrink {
   imageUrl?: string | null
 }
 
-export async function getPublicInvitation(token: string): Promise<PublicInvitation> {
-  const res = await http.get(`${ApiConfig.publicInvitationsPath}/${token}`)
+export async function getPublicInvitation(token: string, options: { skipNotification?: boolean } = {}): Promise<PublicInvitation> {
+  const res = await http.get(`${ApiConfig.publicInvitationsPath}/${token}`, options)
   const j = decodeMap(res.data)
   return {
+    invitationCardTemplate: resolveCardTemplate(j.invitationCardTemplate),
+    tableName: typeof j.tableName === 'string' ? j.tableName : null,
+    eventType: typeof j.eventType === 'string' ? j.eventType : null,
     guestFirstName: j.guestFirstName ? String(j.guestFirstName) : null,
     guestLastName: j.guestLastName ? String(j.guestLastName) : null,
     weddingDisplayName: j.weddingDisplayName ? String(j.weddingDisplayName) : null,

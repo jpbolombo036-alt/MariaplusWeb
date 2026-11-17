@@ -8,6 +8,13 @@
     </div>
     <span class="mp-inv-heart mp-inv-heart--violet">♥</span>
 
+    <div v-if="refreshError" role="status" class="mp-inv-hint">
+      <p>{{ refreshError }}</p>
+      <button type="button" class="mp-inv-link" :disabled="refreshing || sending" @click="refreshInvitation">
+        {{ refreshing ? 'Actualisation…' : 'Actualiser les détails' }}
+      </button>
+    </div>
+
     <!-- État succès -->
     <div v-if="success" class="mp-inv-success" :class="success">
       <template v-if="success === 'ACCEPTED'">
@@ -49,14 +56,14 @@
           </div>
         </div>
 
-        <button type="button" class="mp-inv-link" @click="editAnswer">Modifier ma réponse</button>
+        <button type="button" class="mp-inv-link" :disabled="sending || refreshing" @click="editAnswer">Modifier ma réponse</button>
       </template>
 
       <template v-else>
         <span class="mp-inv-success-icon">✓</span>
         <h3 class="mp-inv-success-title">Merci pour votre réponse !</h3>
         <p class="mp-inv-success-text">{{ successText }}</p>
-        <button type="button" class="mp-inv-link" @click="editAnswer">Modifier ma réponse</button>
+        <button type="button" class="mp-inv-link" :disabled="sending || refreshing" @click="editAnswer">Modifier ma réponse</button>
       </template>
     </div>
 
@@ -170,6 +177,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:invitation': [invitation: PublicInvitation] }>()
 const {
   choice, success, attendees, note, drinkChoices, drinks, drinksLoading, sending,
+  refreshing, refreshError, refreshInvitation,
   maxAccepted, guestFullName, successText, editAnswer, toggleDrink, submitAccepted, submitDecline,
 } = useInvitationRsvp(props.token, toRef(props, 'invitation'), (invitation) => emit('update:invitation', invitation))
 watch(success, (status) => { props.card.accepted = status === 'ACCEPTED' }, { immediate: true })

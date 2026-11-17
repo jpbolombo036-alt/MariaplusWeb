@@ -1,0 +1,18 @@
+unit: login
+side_effects:
+  - source_loc: src/stores/auth.ts:52
+    effect: "Successful login stores the access token in memory and exposes the authenticated user to the app."
+    must_preserve: true
+branches:
+  - source_loc: src/router/index.ts:90
+    condition: "Route metadata is public."
+    behavior: "Allow login access without attempting session restoration."
+    must_preserve: true
+error_paths:
+  - source_loc: src/stores/auth.ts:49
+    trigger: "Login request fails or returns an error field."
+    outcome: "Reject login so the login screen can present the failure."
+    contract: "HTTP error; no global auth-endpoint toast."
+    must_preserve: true
+concurrency:
+  model: async
