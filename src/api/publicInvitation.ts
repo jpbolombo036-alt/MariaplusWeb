@@ -1,4 +1,5 @@
 import { resolveCardTemplate, type InvitationCardTemplate } from '../models/invitationCard'
+import axios from 'axios'
 import { http, decodeMap, decodeList } from './http'
 import { ApiConfig } from './config'
 import type { DressCodeOption as DressColorOption } from './events'
@@ -128,6 +129,18 @@ export async function getPublicInvitation(token: string, options: { skipNotifica
         }))
       : null,
   }
+}
+
+/** Best-effort page visit only: reads and link probes must remain side-effect free. */
+export async function markPublicInvitationOpened(token: string): Promise<void> {
+  // No session interceptor: tracking must never refresh/expire an organizer's
+  // session, or prevent an invitation from loading against an older backend.
+  try {
+    await axios.post(`${ApiConfig.baseUrl}${ApiConfig.publicInvitationsPath}/${encodeURIComponent(token)}/opened`, {}, {
+      timeout: 10_000,
+      headers: { 'X-Client-Platform': 'web' },
+    })
+  } catch { /* A failed tracking request must not block the guest or RSVP. */ }
 }
 
 /**
