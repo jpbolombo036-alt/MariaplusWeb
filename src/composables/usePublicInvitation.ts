@@ -1,5 +1,5 @@
-import { onMounted, ref } from 'vue'
-import { getPublicInvitation, type PublicInvitation } from '../api/publicInvitation'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { getPublicInvitation, markPublicInvitationOpened, type PublicInvitation } from '../api/publicInvitation'
 
 /** Load the invitation and translate endpoint availability into the public page state. */
 export function usePublicInvitation(token: string) {
@@ -7,6 +7,14 @@ export function usePublicInvitation(token: string) {
   const unavailable = ref(false)
   const unavailableText = ref('')
   const inv = ref<PublicInvitation | null>(null)
+  let opened = false
+  let disposed = false
+
+  function trackOpening() {
+    if (disposed || opened || loading.value || unavailable.value || !inv.value || document.visibilityState !== 'visible') return
+    opened = true
+    void markPublicInvitationOpened(token)
+  }
 
   async function load() {
     loading.value = true
@@ -34,10 +42,18 @@ export function usePublicInvitation(token: string) {
       }
     } finally {
       loading.value = false
+      trackOpening()
     }
   }
 
 
-  onMounted(() => { void load() })
+  onMounted(() => {
+    document.addEventListener('visibilitychange', trackOpening)
+    void load()
+  })
+  onBeforeUnmount(() => {
+    disposed = true
+    document.removeEventListener('visibilitychange', trackOpening)
+  })
   return { loading, unavailable, unavailableText, inv }
 }

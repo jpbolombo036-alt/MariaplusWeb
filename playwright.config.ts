@@ -1,5 +1,13 @@
 import { defineConfig, devices } from '@playwright/test'
 
+// An Electron-based editor can pass its own crash reporter pipe to the shell.
+// The test browser must initialize its own crash reporter instead of using it.
+const browserEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([key, value]) =>
+    key.toUpperCase() !== 'CHROME_CRASHPAD_PIPE_NAME' && value !== undefined,
+  ),
+) as Record<string, string>
+
 export default defineConfig({
   testDir: './tests',
   testMatch: '**/*.spec.ts',
@@ -14,6 +22,7 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4183',
     serviceWorkers: 'block',
     trace: 'retain-on-failure',
+    launchOptions: { env: browserEnv, timeout: 30_000 },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {

@@ -226,7 +226,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   listInvitations, createInvitation, sendInvitation, resendInvitation, cancelInvitation, deleteInvitation,
@@ -295,10 +295,31 @@ const avatarPalette = ['#5b2ecc', '#176b5b', '#f4a340', '#1f2937', '#7c3aed', '#
 const avatarColor = (n: number) => avatarPalette[n % avatarPalette.length]
 
 const platform = usePlatformStore()
+let refreshRevision = 0
+let disposed = false
+async function refreshOpenStatus() {
+  if (document.visibilityState !== 'visible' || loading.value || disposed) return
+  const revision = ++refreshRevision
+  try {
+    const latest = await listInvitations(id)
+    if (!disposed && revision === refreshRevision) invitations.value = latest
+  } catch { /* Keep the current list if the background refresh fails. */ }
+}
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') void refreshOpenStatus()
+}
 onMounted(async () => {
+  window.addEventListener('focus', refreshOpenStatus)
+  document.addEventListener('visibilitychange', onVisibilityChange)
   load()
   await platform.load()
   waEnabled.value = platform.canSendWhatsapp
+})
+onBeforeUnmount(() => {
+  disposed = true
+  refreshRevision++
+  window.removeEventListener('focus', refreshOpenStatus)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 async function toggleWhatsapp() {
   const next = !waEnabled.value
@@ -314,8 +335,10 @@ async function toggleWhatsapp() {
   }
 }
 async function load() {
+  const revision = ++refreshRevision
   try {
     const [inv, g] = await Promise.all([listInvitations(id), listGuests(id)])
+    if (disposed || revision !== refreshRevision) return
     invitations.value = inv
     guests.value = g
   } finally {

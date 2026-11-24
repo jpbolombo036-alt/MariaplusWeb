@@ -83,6 +83,7 @@ export async function mockPublicInvitation(page: Page, options: FixtureOptions =
   const apiRequests: { path: string; authorization?: string }[] = []
   const pageErrors: string[] = []
   let invitationReads = 0
+  let openingWrites = 0
   const image = readFileSync(new URL('../../public/logo.png', import.meta.url))
 
   page.on('pageerror', (error) => pageErrors.push(error.message))
@@ -90,6 +91,12 @@ export async function mockPublicInvitation(page: Page, options: FixtureOptions =
     const request = route.request()
     apiRequests.push({ path: url.pathname, authorization: request.headers().authorization })
     const prefix = `/api/public/invitations/${INVITATION_TOKEN}`
+
+    if (url.pathname === `${prefix}/opened` && request.method() === 'POST') {
+      openingWrites++
+      await fulfillJson(route, {}, 200)
+      return true
+    }
 
     if (url.pathname.startsWith('/fixtures/')) {
       await route.fulfill({
@@ -142,5 +149,6 @@ export async function mockPublicInvitation(page: Page, options: FixtureOptions =
     return false
   })
 
-  return { ...traffic, invitation, rsvps, uploads, apiRequests, pageErrors, get invitationReads() { return invitationReads } }
+  return { ...traffic, invitation, rsvps, uploads, apiRequests, pageErrors,
+    get invitationReads() { return invitationReads }, get openingWrites() { return openingWrites } }
 }

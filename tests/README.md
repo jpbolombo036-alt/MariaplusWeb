@@ -25,6 +25,12 @@ récupération et le décodage réel des QR à faible marge (URL et jeton).
 
 ## Tests navigateur
 
+La configuration retire `CHROME_CRASHPAD_PIPE_NAME` de l'environnement transmis
+au navigateur uniquement. Un terminal ouvert depuis un éditeur basé sur Electron
+peut hériter de ce canal de rapport de plantage ; Chromium doit créer le sien.
+L'environnement du terminal n'est pas modifié. Le lancement dispose de 30 secondes,
+indépendamment du délai de chaque scénario.
+
 Les dépendances du projet et le navigateur Chromium de Playwright doivent déjà être installés. Pour lancer tous les scénarios :
 
 ```powershell
