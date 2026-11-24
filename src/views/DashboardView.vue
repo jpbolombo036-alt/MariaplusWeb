@@ -18,8 +18,11 @@
         </div>
       </div>
 
+      <EventCreationLockedNotice />
+
       <div v-if="!active" class="bg-white border border-slate-200 rounded-xl p-10 text-center text-slate-500 shadow-sm text-sm">
-        Aucun événement actif pour le moment. Créez votre premier événement pour suivre votre activité ici.
+        <template v-if="creationLocked">Aucun événement pour le moment. Votre activité apparaîtra ici après votre premier événement.</template>
+        <template v-else>Aucun événement actif pour le moment. Créez votre premier événement pour suivre votre activité ici.</template>
       </div>
 
       <template v-else>
@@ -75,6 +78,8 @@ import RsvpOverviewCard from '../components/dashboard/RsvpOverviewCard.vue'
 import UpcomingInternalEventCard from '../components/dashboard/UpcomingInternalEventCard.vue'
 import RecentGuestsTable from '../components/dashboard/RecentGuestsTable.vue'
 import RecentActivityCard from '../components/dashboard/RecentActivityCard.vue'
+import EventCreationLockedNotice from '../components/common/EventCreationLockedNotice.vue'
+import { useEventCreationLock } from '../composables/useEventCreationLock'
 import { useAuthStore } from '../stores/auth'
 import { initialsOf, fullName } from '../utils/initials'
 import { eventDateLabel, eventTypeLabel, statusLabel } from '../utils/eventStatus'
@@ -98,6 +103,7 @@ interface ActivityRow {
 }
 
 const auth = useAuthStore()
+const { locked: creationLocked } = useEventCreationLock()
 const weddingStore = useWeddingStore()
 const dashboard = ref<Dashboard | null>(null)
 const guests = ref<Guest[]>([])

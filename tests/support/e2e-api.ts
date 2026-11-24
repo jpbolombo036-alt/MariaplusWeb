@@ -39,6 +39,11 @@ export async function mockApi(
         return
       }
       if (await handler(route, url)) return
+      // The header bell polls this for every signed-in non-admin user.
+      if (url.pathname === '/api/notifications' && route.request().method() === 'GET') {
+        await fulfillJson(route, { unreadCount: 0, items: [] })
+        return
+      }
       unexpectedRequests.push(`${route.request().method()} ${url.pathname}${url.search}`)
       await fulfillJson(route, { error: 'No fixture for this request' }, 404)
       return

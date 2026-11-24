@@ -42,7 +42,9 @@
           </button>
         </template>
         <p v-if="!weddingStore.weddings.length" class="px-3 py-3 text-[12px] text-slate-400 text-center">
-          Aucun événement — créez-en un dans « Mes Événements ».
+          {{ creationLocked
+            ? 'Aucun événement — la création sera possible après activation de votre organisation.'
+            : 'Aucun événement — créez-en un dans « Mes Événements ».' }}
         </p>
       </div>
     </div>
@@ -55,8 +57,10 @@ import { useRouter } from 'vue-router'
 import { useWeddingStore } from '../../stores/wedding'
 import { eventDateLabel, isPastEvent, sortEventsForSelector, statusLabel } from '../../utils/eventStatus'
 import type { Event } from '../../api/events'
+import { useEventCreationLock } from '../../composables/useEventCreationLock'
 
 defineProps<{ name?: string; subtitle?: string }>()
+const { locked: creationLocked } = useEventCreationLock()
 const emit = defineEmits<{ (e: 'select'): void }>()
 
 const weddingStore = useWeddingStore()

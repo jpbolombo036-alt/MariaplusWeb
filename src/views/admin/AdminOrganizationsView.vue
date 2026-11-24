@@ -1,6 +1,21 @@
 <template>
   <div class="space-y-4">
-    <div v-for="o in orgs" :key="o.id" class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+    <div class="flex justify-end">
+      <button
+        class="h-10 px-4 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all"
+        @click="messageTarget = 'all'"
+      >
+        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">campaign</span>
+        Message à tous les organisateurs
+      </button>
+    </div>
+    <AdminMessageDialog
+      v-if="messageTarget"
+      :organization="messageTarget === 'all' ? null : messageTarget"
+      @close="messageTarget = null"
+      @sent="onMessageSent"
+    />
+    <div v-for="o in orgs" :key="o.id" :data-org-id="o.id" class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
       <div class="px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="flex items-center gap-3.5 min-w-0 flex-1">
           <div class="w-11 h-11 rounded-lg bg-success-light text-success flex items-center justify-center shrink-0">
@@ -34,6 +49,14 @@
           >
             <span class="material-symbols-outlined text-[16px]">{{ expandedId === o.id ? 'expand_less' : 'group' }}</span>
             Organisateurs
+          </button>
+          <button
+            class="h-9 px-3 rounded-lg border border-primary/30 text-primary text-[12px] font-semibold hover:bg-primary-light transition-colors inline-flex items-center gap-1.5"
+            :aria-label="`Écrire à ${o.name}`"
+            @click="messageTarget = { id: o.id, name: o.name }"
+          >
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">mail</span>
+            Écrire
           </button>
         </div>
       </div>
@@ -169,8 +192,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { nextTick, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import AdminMessageDialog from '../../components/admin/AdminMessageDialog.vue'
+import { useNotificationStore } from '../../stores/notifications'
 import {
   listOrganizations,
   toggleOrganizationActive,
@@ -180,6 +205,33 @@ import { listMembers, type OrgMember } from '../../api/organization'
 import { getOrgSettings, updateOrgSettings } from '../../api/organizationSettings'
 
 const router = useRouter()
+const route = useRoute()
+const toasts = useNotificationStore()
+/** Open message dialog: an organization, every organizer ('all'), or closed (null). */
+const messageTarget = ref<{ id: number; name: string } | 'all' | null>(null)
+
+function onMessageSent(recipients: number) {
+  messageTarget.value = null
+  toasts.push(`Message envoyé à ${recipients} organisateur${recipients > 1 ? 's' : ''}.`, 'success')
+}
+
+/** Links from the SUPER_ADMIN bell: ?write=<orgId> opens the reply, ?org=<orgId> opens the organization. */
+async function applyBellLink() {
+  const writeId = Number(route.query.write)
+  const orgId = Number(route.query.org)
+  if (!writeId && !orgId) return
+  const target = orgs.value.find((o) => o.id === (writeId || orgId))
+  void router.replace({ query: {} })
+  if (!target) return
+  if (writeId) {
+    messageTarget.value = { id: target.id, name: target.name }
+  } else {
+    if (expandedId.value !== target.id) void toggleExpand(target)
+    await nextTick()
+    document.querySelector(`[data-org-id="${target.id}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }
+}
+watch(() => [route.query.write, route.query.org], () => { if (!loading.value) void applyBellLink() })
 const orgs = ref<AdminOrganization[]>([])
 const loading = ref(true)
 const loadErr = ref(false)
@@ -339,7 +391,10 @@ function roleLabel(code: string): string {
   return ROLE_LABELS[code] ?? code
 }
 
-onMounted(load)
+onMounted(async () => {
+  await load()
+  await applyBellLink()
+})
 </script>
 
 <style scoped>

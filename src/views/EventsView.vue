@@ -19,6 +19,8 @@
       </div>
     </div>
 
+    <EventCreationLockedNotice />
+
     <!-- 4 cartes statistiques -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8">
       <div v-for="s in statCards" :key="s.label" class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 flex items-center gap-3 sm:gap-5 shadow-sm hover:shadow-md transition-all min-w-0">
@@ -149,6 +151,7 @@ import { listAllEvents, loadEventImage, type Event } from '../api/events'
 import PermGuard from '../components/common/PermGuard.vue'
 import StatusBadge from '../components/common/StatusBadge.vue'
 import CreateEventDialog from '../components/events/CreateEventDialog.vue'
+import EventCreationLockedNotice from '../components/common/EventCreationLockedNotice.vue'
 import { useAuthStore } from '../stores/auth'
 import { usePlatformStore } from '../stores/platform'
 import { Perm } from '../permissions'
