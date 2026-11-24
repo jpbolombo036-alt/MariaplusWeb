@@ -8,6 +8,8 @@ export interface AuthUser {
   roles: string[]
   permissions: string[]
   organizationId?: number | null
+  /** Temporary password issued by a SUPER_ADMIN: a new one must be chosen first. */
+  mustChangePassword: boolean
 }
 
 export interface LoginResponse {
@@ -29,6 +31,7 @@ export function parseAuthUser(json: Record<string, unknown>): AuthUser {
     roles: (json.roles as unknown[])?.map(String) ?? [],
     permissions: (json.permissions as unknown[])?.map(String) ?? [],
     organizationId: json.organizationId ? Number(json.organizationId) : null,
+    mustChangePassword: json.mustChangePassword === true,
   }
 }
 

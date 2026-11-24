@@ -101,9 +101,26 @@
             <div class="text-right">
               <button type="button" class="text-sm font-semibold text-primary hover:underline" :aria-expanded="recoveryOpen" aria-controls="password-recovery" @click="recoveryOpen = !recoveryOpen">Mot de passe oublié ?</button>
             </div>
-            <div v-if="recoveryOpen" id="password-recovery" class="rounded-xl border border-outline-variant p-4 text-sm" role="status">
-              <p>La réinitialisation automatique n'est pas encore disponible. Contactez l'assistance pour récupérer l'accès à votre compte. Ne communiquez jamais votre mot de passe.</p>
-              <a :href="recoverySupportUrl" target="_blank" rel="noopener noreferrer" class="mt-2 inline-block font-semibold text-primary hover:underline">Contacter l'assistance</a>
+            <div v-if="recoveryOpen" id="password-recovery" class="rounded-xl border border-outline-variant p-4 text-sm">
+              <p v-if="recoverySent" role="status" data-testid="recovery-sent" class="font-medium">{{ recoverySent }}</p>
+              <template v-else>
+                <p>Indiquez l'adresse de votre compte. Notre équipe vous enverra un mot de passe temporaire, en général par WhatsApp. Ne communiquez jamais votre mot de passe actuel.</p>
+                <label for="recovery-email" class="block mt-3 mb-1 font-semibold">Email du compte</label>
+                <div class="flex gap-2">
+                  <input
+                    id="recovery-email" v-model="recoveryEmail" type="email" autocomplete="email"
+                    class="min-w-0 flex-1 px-3 py-2 rounded-lg border border-outline-variant bg-transparent outline-none focus:border-primary"
+                    @keydown.enter.prevent="sendRecovery"
+                  />
+                  <button
+                    type="button" :disabled="recoverySending"
+                    class="shrink-0 px-4 py-2 rounded-lg bg-primary text-white font-semibold disabled:opacity-60"
+                    @click="sendRecovery"
+                  >{{ recoverySending ? 'Envoi…' : 'Envoyer la demande' }}</button>
+                </div>
+                <p v-if="recoveryError" role="alert" class="mt-2 text-error">{{ recoveryError }}</p>
+              </template>
+              <a :href="recoverySupportUrl" target="_blank" rel="noopener noreferrer" class="mt-3 inline-block font-semibold text-primary hover:underline">Ou écrivez-nous sur WhatsApp</a>
             </div>
 
             <button
@@ -268,6 +285,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { ApiConfig } from '../api/config'
+import { requestPasswordReset } from '../api/user'
+import { apiErrorMessage } from '../api/http'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -275,6 +294,29 @@ const route = useRoute()
 
 const email = ref('')
 const recoveryOpen = ref(false)
+const recoveryEmail = ref('')
+const recoverySending = ref(false)
+const recoverySent = ref('')
+const recoveryError = ref('')
+watch(recoveryOpen, (isOpen) => { if (isOpen && !recoveryEmail.value) recoveryEmail.value = email.value.trim() })
+
+async function sendRecovery() {
+  const value = recoveryEmail.value.trim()
+  recoveryError.value = ''
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    recoveryError.value = 'Saisissez une adresse email valide.'
+    return
+  }
+  if (recoverySending.value) return
+  recoverySending.value = true
+  try {
+    recoverySent.value = await requestPasswordReset(value)
+  } catch (e) {
+    recoveryError.value = apiErrorMessage(e)
+  } finally {
+    recoverySending.value = false
+  }
+}
 const recoverySupportUrl = `https://wa.me/${ApiConfig.whatsappContactNumber}?text=${encodeURIComponent("Bonjour, j'ai besoin d'aide pour récupérer l'accès à mon compte EventiaEasy.")}`
 const password = ref('')
 const loading = ref(false)

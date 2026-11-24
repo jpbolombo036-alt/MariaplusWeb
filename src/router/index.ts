@@ -77,6 +77,11 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/change-password',
+      name: 'change-password',
+      component: () => import('../views/ChangePasswordView.vue'),
+    },
     { path: '/invitations/:token', name: 'public-invitation', component: () => import('../views/PublicInvitationView.vue'), meta: { public: true } },
     {
       path: '/agent/checkin/:id',
@@ -104,6 +109,15 @@ router.beforeEach(async (to) => {
   }
   if (!auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  // Mot de passe temporaire (réinitialisé par le SUPER_ADMIN) : rien d'autre tant
+  // qu'il n'est pas remplacé. Le backend refuse aussi les autres appels (403).
+  if (auth.user?.mustChangePassword) {
+    if (to.name === 'change-password') return true
+    return { name: 'change-password', query: { redirect: to.fullPath } }
+  }
+  if (to.name === 'change-password') {
+    return { path: '/dashboard' }
   }
   // Console SUPER_ADMIN : réservée au rôle SUPER_ADMIN (la sécurité réelle
   // est côté backend ; ici on redirige simplement les autres rôles).

@@ -17,6 +17,16 @@ export async function changeMyPassword(oldPassword: string, newPassword: string)
   await http.put(`${ApiConfig.usersPath}/me/password`, { oldPassword, newPassword })
 }
 
+/**
+ * Public "forgot password" request, handled by a SUPER_ADMIN (no SMTP needed).
+ * The server answers the same whether or not the account exists.
+ */
+export async function requestPasswordReset(email: string): Promise<string> {
+  const res = await http.post('/auth/password-reset-requests', { email }, { skipNotification: true })
+  return String(decodeMap(res.data).message
+    ?? 'Si un compte correspond à cette adresse, notre équipe a été prévenue et vous contactera.')
+}
+
 export function avatarUrl(version: number): string {
   // http (instance axios) gère le token ; pour <img> on passe par axios en blob.
   return `${ApiConfig.usersPath}/me/avatar?v=${version}`

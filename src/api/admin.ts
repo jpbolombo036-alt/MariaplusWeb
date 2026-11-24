@@ -59,6 +59,36 @@ export interface AdminPage<T> {
   totalPages: number
 }
 
+export interface TemporaryPassword {
+  temporaryPassword: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string | null
+  /** International digits for wa.me, or null when the phone is missing or not normalizable. */
+  whatsappNumber: string | null
+}
+
+/** SUPER_ADMIN: new temporary password (shown once), sessions revoked, change forced at next login. */
+export async function issueTemporaryPassword(userId: number): Promise<TemporaryPassword> {
+  const res = await http.post(`${ApiConfig.usersPath}/${userId}/temporary-password`, undefined, { skipNotification: true })
+  const j = decodeMap(res.data)
+  return {
+    temporaryPassword: String(j.temporaryPassword ?? ''),
+    firstName: String(j.firstName ?? ''),
+    lastName: String(j.lastName ?? ''),
+    email: String(j.email ?? ''),
+    phone: j.phone == null ? null : String(j.phone),
+    whatsappNumber: j.whatsappNumber == null ? null : String(j.whatsappNumber),
+  }
+}
+
+/** One user, for links that point to a user outside the current page. */
+export async function getAdminUser(id: number): Promise<AdminUser> {
+  const res = await http.get(`${ApiConfig.usersPath}/${id}`, { skipNotification: true })
+  return parseAdminUser(decodeMap(res.data))
+}
+
 export interface AdminUser {
   id: number
   firstName: string

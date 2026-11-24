@@ -1,5 +1,6 @@
 <template>
   <div>
+    <TemporaryPasswordDialog v-if="resetTarget" :user="resetTarget" @close="resetTarget = null" />
     <div class="bg-white border border-slate-200 rounded-xl shadow-sm">
       <div class="px-6 pt-6 pb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -89,6 +90,16 @@
                     {{ u.active ? 'Désactiver' : 'Activer' }}
                   </button>
                   <button
+                    v-if="u.id !== auth.user?.id"
+                    :disabled="busyId === u.id"
+                    class="h-9 w-9 rounded-lg border border-slate-200 text-slate-500 hover:text-primary hover:border-primary/30 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
+                    title="Réinitialiser le mot de passe"
+                    :aria-label="`Réinitialiser le mot de passe de ${u.firstName} ${u.lastName}`"
+                    @click="resetTarget = u"
+                  >
+                    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">lock_reset</span>
+                  </button>
+                  <button
                     :disabled="busyId === u.id"
                     class="h-9 w-9 rounded-lg border border-slate-200 text-slate-400 hover:text-error hover:border-error/30 transition-colors disabled:opacity-50 inline-flex items-center justify-center"
                     title="Supprimer définitivement"
@@ -119,8 +130,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import TemporaryPasswordDialog from '../../components/admin/TemporaryPasswordDialog.vue'
+import { useAuthStore } from '../../stores/auth'
 import {
+  getAdminUser,
   listUsers,
   toggleUserActive,
   deleteAdminUser,
@@ -138,6 +153,26 @@ const loading = ref(true)
 const loadErr = ref(false)
 const busyId = ref<number | null>(null)
 const search = ref('')
+const auth = useAuthStore()
+const route = useRoute()
+const router = useRouter()
+/** User whose password is being reset (dialog open), or null. */
+const resetTarget = ref<AdminUser | null>(null)
+
+/**
+ * Link from the bell (?reset=<userId>): opens the confirmation step only — the
+ * password is generated after an explicit click. The user may be on another page.
+ */
+async function applyResetLink() {
+  const id = Number(route.query.reset)
+  if (!id) return
+  void router.replace({ query: {} })
+  if (id === auth.user?.id) return
+  try {
+    resetTarget.value = rows.value.find((u) => u.id === id) ?? await getAdminUser(id)
+  } catch { /* deleted user: nothing to open */ }
+}
+watch(() => route.query.reset, () => { void applyResetLink() })
 
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
@@ -228,5 +263,6 @@ onMounted(async () => {
     orgs.value = await listOrganizations()
   } catch { /* filtre organisationnel indisponible */ }
   await load()
+  await applyResetLink()
 })
 </script>

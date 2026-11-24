@@ -41,9 +41,9 @@
           >
             <span
               class="material-symbols-outlined text-[20px] shrink-0 mt-0.5"
-              :class="n.type === 'CONTACT_MESSAGE' ? 'text-primary' : 'text-amber-600'"
+              :class="ICONS[n.type]?.color ?? 'text-amber-600'"
               aria-hidden="true"
-            >{{ n.type === 'CONTACT_MESSAGE' ? 'mail' : 'domain_add' }}</span>
+            >{{ ICONS[n.type]?.icon ?? 'domain_add' }}</span>
             <span class="min-w-0 flex-1">
               <span class="block text-[13px] text-slate-800 break-words" :class="n.readAt ? 'font-medium' : 'font-bold'">{{ n.title }}</span>
               <span class="block text-[12px] text-slate-600 mt-0.5 break-words whitespace-pre-line line-clamp-4">{{ n.message }}</span>
@@ -51,6 +51,7 @@
                 {{ n.senderEmail }}<template v-if="n.senderEmail && n.createdAt"> · </template>{{ formatNotificationDate(n.createdAt) }}
               </span>
               <span v-if="n.type === 'CONTACT_MESSAGE' && n.organizationId" class="block text-[11px] font-semibold text-primary mt-1">Répondre →</span>
+              <span v-else-if="n.type === 'PASSWORD_RESET_REQUEST' && n.userId" class="block text-[11px] font-semibold text-primary mt-1">Réinitialiser le mot de passe →</span>
             </span>
             <span v-if="!n.readAt" class="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" aria-label="Non lue"></span>
           </button>
@@ -86,10 +87,23 @@ function toggle() {
   if (open.value) void refresh()
 }
 
-/** A message opens the reply to its organization; a registration opens the organization. */
+const ICONS: Record<string, { icon: string; color: string }> = {
+  CONTACT_MESSAGE: { icon: 'mail', color: 'text-primary' },
+  ORGANIZATION_REGISTERED: { icon: 'domain_add', color: 'text-amber-600' },
+  PASSWORD_RESET_REQUEST: { icon: 'lock_reset', color: 'text-error' },
+}
+
+/**
+ * A message opens the reply to its organization, a registration opens the
+ * organization, a password request opens the reset of that user.
+ */
 async function openNotification(n: AdminNotification) {
   open.value = false
   void markRead(n)
+  if (n.type === 'PASSWORD_RESET_REQUEST' && n.userId) {
+    void router.push({ path: '/dashboard/admin/users', query: { reset: String(n.userId) } })
+    return
+  }
   const query: Record<string, string> = {}
   if (n.organizationId) query[n.type === 'CONTACT_MESSAGE' ? 'write' : 'org'] = String(n.organizationId)
   void router.push({ path: '/dashboard/admin/organizations', query })

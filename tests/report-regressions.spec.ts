@@ -1,16 +1,35 @@
 import { expect, test } from '@playwright/test'
 import QRCode from 'qrcode'
 import { readFileSync } from 'node:fs'
-import { mockApi } from './support/e2e-api'
+import { fulfillJson, mockApi } from './support/e2e-api'
 
-test('connexion : noms de champs exacts et assistance de récupération honnête', async ({ page }) => {
-  const network = await mockApi(page, async () => false)
+test('connexion : noms de champs exacts et demande de réinitialisation neutre', async ({ page }) => {
+  const requests: unknown[] = []
+  const network = await mockApi(page, async (route, url) => {
+    if (url.pathname !== '/auth/password-reset-requests') return false
+    requests.push(route.request().postDataJSON())
+    await fulfillJson(route, { message: 'Si un compte correspond à cette adresse, notre équipe a été prévenue et vous contactera.' }, 202)
+    return true
+  })
   await page.goto('/login')
   await expect(page.getByRole('textbox', { name: 'Email', exact: true })).toBeVisible()
   await expect(page.getByLabel('Mot de passe', { exact: true })).toBeVisible()
+  await page.getByRole('textbox', { name: 'Email', exact: true }).fill('nadia@example.test')
   await page.getByRole('button', { name: 'Mot de passe oublié ?', exact: true }).click()
-  await expect(page.getByRole('status')).toContainText("La réinitialisation automatique n'est pas encore disponible")
-  await expect(page.getByRole('link', { name: "Contacter l'assistance" })).toHaveAttribute('href', /^https:\/\/wa\.me\//)
+  await expect(page.getByRole('link', { name: 'Ou écrivez-nous sur WhatsApp' })).toHaveAttribute('href', /^https:\/\/wa\.me\//)
+
+  // Prefilled from the login field; Enter sends the request, never the login form.
+  const field = page.getByLabel('Email du compte')
+  await expect(field).toHaveValue('nadia@example.test')
+  await field.fill('pas-un-email')
+  await field.press('Enter')
+  await expect(page.getByRole('alert')).toContainText('adresse email valide')
+  expect(requests).toEqual([])
+
+  await field.fill('nadia@example.test')
+  await field.press('Enter')
+  await expect(page.getByTestId('recovery-sent')).toContainText('notre équipe a été prévenue')
+  expect(requests).toEqual([{ email: 'nadia@example.test' }])
   expect(network.unexpectedRequests).toEqual([])
 })
 

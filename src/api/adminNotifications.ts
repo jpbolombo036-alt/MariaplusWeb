@@ -8,6 +8,7 @@ export interface AdminNotification {
   title: string
   message: string
   organizationId: number | null
+  userId: number | null
   senderEmail: string | null
   createdAt: string | null
   readAt: string | null
@@ -27,6 +28,7 @@ function parseNotification(j: Record<string, unknown>): AdminNotification {
     title: String(j.title ?? ''),
     message: String(j.message ?? ''),
     organizationId: j.organizationId == null ? null : Number(j.organizationId),
+    userId: j.userId == null ? null : Number(j.userId),
     senderEmail: j.senderEmail == null ? null : String(j.senderEmail),
     createdAt: j.createdAt == null ? null : String(j.createdAt),
     readAt: j.readAt == null ? null : String(j.readAt),
