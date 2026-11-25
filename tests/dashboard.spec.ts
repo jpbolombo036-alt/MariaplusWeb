@@ -10,7 +10,7 @@ function inDays(days: number): string {
 
 const page1 = <T>(content: T[]) => ({ content, totalPages: 1, currentPage: 0, totalElements: content.length })
 
-async function openDashboard(page: Page, opts: { status?: string; dashboard?: Record<string, unknown> } = {}) {
+async function openDashboard(page: Page, opts: { status?: string; dashboard?: Record<string, unknown>; otherEvents?: number } = {}) {
   const event = {
     id: 1, name: 'Mariage de Grâce & David', type: 'WEDDING', status: opts.status ?? 'PUBLISHED',
     eventDate: inDays(18), startTime: '14:00:00', venueName: 'Salle Les Palmiers', city: 'Gombe', organizationId: 9,
@@ -31,7 +31,9 @@ async function openDashboard(page: Page, opts: { status?: string; dashboard?: Re
         permissions: ['WEDDING_VIEW', 'GUEST_VIEW', 'GUEST_CREATE', 'RSVP_VIEW', 'INVITATION_SEND', 'CHECKIN_SCAN', 'DASHBOARD_VIEW'],
       } })
     } else if (p === '/api/events') {
-      await fulfillJson(route, page1([event]))
+      await fulfillJson(route, page1([event, ...Array.from({ length: opts.otherEvents ?? 0 }, (_, k) => ({
+        ...event, id: 100 + k, name: `Autre événement ${k + 1}`, eventDate: inDays(30 + k),
+      }))]))
     } else if (p === '/api/events/1') {
       await fulfillJson(route, event)
     } else if (p === '/api/events/1/dashboard') {
@@ -152,4 +154,13 @@ test('an older backend without sent/opened figures hides the funnel instead of s
   await expect(page.getByTestId('funnel')).toHaveCount(0)
   await expect(page.getByTestId('todo').getByText(/pas encore envoyée|jamais ouverte/)).toHaveCount(0)
   await expect(page.getByTestId('kpi-confirmed')).toContainText('1 déjà présent')
+})
+
+test('the event list opens above the key figures and can be clicked', async ({ page }) => {
+  await openDashboard(page, { otherEvents: 5 })
+  await page.getByRole('button', { name: "Changer d'événement" }).click()
+  // The last entries sit over the key figure cards: a click there must reach the list.
+  const dashboardRequest = page.waitForRequest((r) => new URL(r.url()).pathname === '/api/events/104/dashboard')
+  await page.getByText('Autre événement 5').click()
+  await dashboardRequest
 })

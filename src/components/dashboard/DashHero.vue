@@ -1,6 +1,6 @@
 <template>
   <section
-    class="bg-white border border-slate-200 rounded-2xl p-6 flex flex-wrap items-center gap-6"
+    class="relative z-20 bg-white border border-slate-200 rounded-2xl p-6 flex flex-wrap items-center gap-6"
     aria-label="Événement sélectionné"
   >
     <div class="flex items-center gap-5 flex-[1_1_420px] min-w-0">
