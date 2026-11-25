@@ -85,7 +85,7 @@ test('the dashboard shows the event, its figures and what to do next', async ({ 
   await expect(page.getByTestId('countdown')).toHaveAccessibleName('Dans 18 jours')
   await expect(page.getByRole('link', { name: 'Ajouter un invité' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Check-in' })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: 'Envoyer les invitations' })).toHaveAttribute('href', '/dashboard/events/1/invitations/send')
+  await expect(page.getByRole('link', { name: 'Envoyer les invitations' })).toHaveCount(0)
 
   // Key figures, response rate on SENT invitations: 178 / 228 = 78 %.
   await expect(page.getByTestId('kpi-guests')).toContainText('240')

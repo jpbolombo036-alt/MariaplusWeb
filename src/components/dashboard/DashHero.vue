@@ -30,20 +30,13 @@
 
     <div class="flex flex-col gap-3 items-start sm:items-end flex-[0_1_auto]">
       <EventSelector trigger-label="Changer d'événement" />
-      <div class="flex flex-wrap gap-2 sm:justify-end">
-        <router-link
-          v-if="canSend"
-          :to="`/dashboard/events/${event.id}/invitations/send`"
-          class="inline-flex items-center gap-2 h-11 px-4 rounded-xl bg-primary text-white text-[14px] font-semibold hover:bg-primary-dark"
-        ><Send :size="16" aria-hidden="true" />Envoyer les invitations</router-link>
-      </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CalendarDays, Clock, MapPin, Send } from 'lucide-vue-next'
+import { CalendarDays, Clock, MapPin } from 'lucide-vue-next'
 import EventSelector from './EventSelector.vue'
 import type { Event } from '../../api/events'
 import { eventTypeLabel, statusLabel } from '../../utils/eventStatus'
@@ -51,7 +44,6 @@ import { daysUntil } from './dashboardMath'
 
 const props = defineProps<{
   event: Event
-  canSend: boolean
 }>()
 
 const title = computed(() => props.event.weddingDetails?.displayName || props.event.name)
