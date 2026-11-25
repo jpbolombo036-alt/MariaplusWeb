@@ -1,252 +1,331 @@
 <template>
   <div class="min-h-full">
-    <p v-if="loading" class="text-slate-400 py-20 text-center text-sm">Chargement…</p>
-    <p v-else-if="error" class="text-error py-20 text-center text-sm">{{ error }}</p>
+    <p v-if="loading" class="text-slate-500 py-20 text-center text-sm">Chargement…</p>
+    <p v-else-if="error" class="text-error py-20 text-center text-sm" role="alert">{{ error }}</p>
 
     <template v-else>
-      <!-- En-tête dashboard style Prosoc -->
-      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm mb-6">
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
-          <div>
-            <h1 class="text-[22px] font-bold text-slate-900 tracking-tight">Bonjour, {{ firstName }} 👋</h1>
-            <p class="text-[13px] text-slate-500 mt-0.5 font-medium">Voici un aperçu de vos événements et de vos activités.</p>
-          </div>
-        </div>
-
-        <div class="flex justify-end">
-          <EventSelector :name="active?.weddingDetails?.displayName || active?.name" :subtitle="eventSubtitle" />
-        </div>
+      <div class="mb-5">
+        <h1 class="m-0 text-[22px] font-bold text-slate-900 tracking-tight">Bonjour, {{ firstName }}</h1>
+        <p class="m-0 mt-0.5 text-[14px] text-slate-600">Voici où en est votre événement.</p>
       </div>
 
       <EventCreationLockedNotice />
 
-      <div v-if="!active" class="bg-white border border-slate-200 rounded-xl p-10 text-center text-slate-500 shadow-sm text-sm">
+      <div v-if="!active" class="bg-white border border-slate-200 rounded-2xl p-10 text-center text-slate-600 text-sm">
         <template v-if="creationLocked">Aucun événement pour le moment. Votre activité apparaîtra ici après votre premier événement.</template>
         <template v-else>Aucun événement actif pour le moment. Créez votre premier événement pour suivre votre activité ici.</template>
       </div>
 
-      <template v-else>
-        <!-- Ligne cartes stats -->
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
-          <StatCard label="Total Invités" :value="guestsTotal" icon="group" tone="primary" />
-          <StatCard label="Invitations créées" :value="invitedTotal" :total="guestsTotal" icon="mail" tone="primary" :progress="inviteProgress" />
-          <StatCard label="Check-ins" :value="checkedIn" :total="expectedGuests" icon="person_check" tone="success" :progress="checkinProgress" />
-          <StatCard label="Taux de réponse" :value="responseRate + '%'" icon="poll" tone="attention" :progress="responseRate" />
+      <div v-else class="flex flex-col gap-5">
+        <DashHero :event="active" :can-add-guest="canAddGuest" :can-checkin="canCheckin" :can-send="canSend" />
+
+        <section v-if="dashboard" aria-label="Indicateurs clés" class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+          <DashKpi
+            v-if="dashboard.has.guests"
+            test-id="kpi-guests"
+            label="Invités"
+            :value="dashboard.guests.total"
+            :icon="Users"
+            tone="primary"
+            :hint="guestsHint"
+          />
+          <DashKpi
+            v-if="dashboard.has.invitations"
+            test-id="kpi-response"
+            label="Taux de réponse"
+            :value="`${responseRate}%`"
+            :suffix="`${responded} / ${responseBase}`"
+            :icon="RefreshCw"
+            tone="amber"
+            :progress="responseRate"
+            :progress-label="`${responseRate} % des invitations envoyées ont reçu une réponse`"
+          />
+          <DashKpi
+            v-if="dashboard.has.invitations || dashboard.has.attendance"
+            test-id="kpi-confirmed"
+            label="Présences confirmées"
+            :value="dashboard.has.attendance ? dashboard.attendance.expected : dashboard.invitations.accepted"
+            :suffix="dashboard.has.attendance ? 'personnes' : 'acceptées'"
+            :icon="UserCheck"
+            tone="green"
+            :hint="confirmedHint"
+          />
+          <DashKpi
+            v-if="dashboard.has.tables"
+            test-id="kpi-tables"
+            label="Places aux tables"
+            :value="dashboard.tables.assignedGuests"
+            :suffix="dashboard.tables.capacity ? `/ ${dashboard.tables.capacity} places` : 'aucune table'"
+            :icon="LayoutGrid"
+            tone="blue"
+            :progress="dashboard.tables.capacity ? percent(dashboard.tables.assignedGuests, dashboard.tables.capacity) : null"
+            :progress-label="`${dashboard.tables.assignedGuests} places attribuées sur ${dashboard.tables.capacity}`"
+          />
+        </section>
+
+        <div v-if="dashboard?.has.invitations" class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,380px),1fr))]">
+          <DashFunnel
+            v-if="dashboard.has.tracking"
+            :created="dashboard.invitations.total"
+            :sent="sent"
+            :opened="dashboard.invitations.opened"
+            :responded="responded"
+            :present="dashboard.has.attendance && dashboard.attendance.checkedIn > 0 ? dashboard.attendance.checkedIn : null"
+          />
+          <DashTodo :items="todo" />
         </div>
 
-        <!-- RSVP + Prochain événement interne -->
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-6">
-          <div class="xl:col-span-2">
-            <RsvpOverviewCard :accepted="accepted" :pending="pending" :declined="declined" :noResponse="noResponse" />
-          </div>
-          <div class="xl:col-span-1">
-            <UpcomingInternalEventCard
-              :date="upcoming?.sessionDate ?? undefined"
-              :name="upcoming?.name ?? undefined"
-              :time="upcoming?.startTime ?? undefined"
-              :venue="[upcoming?.venueName, upcoming?.city].filter(Boolean).join(', ') || undefined"
-              :guests="upcoming?.expectedAttendees ?? undefined"
-            />
-          </div>
+        <div class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,380px),1fr))]">
+          <DashResponses
+            v-if="dashboard?.has.invitations"
+            :accepted="dashboard.invitations.accepted"
+            :declined="dashboard.invitations.declined"
+            :no-answer="noAnswer"
+            :link="auth.can([Perm.rsvpView]) ? `/dashboard/events/${active.id}/rsvp` : undefined"
+          />
+          <DashProgramme :sessions="sessions" :link="`/dashboard/events/${active.id}/internal-events`" />
         </div>
 
-        <!-- Invités récents + Activité récente -->
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
-          <div class="xl:col-span-2">
-            <RecentGuestsTable :rows="guestRows" />
-          </div>
-          <div class="xl:col-span-1">
-            <RecentActivityCard :rows="activityRows" />
-          </div>
+        <div class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,380px),1fr))]">
+          <DashLatestResponses
+            v-if="rsvps !== null"
+            :rows="latestResponses"
+            :link="auth.can([Perm.guestView]) ? `/dashboard/events/${active.id}/guests` : undefined"
+          />
+          <DashActivity :activity="activity" />
         </div>
-      </template>
+      </div>
+
+      <ReminderSettingsDialog
+        v-if="remindersOpen && active"
+        level="event"
+        :target-id="active.id"
+        :subtitle="`Événement : ${active.weddingDetails?.displayName || active.name}`"
+        @close="remindersOpen = false"
+        @saved="onRemindersSaved"
+      />
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import { getDashboard, getUpcomingSession, getRecentActivity, type Dashboard, type UpcomingSession, type ActivityItem } from '../api/dashboard'
-import { listGuestsPage, type Guest } from '../api/guests'
+import { Bell, Eye, LayoutGrid, Mail, Megaphone, RefreshCw, Send, UserCheck, Users } from 'lucide-vue-next'
+import { getDashboard, getRecentActivity, type Dashboard, type ActivityItem } from '../api/dashboard'
+import { listGuests, listCategories, type Guest, type GuestCategory } from '../api/guests'
 import { listRsvps, type RsvpRow } from '../api/rsvp'
+import { listWeddingEvents, type WeddingEventItem } from '../api/weddingEvents'
+import { getReminderSettings, effectiveReminderSettings, type ReminderSettings } from '../api/reminderSettings'
 import { apiErrorMessage } from '../api/http'
 import { Perm } from '../permissions'
 import { useWeddingStore } from '../stores/wedding'
-import EventSelector from '../components/dashboard/EventSelector.vue'
-import StatCard from '../components/dashboard/StatCard.vue'
-import RsvpOverviewCard from '../components/dashboard/RsvpOverviewCard.vue'
-import UpcomingInternalEventCard from '../components/dashboard/UpcomingInternalEventCard.vue'
-import RecentGuestsTable from '../components/dashboard/RecentGuestsTable.vue'
-import RecentActivityCard from '../components/dashboard/RecentActivityCard.vue'
-import EventCreationLockedNotice from '../components/common/EventCreationLockedNotice.vue'
-import { useEventCreationLock } from '../composables/useEventCreationLock'
 import { useAuthStore } from '../stores/auth'
+import { useNotificationStore } from '../stores/notifications'
 import { initialsOf, fullName } from '../utils/initials'
-import { eventDateLabel, eventTypeLabel, statusLabel } from '../utils/eventStatus'
-
-interface GuestRow {
-  id: number
-  name: string
-  initials: string
-  group?: string | null
-  people?: number | null
-  status?: string | null
-}
-
-interface ActivityRow {
-  id: string
-  type: 'guest' | 'invitation' | 'checkin' | 'table'
-  icon: string
-  title: string
-  subtitle: string
-  time: string
-}
+import DashHero from '../components/dashboard/DashHero.vue'
+import DashKpi from '../components/dashboard/DashKpi.vue'
+import DashFunnel from '../components/dashboard/DashFunnel.vue'
+import DashTodo, { type TodoItem } from '../components/dashboard/DashTodo.vue'
+import DashResponses from '../components/dashboard/DashResponses.vue'
+import DashProgramme from '../components/dashboard/DashProgramme.vue'
+import DashLatestResponses, { type LatestResponseRow } from '../components/dashboard/DashLatestResponses.vue'
+import DashActivity from '../components/dashboard/DashActivity.vue'
+import EventCreationLockedNotice from '../components/common/EventCreationLockedNotice.vue'
+import ReminderSettingsDialog from '../components/common/ReminderSettingsDialog.vue'
+import { useEventCreationLock } from '../composables/useEventCreationLock'
+import { percent, plural } from '../components/dashboard/dashboardMath'
 
 const auth = useAuthStore()
+const toasts = useNotificationStore()
 const { locked: creationLocked } = useEventCreationLock()
 const weddingStore = useWeddingStore()
+
 const dashboard = ref<Dashboard | null>(null)
-const guests = ref<Guest[]>([])
-// null signifie que les réponses ne sont pas accessibles ou n'ont pas été chargées.
-const rsvps = ref<RsvpRow[] | null>(null)
-const upcoming = ref<UpcomingSession | null>(null)
+const sessions = ref<WeddingEventItem[]>([])
 const activity = ref<ActivityItem[]>([])
+// null: answers not accessible to this user (or not loaded).
+const rsvps = ref<RsvpRow[] | null>(null)
+const guests = ref<Guest[]>([])
+const categories = ref<GuestCategory[]>([])
+const reminders = ref<ReminderSettings | null>(null)
+const remindersOpen = ref(false)
 const loading = ref(true)
 const error = ref('')
 
-const firstName = computed(() => auth.user?.firstName || 'JP')
+const firstName = computed(() => auth.user?.firstName || '')
 const active = computed(() => weddingStore.active)
-/** Sous-titre : « Mariage • 12 oct. 2026 · 14:30 • À venir » (sans date si absente). */
-const eventSubtitle = computed(() => {
-  if (!active.value) return ''
+
+const canAddGuest = computed(() => auth.can([Perm.guestCreate]))
+const canCheckin = computed(() => auth.can([Perm.checkinScan, Perm.checkinCreate]))
+const canSend = computed(() => auth.can([Perm.invitationSend]))
+const canSetReminders = computed(() => auth.isSuperAdmin || auth.roles.includes('ORGANISATEUR'))
+
+// ----- Figures -----
+const sent = computed(() => dashboard.value?.invitations.sent ?? 0)
+const responded = computed(() => (dashboard.value?.invitations.accepted ?? 0) + (dashboard.value?.invitations.declined ?? 0))
+/** Rates are computed on sent invitations; on an older backend without `sent`, on all of them. */
+const responseBase = computed(() => Math.max(sent.value, responded.value) || dashboard.value?.invitations.total || 0)
+const responseRate = computed(() => percent(responded.value, responseBase.value))
+const noAnswer = computed(() => Math.max(0, responseBase.value - responded.value))
+
+const guestsHint = computed(() => {
+  const d = dashboard.value
+  if (!d?.has.invitations) return undefined
+  if (!d.has.tracking) return plural(d.invitations.total, 'invitation créée', 'invitations créées')
+  const toSend = Math.max(0, d.invitations.total - sent.value)
+  const parts = [plural(sent.value, 'invitation envoyée', 'invitations envoyées')]
+  if (toSend) parts.push(`${toSend} à envoyer`)
+  return parts.join(' · ')
+})
+const confirmedHint = computed(() => {
+  const d = dashboard.value
+  if (!d) return undefined
+  const parts: string[] = []
+  if (d.has.attendance && d.has.invitations) parts.push(plural(d.invitations.accepted, 'invitation acceptée', 'invitations acceptées'))
+  if (d.has.invitations) parts.push(plural(d.invitations.declined, 'refus', 'refus'))
+  if (d.has.attendance && d.attendance.checkedIn > 0) parts.push(`${d.attendance.checkedIn} déjà présent${d.attendance.checkedIn > 1 ? 's' : ''}`)
+  return parts.join(' · ') || undefined
+})
+
+// ----- À faire -----
+const todo = computed<TodoItem[]>(() => {
+  const d = dashboard.value
   const ev = active.value
-  const parts = [eventTypeLabel(ev.type)]
-  const date = eventDateLabel(ev)
-  if (date) parts.push(date)
-  parts.push(statusLabel(ev.status) || 'Brouillon')
-  return parts.join(' • ')
+  if (!d || !ev) return []
+  const base = `/dashboard/events/${ev.id}`
+  const items: TodoItem[] = []
+  if (ev.status === 'DRAFT') {
+    items.push({ id: 'draft', title: "L'événement est encore en brouillon", detail: 'Publiez-le pour que vos invités puissent répondre.', icon: Megaphone, tone: 'amber', urgent: true, action: 'Publier', to: base })
+  }
+  if (noAnswer.value > 0 && sent.value > 0) {
+    items.push({ id: 'no-answer', title: `${plural(noAnswer.value, 'invité n\'a', 'invités n\'ont')} pas répondu`, detail: 'Une relance augmente nettement le taux de réponse.', icon: RefreshCw, tone: 'amber', urgent: true, action: 'Relancer', to: `${base}/invitations` })
+  }
+  const toSend = d.has.tracking ? Math.max(0, d.invitations.total - sent.value) : 0
+  if (toSend > 0) {
+    items.push({ id: 'to-send', title: `${plural(toSend, 'invitation', 'invitations')} pas encore ${toSend > 1 ? 'envoyées' : 'envoyée'}`, icon: Send, tone: 'primary', action: 'Envoyer', to: `${base}/invitations/send` })
+  }
+  const withoutInvitation = d.has.guests ? Math.max(0, d.guests.total - d.invitations.total) : 0
+  if (withoutInvitation > 0) {
+    items.push({ id: 'no-invitation', title: `${plural(withoutInvitation, 'invité', 'invités')} sans invitation`, icon: Mail, tone: 'primary', action: 'Créer', to: `${base}/invitations/new` })
+  }
+  const neverOpened = d.has.tracking ? Math.max(0, sent.value - d.invitations.opened) : 0
+  if (neverOpened > 0) {
+    items.push({ id: 'never-opened', title: `${plural(neverOpened, 'invitation jamais ouverte', 'invitations jamais ouvertes')}`, detail: 'Vérifiez les numéros WhatsApp.', icon: Eye, tone: 'primary', action: 'Voir', to: `${base}/invitations` })
+  }
+  const unassigned = d.guests.unassigned ?? 0
+  if (d.has.tables && d.tables.total > 0 && unassigned > 0) {
+    items.push({ id: 'unassigned', title: `${plural(unassigned, 'invité', 'invités')} sans table`, detail: `${plural(d.tables.remainingCapacity, 'place encore libre', 'places encore libres')}.`, icon: LayoutGrid, tone: 'blue', action: 'Placer', to: `${base}/tables` })
+  }
+  const next = nextReminder.value
+  if (next && canSetReminders.value) {
+    items.push({ id: 'reminder', title: `Prochain rappel : ${next}`, detail: 'Dans votre cloche de notifications.', icon: Bell, tone: 'slate', info: true, action: 'Régler', onClick: () => { remindersOpen.value = true } })
+  }
+  return items
 })
-const guestsTotal = computed(() => dashboard.value?.guests.total ?? 0)
-const invitedTotal = computed(() => dashboard.value?.invitations.total ?? 0)
-const accepted = computed(() => dashboard.value?.invitations.accepted ?? 0)
-// Le backend nomme `pending` le nombre d'invitations sans réponse
-// (total - acceptées - refusées). Ce ne sont pas des réponses RSVP PENDING.
-const pending = computed(() => 0)
-const declined = computed(() => dashboard.value?.invitations.declined ?? 0)
-const noResponse = computed(() => dashboard.value?.invitations.pending ?? 0)
-const checkedIn = computed(() => dashboard.value?.attendance.checkedIn ?? 0)
-const expectedGuests = computed(() => dashboard.value?.attendance.expected ?? 0)
-const inviteProgress = computed(() =>
-  guestsTotal.value > 0 ? Math.round((invitedTotal.value / guestsTotal.value) * 100) : 0,
-)
-const checkinProgress = computed(() =>
-  expectedGuests.value > 0 ? Math.round((checkedIn.value / expectedGuests.value) * 100) : 0,
-)
-const responseRate = computed(() => {
-  return Math.round(dashboard.value?.invitations.responseRate ?? 0)
+
+/** Next automatic reminder from the event's settings, e.g. "samedi 6 décembre, 08h00". */
+const nextReminder = computed(() => {
+  const s = reminders.value
+  const date = active.value?.eventDate
+  if (!s || !s.enabled || !date) return null
+  const hour = s.sendHour ?? 8
+  const day = new Date(`${date.slice(0, 10)}T00:00:00`)
+  if (Number.isNaN(day.getTime())) return null
+  const offsets: number[] = []
+  if (s.firstReminderEnabled && s.firstReminderDays) offsets.push(s.firstReminderDays)
+  if (s.eveEnabled) offsets.push(1)
+  if (s.dayOfEnabled) offsets.push(0)
+  const now = new Date()
+  const candidates = offsets.map((o) => {
+    const at = new Date(day)
+    at.setDate(day.getDate() - o)
+    at.setHours(hour, 0, 0, 0)
+    return at
+  }).filter((at) => at.getTime() > now.getTime()).sort((a, b) => a.getTime() - b.getTime())
+  if (!candidates.length) return null
+  const at = candidates[0]
+  return `${at.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}, ${String(hour).padStart(2, '0')}h00`
 })
 
-const rsvpByGuest = computed(() =>
-  new Map(rsvps.value?.map((rsvp) => [rsvp.guestId, rsvp]) ?? []),
-)
-const guestRows = computed<GuestRow[]>(() =>
-  guests.value.map((g) => ({
-    id: g.id,
-    name: fullName(g.firstName, g.lastName),
-    initials: initialsOf(g.firstName, g.lastName),
-    group: null,
-    people: g.allowedCompanions != null ? g.allowedCompanions + 1 : 1,
-    status: rsvps.value === null ? null : rsvpByGuest.value.get(g.id)?.status || 'PENDING',
-  })),
-)
+// ----- Dernières réponses -----
+const latestResponses = computed<LatestResponseRow[]>(() => {
+  if (!rsvps.value) return []
+  const byGuest = new Map(guests.value.map((g) => [g.id, g]))
+  const categoryName = new Map(categories.value.map((c) => [c.id, c.name]))
+  return rsvps.value
+    .filter((r) => r.status === 'ACCEPTED' || r.status === 'DECLINED')
+    .sort((a, b) => (b.respondedAt ?? '').localeCompare(a.respondedAt ?? ''))
+    .slice(0, 5)
+    .map((r) => {
+      const g = byGuest.get(r.guestId)
+      return {
+        id: r.invitationId,
+        name: g ? fullName(g.firstName, g.lastName) : `Invité n°${r.guestId}`,
+        initials: g ? initialsOf(g.firstName, g.lastName) : '?',
+        category: g?.categoryId != null ? categoryName.get(g.categoryId) ?? null : null,
+        people: r.status === 'ACCEPTED' ? Math.max(1, r.numberOfAttendees ?? 1) : 0,
+        accepted: r.status === 'ACCEPTED',
+      }
+    })
+})
 
-const activityRows = computed<ActivityRow[]>(() =>
-  activity.value.map((a) => {
-    const kind = activityKind(a.action, a.entityType)
-    return {
-      id: String(a.id),
-      type: kind,
-      icon: activityIcon(kind, a.action),
-      title: a.details || a.action,
-      subtitle: active.value?.name ?? '',
-      time: formatActivityTime(a.performedAt),
-    }
-  }),
-)
+function onRemindersSaved() {
+  remindersOpen.value = false
+  toasts.push('Réglages des rappels enregistrés.', 'success')
+  if (active.value) void loadReminders(active.value.id)
+}
 
+// ----- Loading -----
 let loadSequence = 0
 
 function clearData() {
   dashboard.value = null
-  guests.value = []
-  rsvps.value = null
-  upcoming.value = null
+  sessions.value = []
   activity.value = []
+  rsvps.value = null
+  guests.value = []
+  categories.value = []
+  reminders.value = null
 }
 
-async function loadData(activeId: number) {
+async function loadReminders(eventId: number) {
+  if (!canSetReminders.value) return
+  try {
+    reminders.value = effectiveReminderSettings(await getReminderSettings('event', eventId))
+  } catch { reminders.value = null }
+}
+
+async function loadData(eventId: number) {
   const sequence = ++loadSequence
   loading.value = true
   error.value = ''
   clearData()
   try {
+    const canRsvp = auth.can([Perm.rsvpView])
+    const canGuests = auth.can([Perm.guestView])
     const results = await Promise.allSettled([
-      getDashboard(activeId),
-      listGuestsPage(activeId, { size: 5 }),
-      getUpcomingSession(activeId),
-      getRecentActivity(activeId, 5),
-      auth.can([Perm.rsvpView])
-        ? listRsvps(activeId)
-        : Promise.resolve(null),
+      getDashboard(eventId),
+      listWeddingEvents(eventId),
+      getRecentActivity(eventId, 6),
+      canRsvp ? listRsvps(eventId) : Promise.resolve(null),
+      canRsvp && canGuests ? listGuests(eventId) : Promise.resolve([] as Guest[]),
+      canRsvp && canGuests ? listCategories(eventId) : Promise.resolve([] as GuestCategory[]),
     ])
     if (sequence !== loadSequence) return
-    // Sans statistiques, afficher des zéros ferait passer une erreur réseau
-    // pour un événement vide. Les autres cartes restent facultatives.
+    // Without figures, zeros would pass a network error off as an empty event. The other cards are optional.
     if (results[0].status === 'rejected') throw results[0].reason
     dashboard.value = results[0].value
-    guests.value = results[1].status === 'fulfilled' ? results[1].value.content : []
-    upcoming.value = results[2].status === 'fulfilled' ? results[2].value : null
-    activity.value = results[3].status === 'fulfilled' ? results[3].value : []
-    rsvps.value = results[4].status === 'fulfilled' ? results[4].value : null
+    sessions.value = results[1].status === 'fulfilled' ? results[1].value : []
+    activity.value = results[2].status === 'fulfilled' ? results[2].value : []
+    rsvps.value = results[3].status === 'fulfilled' ? results[3].value : null
+    guests.value = results[4].status === 'fulfilled' ? results[4].value : []
+    categories.value = results[5].status === 'fulfilled' ? results[5].value : []
+    void loadReminders(eventId)
   } catch (e: unknown) {
     if (sequence === loadSequence) error.value = apiErrorMessage(e)
   } finally {
     if (sequence === loadSequence) loading.value = false
   }
-}
-
-/** Catégorise une trace d'audit pour l'icône / la couleur. */
-function activityKind(action: string, entityType?: string | null): ActivityRow['type'] {
-  const a = `${action} ${entityType ?? ''}`.toUpperCase()
-  if (a.includes('CHECKIN') || a.includes('CHECK_IN')) return 'checkin'
-  if (a.includes('INVITATION')) return 'invitation'
-  if (a.includes('TABLE')) return 'table'
-  if (a.includes('GUEST') || a.includes('RSVP')) return 'guest'
-  return 'guest'
-}
-
-/** Icône Material Symbols selon le type d'activité. */
-function activityIcon(kind: ActivityRow['type'], action: string): string {
-  const a = action.toUpperCase()
-  if (kind === 'checkin') return 'how_to_reg'
-  if (kind === 'invitation') return a.includes('SEND') ? 'send' : 'mail'
-  if (kind === 'table') return 'table_restaurant'
-  return a.includes('CREATE') || a.includes('IMPORT') ? 'person_add' : 'person'
-}
-
-/** Formatage FR : « aujourd'hui, 14h30 » / « hier, 09h15 » / « 12/09, 18h00 ». */
-function formatActivityTime(iso: string): string {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return '—'
-  const hhmm = `${String(d.getHours()).padStart(2, '0')}h${String(d.getMinutes()).padStart(2, '0')}`
-  const today = new Date()
-  const isSameDay = (x: Date, y: Date) => x.getFullYear() === y.getFullYear() && x.getMonth() === y.getMonth() && x.getDate() === y.getDate()
-  const yesterday = new Date(today)
-  yesterday.setDate(today.getDate() - 1)
-  if (isSameDay(d, today)) return hhmm
-  if (isSameDay(d, yesterday)) return `hier, ${hhmm}`
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}, ${hhmm}`
 }
 
 onMounted(() => {

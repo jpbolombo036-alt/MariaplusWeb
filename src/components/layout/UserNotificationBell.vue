@@ -39,8 +39,8 @@
             :aria-expanded="expandedId === n.id"
             @click="toggleItem(n)"
           >
-            <span class="material-symbols-outlined text-[20px] shrink-0 mt-0.5 text-primary" aria-hidden="true">
-              {{ n.broadcast ? 'campaign' : 'mail' }}
+            <span class="material-symbols-outlined text-[20px] shrink-0 mt-0.5" :class="isReminder(n) ? 'text-amber-600' : 'text-primary'" aria-hidden="true">
+              {{ isReminder(n) ? 'event_upcoming' : n.broadcast ? 'campaign' : 'mail' }}
             </span>
             <span class="min-w-0 flex-1">
               <span class="block text-[13px] text-slate-800 break-words" :class="n.readAt ? 'font-medium' : 'font-bold'">{{ n.title }}</span>
@@ -49,12 +49,21 @@
                 :class="expandedId === n.id ? '' : 'line-clamp-2'"
               >{{ n.message }}</span>
               <span class="block text-[11px] text-slate-400 mt-1">
-                {{ n.broadcast ? 'Tous les organisateurs' : 'Équipe EventiaEasy' }} · {{ formatNotificationDate(n.createdAt) }}
+                {{ isReminder(n) ? 'Rappel automatique' : n.broadcast ? 'Tous les organisateurs' : 'Équipe EventiaEasy' }} · {{ formatNotificationDate(n.createdAt) }}
               </span>
             </span>
             <span v-if="!n.readAt" class="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" aria-label="Non lue"></span>
           </button>
-          <div v-if="expandedId === n.id" class="px-4 pb-3 pl-12">
+          <div v-if="expandedId === n.id && isReminder(n)" class="px-4 pb-3 pl-12">
+            <button
+              v-if="n.eventId"
+              class="h-8 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold text-primary hover:bg-slate-50 inline-flex items-center gap-1.5"
+              @click="openEvent(n.eventId)"
+            >
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">open_in_new</span> Ouvrir l'événement
+            </button>
+          </div>
+          <div v-else-if="expandedId === n.id" class="px-4 pb-3 pl-12">
             <p v-if="replySent" class="text-[12px] font-semibold text-success" data-testid="reply-sent">
               Réponse envoyée à l'équipe.
             </p>
@@ -94,6 +103,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   listUserNotifications, markUserNotificationRead, markAllUserNotificationsRead, sendContactMessage,
   type UserNotification,
@@ -118,6 +128,17 @@ const { items, unreadCount, refresh, markRead, markAllRead } = usePolledNotifica
   markRead: markUserNotificationRead,
   markAllRead: markAllUserNotificationsRead,
 })
+
+const router = useRouter()
+
+function isReminder(n: UserNotification) {
+  return n.type === 'EVENT_REMINDER'
+}
+
+function openEvent(eventId: number) {
+  open.value = false
+  void router.push(`/dashboard/events/${eventId}`)
+}
 
 function resetReply() {
   replying.value = false

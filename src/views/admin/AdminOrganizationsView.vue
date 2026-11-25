@@ -9,6 +9,14 @@
         Message à tous les organisateurs
       </button>
     </div>
+    <ReminderSettingsDialog
+      v-if="reminderOrg"
+      level="organization"
+      :target-id="reminderOrg.id"
+      :subtitle="`Organisation : ${reminderOrg.name}`"
+      @close="reminderOrg = null"
+      @saved="onRemindersSaved"
+    />
     <AdminMessageDialog
       v-if="messageTarget"
       :organization="messageTarget === 'all' ? null : messageTarget"
@@ -89,6 +97,13 @@
           >
             <span class="material-symbols-outlined text-[16px]">event</span>
             Voir les événements de cette organisation
+          </button>
+          <button
+            class="mt-4 ml-2 h-9 px-4 rounded-lg border border-primary/30 text-primary text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-primary-light transition-colors"
+            @click="reminderOrg = { id: o.id, name: o.name }"
+          >
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">event_upcoming</span>
+            Rappels d'événements
           </button>
 
           <!-- Réglages de l'organisation (override du réglage global) -->
@@ -195,6 +210,7 @@
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AdminMessageDialog from '../../components/admin/AdminMessageDialog.vue'
+import ReminderSettingsDialog from '../../components/common/ReminderSettingsDialog.vue'
 import { useNotificationStore } from '../../stores/notifications'
 import {
   listOrganizations,
@@ -209,6 +225,13 @@ const route = useRoute()
 const toasts = useNotificationStore()
 /** Open message dialog: an organization, every organizer ('all'), or closed (null). */
 const messageTarget = ref<{ id: number; name: string } | 'all' | null>(null)
+
+/** Organization whose reminder settings are open, or null. */
+const reminderOrg = ref<{ id: number; name: string } | null>(null)
+function onRemindersSaved() {
+  reminderOrg.value = null
+  toasts.push('Réglages des rappels enregistrés.', 'success')
+}
 
 function onMessageSent(recipients: number) {
   messageTarget.value = null

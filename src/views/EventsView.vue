@@ -9,6 +9,13 @@
         </div>
         <div class="flex items-center gap-3">
           <button
+            v-if="orgReminderId"
+            class="h-10 px-4 rounded-lg border border-slate-200 text-slate-700 text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-slate-50 transition-all"
+            @click="remindersOpen = true"
+          >
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">event_upcoming</span> Réglages des rappels
+          </button>
+          <button
             v-if="auth.can([Perm.weddingCreate, Perm.eventCreate]) && canCreateNow"
             @click="$router.push({name:'events-new'})"
             class="h-10 px-5 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all"
@@ -20,6 +27,14 @@
     </div>
 
     <EventCreationLockedNotice />
+    <ReminderSettingsDialog
+      v-if="remindersOpen && orgReminderId"
+      level="organization"
+      :target-id="orgReminderId"
+      subtitle="Pour tous les événements de votre organisation (chaque événement peut avoir les siens)"
+      @close="remindersOpen = false"
+      @saved="onRemindersSaved"
+    />
 
     <!-- 4 cartes statistiques -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8">
@@ -152,6 +167,8 @@ import PermGuard from '../components/common/PermGuard.vue'
 import StatusBadge from '../components/common/StatusBadge.vue'
 import CreateEventDialog from '../components/events/CreateEventDialog.vue'
 import EventCreationLockedNotice from '../components/common/EventCreationLockedNotice.vue'
+import ReminderSettingsDialog from '../components/common/ReminderSettingsDialog.vue'
+import { useNotificationStore } from '../stores/notifications'
 import { useAuthStore } from '../stores/auth'
 import { usePlatformStore } from '../stores/platform'
 import { Perm } from '../permissions'
@@ -162,6 +179,16 @@ const platform = usePlatformStore()
 const router = useRouter()
 const route = useRoute()
 const events = ref<Event[]>([])
+
+/** Organizers set their organization's reminders here; the SUPER_ADMIN uses the console. */
+const orgReminderId = computed(() =>
+  !auth.isSuperAdmin && auth.roles.includes('ORGANISATEUR') ? auth.user?.organizationId ?? null : null)
+const remindersOpen = ref(false)
+const toasts = useNotificationStore()
+function onRemindersSaved() {
+  remindersOpen.value = false
+  toasts.push('Réglages des rappels enregistrés.', 'success')
+}
 
 /** Bouton « Nouvel événement » : masqué si le SUPER_ADMIN a désactivé la création. */
 const canCreateNow = computed(() => auth.isSuperAdmin || platform.canCreateEvent)

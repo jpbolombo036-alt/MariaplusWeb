@@ -5,9 +5,19 @@ export interface Dashboard {
   eventId: number
   eventName?: string
   guests: { total: number; unassigned?: number }
-  invitations: { total: number; accepted: number; declined: number; pending: number; responseRate: number }
+  invitations: {
+    total: number; accepted: number; declined: number; pending: number; responseRate: number
+    /** Sent at least once / opened by the guest (0 on an older backend). */
+    sent: number; opened: number
+  }
   attendance: { expected: number; checkedIn: number; remaining: number; checkInRate: number }
   tables: { total: number; capacity: number; assignedGuests: number; remainingCapacity: number }
+  /** Sections the backend sent for this user's role (the others are zeros, not data). */
+  has: {
+    guests: boolean; invitations: boolean; attendance: boolean; tables: boolean
+    /** The backend reports sent/opened invitations (absent on an older backend). */
+    tracking: boolean
+  }
 }
 
 export interface UpcomingSession {
@@ -53,6 +63,8 @@ export async function getDashboard(eventId: number): Promise<Dashboard> {
       declined: num(i.declined),
       pending: num(i.pending),
       responseRate: num(i.responseRate),
+      sent: num(i.sent),
+      opened: num(i.opened),
     },
     attendance: {
       expected: num(a.expected),
@@ -65,6 +77,13 @@ export async function getDashboard(eventId: number): Promise<Dashboard> {
       capacity: num(t.capacity),
       assignedGuests: num(t.assignedGuests),
       remainingCapacity: num(t.remainingCapacity),
+    },
+    has: {
+      guests: json.guests != null,
+      invitations: json.invitations != null,
+      attendance: json.attendance != null,
+      tables: json.tables != null,
+      tracking: i.sent != null && i.opened != null,
     },
   }
 }

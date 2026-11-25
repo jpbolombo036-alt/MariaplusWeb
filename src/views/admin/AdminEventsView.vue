@@ -1,5 +1,13 @@
 <template>
   <div>
+    <ReminderSettingsDialog
+      v-if="reminderTarget"
+      level="event"
+      :target-id="reminderTarget.id"
+      :subtitle="`Événement : ${reminderTarget.name}`"
+      @close="reminderTarget = null"
+      @saved="onRemindersSaved"
+    />
     <div class="bg-white border border-slate-200 rounded-xl shadow-sm">
       <div class="px-6 pt-6 pb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -67,7 +75,15 @@
                   {{ statusLabel(e.status) }}
                 </span>
               </td>
-              <td class="py-4 px-4 text-right">
+              <td class="py-4 px-4 text-right whitespace-nowrap">
+                <button
+                  class="h-9 w-9 mr-2 rounded-lg border border-slate-200 text-slate-500 hover:text-primary hover:border-primary/30 transition-colors inline-flex items-center justify-center align-middle"
+                  title="Rappels de cet événement"
+                  :aria-label="`Rappels de ${e.name}`"
+                  @click="reminderTarget = e"
+                >
+                  <span class="material-symbols-outlined text-[18px]" aria-hidden="true">event_upcoming</span>
+                </button>
                 <router-link
                   :to="`/dashboard/events/${e.id}`"
                   class="h-9 px-3 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5"
@@ -102,8 +118,17 @@ import { useRoute } from 'vue-router'
 import { listAllEvents, listOrganizations, type AdminOrganization } from '../../api/admin'
 import type { Event } from '../../api/events'
 import { eventTypeLabel } from '../../utils/eventStatus'
+import ReminderSettingsDialog from '../../components/common/ReminderSettingsDialog.vue'
+import { useNotificationStore } from '../../stores/notifications'
 
 const route = useRoute()
+const toasts = useNotificationStore()
+/** Event whose reminder settings are open, or null. */
+const reminderTarget = ref<Event | null>(null)
+function onRemindersSaved() {
+  reminderTarget.value = null
+  toasts.push('Réglages des rappels enregistrés.', 'success')
+}
 const rows = ref<Event[]>([])
 const orgs = ref<AdminOrganization[]>([])
 const orgFilter = ref<number | null>(null)

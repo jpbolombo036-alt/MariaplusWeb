@@ -28,7 +28,7 @@ const router = createRouter({
       path: '/dashboard',
       component: () => import('../layouts/AppLayout.vue'),
       children: [
-        { path: '', name: 'dashboard', component: () => import('../views/DashboardView.vue') },
+        { path: '', name: 'dashboard', component: () => import('../views/DashboardView.vue'), meta: { wide: true } },
         { path: 'events', name: 'events', component: () => import('../views/EventsView.vue') },
         { path: 'events/new', name: 'events-new', component: () => import('../views/forms/EventWizard.vue') },
         {

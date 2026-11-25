@@ -16,6 +16,7 @@
     "@zxing/browser": "^0.2.1",
     "axios": "^1.7.7",
     "html2canvas": "^1.4.1",
+    "lucide-vue-next": "^1.0.0",
     "pinia": "^2.2.4",
     "qrcode": "^1.5.4",
     "vue": "^3.5.12",

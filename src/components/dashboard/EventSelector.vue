@@ -1,6 +1,17 @@
 <template>
   <div class="relative" @click.stop>
     <button
+      v-if="triggerLabel"
+      type="button"
+      :aria-expanded="open"
+      class="inline-flex items-center gap-2 h-11 px-4 bg-white border border-slate-200 rounded-xl text-[14px] font-semibold text-slate-700 hover:border-primary/40 transition-all"
+      @click="open = !open"
+    >
+      {{ triggerLabel }}
+      <ChevronDown :size="16" class="text-slate-500 transition-transform" :class="open ? 'rotate-180' : ''" aria-hidden="true" />
+    </button>
+    <button
+      v-else
       @click="open = !open"
       class="flex items-center gap-2 h-10 px-3 bg-white border border-slate-200 rounded-lg shadow-sm hover:border-primary/40 transition-all"
     >
@@ -54,12 +65,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { ChevronDown } from 'lucide-vue-next'
 import { useWeddingStore } from '../../stores/wedding'
 import { eventDateLabel, isPastEvent, sortEventsForSelector, statusLabel } from '../../utils/eventStatus'
 import type { Event } from '../../api/events'
 import { useEventCreationLock } from '../../composables/useEventCreationLock'
 
-defineProps<{ name?: string; subtitle?: string }>()
+/** `triggerLabel`: a plain "Changer d'événement" button instead of the event card trigger. */
+defineProps<{ name?: string; subtitle?: string; triggerLabel?: string }>()
 const { locked: creationLocked } = useEventCreationLock()
 const emit = defineEmits<{ (e: 'select'): void }>()
 

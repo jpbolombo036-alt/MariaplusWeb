@@ -129,6 +129,35 @@
       </p>
     </div>
 
+    <!-- Carte Rappels d'événements (valeurs par défaut de la plateforme) -->
+    <div class="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-symbols-outlined text-[20px] text-primary">event_upcoming</span>
+        <h2 class="text-[15px] font-bold text-slate-900">Rappels d'événements</h2>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <p class="text-[13px] text-slate-500 leading-relaxed min-w-0">
+          Rappels automatiques des événements proches dans la cloche des organisateurs.
+          Ces réglages s'appliquent à toute la plateforme ; chaque organisation et chaque
+          événement peut avoir les siens, et le réglage le plus précis l'emporte.
+        </p>
+        <button
+          class="h-10 px-4 rounded-lg border border-primary/30 text-primary text-[13px] font-semibold hover:bg-primary-light inline-flex items-center gap-2 shrink-0"
+          @click="remindersOpen = true"
+        >
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">tune</span>
+          Régler les rappels
+        </button>
+      </div>
+    </div>
+    <ReminderSettingsDialog
+      v-if="remindersOpen"
+      level="global"
+      subtitle="Valeurs par défaut de toute la plateforme"
+      @close="remindersOpen = false"
+      @saved="onRemindersSaved"
+    />
+
     <!-- Carte Création d'événements -->
     <div class="bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
       <div class="flex items-center gap-2 mb-5">
@@ -184,6 +213,8 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import { useNotificationStore } from '../stores/notifications'
+import ReminderSettingsDialog from '../components/common/ReminderSettingsDialog.vue'
 import { Perm } from '../permissions'
 import { getWhatsappSettings, updateWhatsappSettings } from '../api/admin'
 import {
@@ -192,6 +223,12 @@ import {
 } from '../api/drinkCatalog'
 
 const auth = useAuthStore()
+const toasts = useNotificationStore()
+const remindersOpen = ref(false)
+function onRemindersSaved() {
+  remindersOpen.value = false
+  toasts.push('Réglages des rappels enregistrés.', 'success')
+}
 
 /* --- Autorisation (masquage UI ; la vraie sécurité est côté backend) --- */
 const canUpdate = computed(() => auth.can([Perm.settingsUpdate]))

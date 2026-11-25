@@ -72,6 +72,8 @@ export interface UserNotification {
   title: string
   message: string
   broadcast: boolean
+  /** Set on automatic event reminders: link to the event. */
+  eventId: number | null
   createdAt: string | null
   readAt: string | null
 }
@@ -92,6 +94,7 @@ export async function listUserNotifications(): Promise<{ unreadCount: number; it
         title: String(j.title ?? ''),
         message: String(j.message ?? ''),
         broadcast: Boolean(j.broadcast),
+        eventId: j.eventId == null ? null : Number(j.eventId),
         createdAt: j.createdAt == null ? null : String(j.createdAt),
         readAt: j.readAt == null ? null : String(j.readAt),
       }

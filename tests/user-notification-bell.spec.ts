@@ -7,9 +7,12 @@ async function signInOrganizer(page: Page) {
   const state = {
     items: [
       { id: 11, type: 'ADMIN_MESSAGE', title: 'Compte activé', message: 'Vous pouvez créer vos événements.\nBonne préparation !',
-        broadcast: false, createdAt: '2026-11-24T12:00:00', readAt: null as string | null },
+        broadcast: false, eventId: null, createdAt: '2026-11-24T12:00:00', readAt: null as string | null },
+      { id: 12, type: 'EVENT_REMINDER', title: '« Mariage de Nadia » a lieu demain',
+        message: 'Samedi 28 novembre 2026 à 14h00 — Salle Lumière\nInvités : 120 · Confirmés : 80 · Sans réponse : 30',
+        broadcast: false, eventId: 1, createdAt: '2026-11-24T08:00:00', readAt: '2026-11-24T08:30:00' as string | null },
       { id: 10, type: 'ADMIN_MESSAGE', title: 'Maintenance', message: 'Ce soir à 22h.',
-        broadcast: true, createdAt: '2026-11-24T09:00:00', readAt: '2026-11-24T09:30:00' as string | null },
+        broadcast: true, eventId: null, createdAt: '2026-11-24T09:00:00', readAt: '2026-11-24T09:30:00' as string | null },
     ],
     reads: [] as number[],
     replies: [] as unknown[],
@@ -67,4 +70,17 @@ test('an organizer reads a message from the team and replies', async ({ page }) 
   await expect(panel.getByTestId('reply-sent')).toBeVisible()
   expect(state.replies).toEqual([{ message: 'Réponse à « Compte activé » :\nMerci beaucoup !' }])
   expect(fixture.unexpectedRequests).toEqual([])
+})
+
+test('an automatic event reminder links to its event and cannot be answered', async ({ page }) => {
+  await signInOrganizer(page)
+  await page.getByRole('button', { name: /Notifications/ }).first().click()
+  const panel = page.getByRole('dialog', { name: 'Notifications' })
+  await expect(panel.getByText('Rappel automatique')).toBeVisible()
+
+  await panel.getByText('« Mariage de Nadia » a lieu demain').click()
+  await expect(panel.getByText('Sans réponse : 30')).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Répondre' })).toHaveCount(0)
+  await panel.getByRole('button', { name: "Ouvrir l'événement" }).click()
+  await expect(page).toHaveURL(/\/dashboard\/events\/1$/)
 })

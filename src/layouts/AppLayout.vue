@@ -6,7 +6,7 @@
       <!-- pb-24 : laisse la place à la BottomNav (mobile) pour ne pas couper
            la fin des tableaux ; md+ n'a pas de BottomNav. -->
       <main class="flex-1 overflow-y-auto p-4 pb-24 md:pb-4">
-        <div class="mx-auto max-w-content">
+        <div class="mx-auto" :class="route.meta.wide ? 'max-w-[1280px]' : 'max-w-content'">
           <router-view :key="contentKey" />
         </div>
       </main>

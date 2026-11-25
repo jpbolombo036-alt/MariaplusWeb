@@ -3,6 +3,14 @@
   <div v-else-if="!event" class="text-error">Événement introuvable</div>
 
   <div v-else>
+    <ReminderSettingsDialog
+      v-if="remindersOpen"
+      level="event"
+      :target-id="eventId"
+      :subtitle="`Événement : ${event.weddingDetails?.displayName || event.name}`"
+      @close="remindersOpen = false"
+      @saved="onRemindersSaved"
+    />
     <!-- En-tête toujours visible ; carrousel si des photos existent, sinon couverture par défaut. -->
     <div class="relative rounded-b-2xl overflow-hidden">
       <div
@@ -55,6 +63,15 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
+            <button
+              v-if="canSetReminders"
+              class="h-10 w-10 rounded-lg bg-white text-slate-800 inline-flex items-center justify-center shadow-sm"
+              title="Rappels de cet événement"
+              aria-label="Rappels de cet événement"
+              @click="remindersOpen = true"
+            >
+              <span class="material-symbols-outlined text-base" aria-hidden="true">event_upcoming</span>
+            </button>
             <PermGuard :allow="['WEDDING_UPDATE']">
               <button class="h-10 px-5 rounded-lg bg-white text-slate-800 text-sm font-semibold inline-flex items-center gap-2 shadow-sm" @click="$router.push(`/dashboard/events/${eventId}/edit`)">
                 <span class="material-symbols-outlined text-base">edit</span>Modifier
@@ -125,6 +142,8 @@ import { useRoute } from 'vue-router'
 import { getEvent, updateEventStatus, loadEventImage, absolutePhotoUrl, type Event } from '../api/events'
 import { getDashboard, type Dashboard } from '../api/dashboard'
 import PermGuard from '../components/common/PermGuard.vue'
+import ReminderSettingsDialog from '../components/common/ReminderSettingsDialog.vue'
+import { useNotificationStore } from '../stores/notifications'
 import { useAuthStore } from '../stores/auth'
 import { Perm } from '../permissions'
 import { eventTypeLabel, statusLabel } from '../utils/eventStatus'
@@ -136,6 +155,14 @@ const stats = ref<Dashboard | null>(null)
 const loading = ref(true)
 
 const eventId = Number(route.params.id)
+const toasts = useNotificationStore()
+/** SUPER_ADMIN, or an organizer of the event's organization (the backend checks it). */
+const canSetReminders = computed(() => auth.isSuperAdmin || auth.roles.includes('ORGANISATEUR'))
+const remindersOpen = ref(false)
+function onRemindersSaved() {
+  remindersOpen.value = false
+  toasts.push('Réglages des rappels enregistrés.', 'success')
+}
 let statsRevision = 0
 let statsTimer: ReturnType<typeof setTimeout> | undefined
 let disposed = false
