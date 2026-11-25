@@ -19,7 +19,7 @@
           <span class="text-[12px] font-semibold px-2.5 py-0.5 rounded-full" :class="statusChip">{{ statusText }}</span>
           <span class="text-[12px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ typeText }}</span>
         </div>
-        <h2 class="mt-2 mb-1.5 text-[24px] leading-tight font-bold tracking-tight text-slate-900 break-words">{{ title }}</h2>
+        <h2 class="mt-2 mb-1.5 text-[19px] leading-snug font-bold tracking-tight text-slate-900 break-words">{{ title }}</h2>
         <div class="flex flex-wrap gap-x-5 gap-y-1.5 text-[14px] text-slate-600">
           <span v-if="dateText" class="inline-flex items-center gap-1.5"><CalendarDays :size="16" aria-hidden="true" />{{ dateText }}</span>
           <span v-if="event.startTime" class="inline-flex items-center gap-1.5"><Clock :size="16" aria-hidden="true" />{{ timeText }}</span>
@@ -32,16 +32,6 @@
       <EventSelector trigger-label="Changer d'événement" />
       <div class="flex flex-wrap gap-2 sm:justify-end">
         <router-link
-          v-if="canAddGuest"
-          :to="`/dashboard/events/${event.id}/guests/new`"
-          class="inline-flex items-center gap-2 h-11 px-4 rounded-xl border border-slate-200 bg-white text-[14px] font-semibold text-slate-800 hover:bg-slate-50"
-        ><UserPlus :size="16" aria-hidden="true" />Ajouter un invité</router-link>
-        <router-link
-          v-if="canCheckin"
-          :to="`/dashboard/events/${event.id}/checkin`"
-          class="inline-flex items-center gap-2 h-11 px-4 rounded-xl border border-slate-200 bg-white text-[14px] font-semibold text-slate-800 hover:bg-slate-50"
-        ><ScanLine :size="16" aria-hidden="true" />Check-in</router-link>
-        <router-link
           v-if="canSend"
           :to="`/dashboard/events/${event.id}/invitations/send`"
           class="inline-flex items-center gap-2 h-11 px-4 rounded-xl bg-primary text-white text-[14px] font-semibold hover:bg-primary-dark"
@@ -53,7 +43,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CalendarDays, Clock, MapPin, ScanLine, Send, UserPlus } from 'lucide-vue-next'
+import { CalendarDays, Clock, MapPin, Send } from 'lucide-vue-next'
 import EventSelector from './EventSelector.vue'
 import type { Event } from '../../api/events'
 import { eventTypeLabel, statusLabel } from '../../utils/eventStatus'
@@ -61,8 +51,6 @@ import { daysUntil } from './dashboardMath'
 
 const props = defineProps<{
   event: Event
-  canAddGuest: boolean
-  canCheckin: boolean
   canSend: boolean
 }>()
 

@@ -83,7 +83,8 @@ test('the dashboard shows the event, its figures and what to do next', async ({ 
   // Event banner with countdown and quick actions.
   await expect(page.getByRole('heading', { name: 'Mariage de Grâce & David' })).toBeVisible()
   await expect(page.getByTestId('countdown')).toHaveAccessibleName('Dans 18 jours')
-  await expect(page.getByRole('link', { name: 'Ajouter un invité' })).toHaveAttribute('href', '/dashboard/events/1/guests/new')
+  await expect(page.getByRole('link', { name: 'Ajouter un invité' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Check-in' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Envoyer les invitations' })).toHaveAttribute('href', '/dashboard/events/1/invitations/send')
 
   // Key figures, response rate on SENT invitations: 178 / 228 = 78 %.

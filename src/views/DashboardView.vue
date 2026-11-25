@@ -17,7 +17,7 @@
       </div>
 
       <div v-else class="flex flex-col gap-5">
-        <DashHero :event="active" :can-add-guest="canAddGuest" :can-checkin="canCheckin" :can-send="canSend" />
+        <DashHero :event="active" :can-send="canSend" />
 
         <section v-if="dashboard" aria-label="Indicateurs clés" class="grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
           <DashKpi
@@ -155,8 +155,6 @@ const error = ref('')
 const firstName = computed(() => auth.user?.firstName || '')
 const active = computed(() => weddingStore.active)
 
-const canAddGuest = computed(() => auth.can([Perm.guestCreate]))
-const canCheckin = computed(() => auth.can([Perm.checkinScan, Perm.checkinCreate]))
 const canSend = computed(() => auth.can([Perm.invitationSend]))
 const canSetReminders = computed(() => auth.isSuperAdmin || auth.roles.includes('ORGANISATEUR'))
 
