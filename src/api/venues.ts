@@ -180,6 +180,21 @@ export interface CurrencyAmount {
   amount: number
 }
 
+/** Un remboursement de la période (liste du tableau de bord). */
+export interface VenueRefundLine {
+  paymentId: number
+  receiptNumber: string
+  bookingId: number
+  bookingReference?: string | null
+  clientName?: string | null
+  venueName?: string | null
+  amount: number
+  currency: VenueCurrency
+  method: PaymentMethod
+  reference?: string | null
+  paidAt: string
+}
+
 export interface VenueDashboard {
   from: string
   to: string
@@ -189,6 +204,8 @@ export interface VenueDashboard {
   /** Encaissé net (paiements − remboursements). */
   collected: CurrencyAmount[]
   refunded: CurrencyAmount[]
+  /** Remboursements de la période, les plus récents d'abord. */
+  refunds?: VenueRefundLine[]
   bookedValue: CurrencyAmount[]
   outstanding: CurrencyAmount[]
   occupancyRate: number

@@ -224,3 +224,31 @@ test('cancelling a paid booking refunds part of it and keeps the rest', async ({
   await expect(page.getByText('Retenu (frais d\'annulation)')).toBeVisible()
   await expect(page.getByText('200,00 USD').first()).toBeVisible()
 })
+
+test('the dashboard shows the month refunds in a card and a list', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 1100 })
+  await signIn(page, true, async (route, url) => {
+    if (url.pathname === '/api/venues/dashboard') {
+      await fulfillJson(route, { from: '2026-11-01', to: '2026-11-30', venueCount: 1,
+        bookingsByStatus: { DEMANDE: 0, OPTION: 0, CONFIRMEE: 1, REALISEE: 0, ANNULEE: 1 },
+        collected: [{ currency: 'USD', amount: 200 }], refunded: [{ currency: 'USD', amount: 400 }],
+        refunds: [{ paymentId: 10, receiptNumber: 'RMB-00010', bookingId: 42, bookingReference: 'RES-00042', clientName: 'Patrick Ilunga',
+          venueName: 'Salle Le Palmier', amount: 400, currency: 'USD', method: 'MPESA', reference: 'MP-9', paidAt: '2026-11-26T10:00:00' }],
+        bookedValue: [], outstanding: [], occupancyRate: 0, occupiedVenueDays: 0, availableVenueDays: 30, unpaid: [], upcoming: [] })
+    } else if (url.pathname === '/api/venues/exchange-rate') await fulfillJson(route, { current: null, history: [] })
+    else if (url.pathname === '/api/venues') await fulfillJson(route, [venue])
+    else return false
+    return true
+  })
+  await page.goto('/dashboard/venue')
+  const card = page.locator('.v-card', { has: page.getByText('Remboursé ce mois') })
+  await expect(card.getByText('400,00 USD')).toBeVisible()
+  await expect(card.getByText('1 remboursement(s) aux clients')).toBeVisible()
+  const list = page.locator('.v-card', { has: page.getByRole('heading', { name: 'Remboursements du mois' }) })
+  await expect(list.getByText('RMB-00010')).toBeVisible()
+  await expect(list.getByText('Patrick Ilunga')).toBeVisible()
+  await expect(list.getByText('− 400,00 USD')).toBeVisible()
+  await page.screenshot({ path: 'output/venue-dashboard-refunds.png', fullPage: true })
+  await list.getByText('RMB-00010').click()
+  await expect(page).toHaveURL(/\/dashboard\/venue\/bookings\/42$/)
+})
