@@ -18,6 +18,23 @@
 
     <!-- Menu -->
     <nav class="flex-1 flex flex-col px-4 pt-3 gap-1 overflow-y-auto">
+      <!-- Module prioritaire : « Ma salle » en tête du menu quand il est activé. -->
+      <template v-if="venueItems.length">
+        <p class="px-3.5 pt-1 pb-2.5 font-bold uppercase tracking-widest text-slate-500" style="font-size:11px">Ma salle</p>
+        <router-link
+          v-for="item in venueItems"
+          :key="item.to"
+          :to="item.to"
+          :title="item.label"
+          class="flex items-center gap-3.5 px-3.5 rounded-lg font-medium transition-all duration-200"
+          :class="[isVenueActive(item.to) ? 'bg-primary text-white shadow-sm shadow-primary/20' : 'text-slate-700 hover:bg-white hover:text-slate-900']"
+          style="height:44px;font-size:15px"
+        >
+          <span class="material-symbols-outlined" style="font-size:26px">{{ item.icon }}</span>
+          <span class="truncate">{{ item.label }}</span>
+        </router-link>
+        <div class="h-px bg-slate-200 my-3 mx-3.5" aria-hidden="true" />
+      </template>
       <router-link
         v-for="item in generalItems"
         :key="item.label"
@@ -48,21 +65,6 @@
       </router-link>
     </template>
 
-    <template v-if="venueItems.length">
-      <p class="px-3.5 pt-7 pb-2.5 font-bold uppercase tracking-widest text-slate-500" style="font-size:11px">Ma salle</p>
-      <router-link
-        v-for="item in venueItems"
-        :key="item.to"
-        :to="item.to"
-        :title="item.label"
-        class="flex items-center gap-3.5 px-3.5 rounded-lg font-medium transition-all duration-200"
-        :class="[isVenueActive(item.to) ? 'bg-primary text-white shadow-sm shadow-primary/20' : 'text-slate-700 hover:bg-white hover:text-slate-900']"
-        style="height:44px;font-size:15px"
-      >
-        <span class="material-symbols-outlined" style="font-size:26px">{{ item.icon }}</span>
-        <span class="truncate">{{ item.label }}</span>
-      </router-link>
-    </template>
 
     <template>
       <p class="px-3.5 pt-7 pb-2.5 font-bold uppercase tracking-widest text-slate-400" style="font-size:11px">Bientôt</p>
@@ -117,6 +119,7 @@ const venueItems = computed(() => {
   if (hasAny(p, Perm.bookingView)) items.push({ label: 'Réservations', icon: 'event_available', to: '/dashboard/venue/bookings' })
   if (hasAny(p, Perm.venueClientManage)) items.push({ label: 'Clients', icon: 'contacts', to: '/dashboard/venue/clients' })
   if (hasAny(p, Perm.venueView)) items.push({ label: 'Mes salles', icon: 'storefront', to: '/dashboard/venue/venues' })
+  if (hasAny(p, Perm.bookingView)) items.push({ label: 'Taux de change', icon: 'currency_exchange', to: '/dashboard/venue/exchange-rate' })
   return items
 })
 

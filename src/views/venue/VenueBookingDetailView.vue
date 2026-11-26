@@ -26,7 +26,7 @@
             <span class="material-symbols-outlined text-[18px]">task_alt</span>
             Marquer réalisée
           </button>
-          <button v-if="editable" class="v-btn-danger" :disabled="busy" @click="cancel">
+          <button v-if="editable" class="v-btn-danger" :disabled="busy" @click="openCancel">
             <span class="material-symbols-outlined text-[18px]">cancel</span>
             Annuler
           </button>
@@ -43,7 +43,7 @@
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <!-- Colonne gauche : montants, prestations, paiements -->
         <div class="xl:col-span-2 space-y-6">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" :class="{ 'xl:grid-cols-4': cancelled }">
             <div class="v-card p-5">
               <p class="text-[12px] font-semibold text-slate-500">Total</p>
               <p class="text-xl font-bold text-slate-900 mt-1">{{ formatMoney(booking.totalAmount, booking.currency) }}</p>
@@ -53,7 +53,17 @@
               <p class="text-[12px] font-semibold text-slate-500">Payé</p>
               <p class="text-xl font-bold text-success mt-1">{{ formatMoney(booking.paidAmount, booking.currency) }}</p>
             </div>
-            <div class="v-card p-5">
+            <template v-if="cancelled">
+              <div class="v-card p-5">
+                <p class="text-[12px] font-semibold text-slate-500">Remboursé</p>
+                <p class="text-xl font-bold text-error mt-1">{{ formatMoney(booking.refundedAmount, booking.currency) }}</p>
+              </div>
+              <div class="v-card p-5">
+                <p class="text-[12px] font-semibold text-slate-500">Retenu (frais d'annulation)</p>
+                <p class="text-xl font-bold text-slate-900 mt-1">{{ formatMoney(booking.retainedAmount ?? 0, booking.currency) }}</p>
+              </div>
+            </template>
+            <div v-else class="v-card p-5">
               <p class="text-[12px] font-semibold text-slate-500">Reste à payer</p>
               <p class="text-xl font-bold mt-1" :class="booking.balance > 0 ? 'text-error' : 'text-success'">{{ formatMoney(booking.balance, booking.currency) }}</p>
             </div>
@@ -89,24 +99,27 @@
 
           <!-- Paiements -->
           <div class="v-card">
-            <div class="px-5 pt-5 pb-3"><h2 class="text-[16px] font-bold text-slate-900">Paiements</h2></div>
+            <div class="px-5 pt-5 pb-3"><h2 class="text-[16px] font-bold text-slate-900">{{ booking.refundedAmount > 0 ? 'Paiements et remboursements' : 'Paiements' }}</h2></div>
             <div v-if="booking.payments?.length" class="overflow-x-auto">
               <table class="w-full">
                 <thead><tr class="bg-slate-50/80"><th class="v-th">Reçu</th><th class="v-th">Date</th><th class="v-th">Mode</th><th class="v-th text-right">Montant</th><th class="v-th" /></tr></thead>
                 <tbody>
                   <tr v-for="p in booking.payments" :key="p.id" class="border-t border-slate-100">
-                    <td class="v-td font-semibold">{{ p.receiptNumber }}</td>
+                    <td class="v-td font-semibold">
+                      {{ p.receiptNumber }}
+                      <div v-if="p.kind === 'REFUND'" class="text-[11px] font-bold text-error">Remboursement</div>
+                    </td>
                     <td class="v-td whitespace-nowrap">{{ formatDateTime(p.paidAt) }}</td>
                     <td class="v-td">{{ PAYMENT_METHOD_LABELS[p.method] }}<div v-if="p.reference" class="text-[11px] text-slate-400">{{ p.reference }}</div></td>
                     <td class="v-td text-right whitespace-nowrap">
-                      <span class="font-semibold">{{ formatMoney(p.amount, p.currency) }}</span>
+                      <span class="font-semibold" :class="{ 'text-error': p.kind === 'REFUND' }">{{ p.kind === 'REFUND' ? '− ' : '' }}{{ formatMoney(p.amount, p.currency) }}</span>
                       <div v-if="p.currency !== booking.currency" class="text-[11px] text-slate-400">= {{ formatMoney(p.amountInBookingCurrency, booking.currency) }} (1 USD = {{ p.exchangeRate }} CDF)</div>
                     </td>
                     <td class="v-td text-right whitespace-nowrap">
                       <button class="text-slate-500 hover:text-primary mr-2" :aria-label="`Reçu ${p.receiptNumber}`" title="Reçu PDF" @click="pdf(p.id)">
                         <span class="material-symbols-outlined text-[18px]">receipt_long</span>
                       </button>
-                      <button v-if="canPay" class="text-slate-400 hover:text-error" :aria-label="`Annuler le paiement ${p.receiptNumber}`" title="Annuler ce paiement" @click="removePayment(p.id)">
+                      <button v-if="canPay" class="text-slate-400 hover:text-error" :aria-label="`${p.kind === 'REFUND' ? 'Annuler le remboursement' : 'Annuler le paiement'} ${p.receiptNumber}`" title="Annuler ce mouvement (saisie erronée)" @click="removePayment(p.id)">
                         <span class="material-symbols-outlined text-[18px]">delete</span>
                       </button>
                     </td>
@@ -116,8 +129,9 @@
             </div>
             <p v-else class="px-5 pb-4 text-[13px] text-slate-500">Aucun paiement enregistré.</p>
 
-            <form v-if="canPay && booking.status !== 'ANNULEE' && booking.balance > 0" class="px-5 pb-5 pt-3 border-t border-slate-100 space-y-3" @submit.prevent="addPayment">
-              <p class="text-[13px] font-bold text-slate-900">Enregistrer un paiement</p>
+            <form v-if="canPay && (cancelled ? (booking.retainedAmount ?? 0) > 0 : booking.balance > 0)" class="px-5 pb-5 pt-3 border-t border-slate-100 space-y-3" @submit.prevent="addPayment">
+              <p class="text-[13px] font-bold text-slate-900">{{ cancelled ? 'Rembourser le client' : 'Enregistrer un paiement' }}</p>
+              <p v-if="cancelled" class="text-[12px] text-slate-500">Encore remboursable : {{ formatMoney(booking.retainedAmount ?? 0, booking.currency) }}. Ce qui n'est pas remboursé reste retenu.</p>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <label><span class="v-label">Montant *</span><input v-model.number="payment.amount" required type="number" min="0.01" step="0.01" class="v-input" /></label>
                 <label>
@@ -125,8 +139,10 @@
                   <select v-model="payment.currency" class="v-input" aria-label="Devise du paiement"><option value="USD">USD</option><option value="CDF">CDF</option></select>
                 </label>
                 <label v-if="payment.currency !== booking.currency">
-                  <span class="v-label">Taux du jour (CDF pour 1 USD) *</span>
-                  <input v-model.number="payment.exchangeRate" required type="number" min="0.0001" step="0.0001" placeholder="2800" class="v-input" />
+                  <span class="v-label">Taux (CDF pour 1 USD) *</span>
+                  <input v-model.number="payment.exchangeRate" required type="number" min="0.0001" step="0.0001" class="v-input" aria-label="Taux (CDF pour 1 USD)" />
+                  <span v-if="dailyRate" class="text-[11px] text-slate-500 mt-1 block">Taux du jour de la salle : {{ dailyRate.cdfPerUsd }} (modifiable pour ce paiement)</span>
+                  <router-link v-else to="/dashboard/venue/exchange-rate" class="text-[11px] text-primary font-semibold mt-1 block">Fixer le taux du jour</router-link>
                 </label>
                 <label>
                   <span class="v-label">Mode *</span>
@@ -139,7 +155,7 @@
               </div>
               <p v-if="convertedPreview" class="text-[12px] text-slate-500">Équivalent : {{ convertedPreview }}</p>
               <div class="flex justify-end">
-                <button class="v-btn-primary" :disabled="busy"><span class="material-symbols-outlined text-[18px]">payments</span>Encaisser</button>
+                <button class="v-btn-primary" :disabled="busy"><span class="material-symbols-outlined text-[18px]">{{ cancelled ? 'currency_exchange' : 'payments' }}</span>{{ cancelled ? 'Rembourser' : 'Encaisser' }}</button>
               </div>
             </form>
           </div>
@@ -204,11 +220,59 @@
         </div>
       </div>
     </template>
+
+    <!-- Annulation : motif et remboursement du client -->
+    <div v-if="cancelDialog.open && booking" class="fixed inset-0 z-50 bg-slate-900/40 grid place-items-center p-4" @click.self="cancelDialog.open = false">
+      <form class="v-card w-full max-w-lg p-6 space-y-4" role="dialog" aria-modal="true" aria-label="Annuler la réservation" @submit.prevent="confirmCancel">
+        <h2 class="text-[18px] font-bold text-slate-900">Annuler {{ booking.reference }}</h2>
+        <p class="text-[13px] text-slate-600">La date sera libérée{{ booking.eventId ? ' et l\'événement lié annulé' : '' }}.</p>
+        <label class="block">
+          <span class="v-label">Motif</span>
+          <input v-model.trim="cancelDialog.reason" maxlength="500" placeholder="Ex. client empêché" class="v-input" />
+        </label>
+
+        <template v-if="netPaid > 0">
+          <div class="rounded-lg bg-slate-50 border border-slate-200 p-3 text-[13px]">
+            Le client a déjà payé <strong>{{ formatMoney(netPaid, booking.currency) }}</strong>. Que lui rendez-vous ?
+          </div>
+          <div class="space-y-2 text-[13px]" role="radiogroup" aria-label="Remboursement">
+            <label class="flex items-center gap-2"><input v-model="cancelDialog.refundMode" type="radio" value="all" /> Tout rembourser ({{ formatMoney(netPaid, booking.currency) }})</label>
+            <label class="flex items-center gap-2"><input v-model="cancelDialog.refundMode" type="radio" value="part" /> Rembourser une partie (le reste est retenu)</label>
+            <label class="flex items-center gap-2"><input v-model="cancelDialog.refundMode" type="radio" value="none" /> Ne rien rembourser pour l'instant</label>
+          </div>
+          <div v-if="cancelDialog.refundMode !== 'none'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label v-if="cancelDialog.refundMode === 'part'">
+              <span class="v-label">Montant remboursé ({{ booking.currency }}) *</span>
+              <input v-model.number="cancelDialog.amount" required type="number" min="0.01" :max="netPaid" step="0.01" class="v-input" aria-label="Montant remboursé" />
+            </label>
+            <label>
+              <span class="v-label">Mode *</span>
+              <select v-model="cancelDialog.method" class="v-input" aria-label="Mode de remboursement">
+                <option v-for="(label, key) in PAYMENT_METHOD_LABELS" :key="key" :value="key">{{ label }}</option>
+              </select>
+            </label>
+            <label class="sm:col-span-2">
+              <span class="v-label">Référence</span>
+              <input v-model.trim="cancelDialog.reference" maxlength="100" placeholder="N° de transaction" class="v-input" />
+            </label>
+          </div>
+          <p v-if="cancelDialog.refundMode !== 'none'" class="text-[12px] text-slate-500">
+            Retenu par la salle : {{ formatMoney(retainedPreview, booking.currency) }}
+          </p>
+          <p v-if="cancelDialog.refundMode !== 'none' && !canPay" class="text-[12px] text-error">Votre rôle ne permet pas d'enregistrer un remboursement.</p>
+        </template>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" class="v-btn" @click="cancelDialog.open = false">Retour</button>
+          <button class="v-btn-danger" :disabled="busy">Confirmer l'annulation</button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import VenuePageHeader from '../../components/venue/VenuePageHeader.vue'
 import BookingStatusBadge from '../../components/venue/BookingStatusBadge.vue'
@@ -218,8 +282,8 @@ import { Perm } from '../../permissions'
 import {
   EVENT_TYPE_LABELS, PAYMENT_METHOD_LABELS, addBookingExtra, bookingAction, cancelBooking, createEventFromBooking,
   deletePayment, formatDateTime, formatMoney, getBooking, grantClientAccess, openBookingPdf, recordPayment,
-  removeBookingExtra, toApiDateTime, getVenueClient,
-  type Booking, type ClientAccess, type PaymentMethod, type VenueCurrency,
+  removeBookingExtra, toApiDateTime, getVenueClient, getExchangeRate, recordRefund,
+  type Booking, type ClientAccess, type ExchangeRate, type PaymentMethod, type VenueCurrency,
 } from '../../api/venues'
 
 const route = useRoute()
@@ -240,9 +304,26 @@ const payment = reactive({
   reference: '',
   paidAt: '',
 })
+const dailyRate = ref<ExchangeRate | null>(null)
+const cancelDialog = reactive({
+  open: false,
+  reason: '',
+  refundMode: 'all' as 'all' | 'part' | 'none',
+  amount: undefined as number | undefined,
+  method: 'ESPECES' as PaymentMethod,
+  reference: '',
+})
 const couple = reactive({ groomFirstName: '', groomLastName: '', brideFirstName: '', brideLastName: '' })
 
 const canManage = computed(() => auth.can([Perm.bookingManage]))
+const cancelled = computed(() => booking.value?.status === 'ANNULEE')
+/** Encaissé net (payé − déjà remboursé), dans la devise de la réservation. */
+const netPaid = computed(() => Math.max((booking.value?.paidAmount ?? 0) - (booking.value?.refundedAmount ?? 0), 0))
+const retainedPreview = computed(() => {
+  if (cancelDialog.refundMode === 'all') return 0
+  if (cancelDialog.refundMode === 'part') return Math.max(netPaid.value - (cancelDialog.amount ?? 0), 0)
+  return netPaid.value
+})
 const canPay = computed(() => auth.can([Perm.bookingPaymentRecord]))
 const editable = computed(() => !!booking.value && booking.value.status !== 'ANNULEE' && booking.value.status !== 'REALISEE')
 const coupleReady = computed(() => booking.value?.eventType !== 'WEDDING'
@@ -267,6 +348,11 @@ async function load() {
   payment.currency = booking.value.currency
 }
 
+// Autre devise que la réservation : le taux du jour de la salle est proposé (modifiable).
+watch(() => payment.currency, (currency) => {
+  if (booking.value && currency !== booking.value.currency) payment.exchangeRate = dailyRate.value?.cdfPerUsd
+})
+
 async function run(task: () => Promise<unknown>, success?: string) {
   busy.value = true
   try {
@@ -284,10 +370,21 @@ function act(action: 'confirm' | 'complete') {
   return run(() => bookingAction(id, action), action === 'confirm' ? 'Réservation confirmée' : 'Réservation marquée réalisée')
 }
 
-function cancel() {
-  const reason = window.prompt('Motif de l\'annulation (facultatif) :')
-  if (reason === null) return
-  return run(() => cancelBooking(id, reason || undefined), 'Réservation annulée, date libérée')
+function openCancel() {
+  Object.assign(cancelDialog, { open: true, reason: '', refundMode: netPaid.value > 0 && canPay.value ? 'all' : 'none',
+    amount: undefined, method: 'ESPECES', reference: '' })
+}
+
+function confirmCancel() {
+  const b = booking.value
+  if (!b) return
+  const amount = cancelDialog.refundMode === 'all' ? netPaid.value : cancelDialog.amount ?? 0
+  const refund = cancelDialog.refundMode !== 'none' && amount > 0
+    ? { amount, currency: b.currency, method: cancelDialog.method, reference: cancelDialog.reference || undefined }
+    : undefined
+  cancelDialog.open = false
+  return run(() => cancelBooking(id, cancelDialog.reason || undefined, refund),
+    refund ? `Réservation annulée, ${formatMoney(amount, b.currency)} remboursés` : 'Réservation annulée, date libérée')
 }
 
 function addExtra() {
@@ -302,8 +399,9 @@ function removeExtra(extraId: number) {
 }
 
 function addPayment() {
+  const refund = cancelled.value
   return run(async () => {
-    await recordPayment(id, {
+    await (refund ? recordRefund : recordPayment)(id, {
       amount: payment.amount ?? 0,
       currency: payment.currency,
       exchangeRate: payment.currency !== booking.value?.currency ? payment.exchangeRate : undefined,
@@ -312,12 +410,12 @@ function addPayment() {
       paidAt: payment.paidAt ? toApiDateTime(payment.paidAt) : undefined,
     })
     Object.assign(payment, { amount: undefined, reference: '', paidAt: '' })
-  }, 'Paiement enregistré')
+  }, refund ? 'Remboursement enregistré' : 'Paiement enregistré')
 }
 
 function removePayment(paymentId: number) {
-  if (!window.confirm('Annuler ce paiement ? Il ne comptera plus dans le reste à payer.')) return
-  return run(() => deletePayment(id, paymentId), 'Paiement annulé')
+  if (!window.confirm('Annuler ce mouvement saisi par erreur ? Il ne comptera plus dans les montants.')) return
+  return run(() => deletePayment(id, paymentId), 'Mouvement annulé')
 }
 
 function createEvent() {
@@ -346,6 +444,7 @@ async function pdf(paymentId?: number) {
 }
 
 onMounted(async () => {
+  dailyRate.value = (await getExchangeRate().catch(() => null))?.current ?? null
   await load()
   if (booking.value && auth.can([Perm.venueClientManage])) {
     const client = await getVenueClient(booking.value.clientId).catch(() => null)

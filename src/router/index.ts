@@ -76,6 +76,7 @@ const router = createRouter({
             { path: 'venues', name: 'venue-venues', component: () => import('../views/venue/VenuesView.vue'), meta: { wide: true } },
             { path: 'clients', name: 'venue-clients', component: () => import('../views/venue/VenueClientsView.vue'), meta: { wide: true } },
             { path: 'clients/:clientId', name: 'venue-client-detail', component: () => import('../views/venue/VenueClientDetailView.vue') },
+            { path: 'exchange-rate', name: 'venue-exchange-rate', component: () => import('../views/venue/VenueExchangeRateView.vue') },
           ],
         },
         {
