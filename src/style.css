@@ -14,6 +14,9 @@
   --c-on-primary-fixed: 32 0 95;
   --c-inverse-primary: 205 189 255;
   --c-error-container: 255 225 225;
+  --c-success: 23 107 91;            /* #176b5b */
+  --c-error: 198 40 40;              /* #c62828 */
+  --c-attention: 244 163 64;         /* #f4a340 */
   --c-attention-light: 253 243 227;
   --c-success-light: 227 242 238;
   --c-error-light: 253 236 236;
@@ -40,29 +43,37 @@
 .dark {
   --c-primary: 151 118 255;          /* #9776ff — plus clair pour le contraste */
   --c-primary-dark: 108 82 235;
-  --c-primary-light: 46 38 84;       /* fond "violet doux" des badges/icônes */
+  --c-primary-light: 44 36 82;       /* fond "violet doux" des badges/icônes */
   --c-primary-fixed-dim: 205 189 255;
   --c-on-primary-fixed: 233 226 255;
   --c-inverse-primary: 91 46 204;
   --c-error-container: 103 24 30;
-  --c-attention-light: 66 49 16;
-  --c-success-light: 24 54 47;
-  --c-error-light: 64 29 29;
-  --c-line: 60 66 82;
-  --c-background: 28 31 40;          /* #1c1f28 — anthracite doux, pas de noir profond */
-  --c-surface: 28 31 40;
+  /* Couleurs d'état lumineuses : lisibles sur fond sombre (contraste ≥ 4,5:1). */
+  --c-success: 52 211 153;           /* #34d399 */
+  --c-error: 248 113 113;            /* #f87171 */
+  --c-attention: 251 191 36;         /* #fbbf24 */
+  --c-attention-light: 60 46 18;
+  --c-success-light: 18 52 44;
+  --c-error-light: 62 28 32;
+  /*
+   * Hiérarchie anthracite (du plus sombre au plus clair) :
+   * navigation #14161d < fond #1a1d25 < cartes #222630 < éléments survolés #2c3140.
+   */
+  --c-line: 46 51 63;
+  --c-background: 26 29 37;          /* #1a1d25 — anthracite, pas de noir profond */
+  --c-surface: 26 29 37;
   --c-on-surface: 235 237 243;
-  --c-surface-bright: 40 44 55;
-  --c-surface-dim: 24 27 35;
-  --c-surface-container: 38 42 53;
-  --c-surface-container-low: 33 37 47;
-  --c-surface-container-lowest: 43 47 59;   /* cartes légèrement plus claires que le fond */
-  --c-surface-container-high: 46 51 63;
-  --c-surface-container-highest: 54 59 72;
-  --c-surface-variant: 40 44 55;
+  --c-surface-bright: 38 42 53;
+  --c-surface-dim: 20 22 29;
+  --c-surface-container: 34 38 48;
+  --c-surface-container-low: 30 33 42;
+  --c-surface-container-lowest: 34 38 48;   /* cartes : un cran au-dessus du fond */
+  --c-surface-container-high: 42 46 58;
+  --c-surface-container-highest: 50 55 68;
+  --c-surface-variant: 38 42 53;
   --c-on-surface-variant: 168 175 189;
   --c-outline: 122 129 143;
-  --c-outline-variant: 55 61 76;
+  --c-outline-variant: 46 51 63;
   --c-inverse-surface: 235 237 243;
   --c-inverse-on-surface: 34 38 48;
   color-scheme: dark;
@@ -111,8 +122,8 @@ article {
 html.dark input:not([type='checkbox']):not([type='radio']),
 html.dark textarea,
 html.dark select {
-  background-color: rgb(43 47 59) !important;
-  border-color: rgb(66 72 88) !important;
+  background-color: rgb(26 29 37) !important;
+  border-color: rgb(52 57 70) !important;
   color: rgb(235 237 243) !important;
 }
 html.dark input::placeholder,
@@ -127,20 +138,29 @@ html.dark select:focus {
 }
 
 /* --- Surfaces --- */
-html.dark .bg-white { background-color: rgb(43 47 59) !important; }        /* cartes */
-html.dark .bg-slate-50 { background-color: rgb(50 55 68) !important; }
-html.dark .bg-slate-100 { background-color: rgb(58 64 79) !important; }
-html.dark .bg-slate-200 { background-color: rgb(66 72 88) !important; }
-html.dark .bg-slate-300 { background-color: rgb(76 83 100) !important; }
-html.dark .bg-gray-100 { background-color: rgb(58 64 79) !important; }
-html.dark .bg-slate-50\/60 { background-color: rgb(50 55 68 / 0.6) !important; }
-html.dark .bg-slate-50\/80 { background-color: rgb(50 55 68 / 0.8) !important; }
+html.dark .bg-white { background-color: rgb(34 38 48) !important; }        /* cartes */
+html.dark .bg-slate-50 { background-color: rgb(39 43 54) !important; }     /* en-têtes de tableau */
+html.dark .bg-slate-100 { background-color: rgb(44 49 61) !important; }
+html.dark .bg-slate-200 { background-color: rgb(52 57 70) !important; }
+html.dark .bg-slate-300 { background-color: rgb(62 68 83) !important; }
+html.dark .bg-gray-100 { background-color: rgb(44 49 61) !important; }
+html.dark .bg-slate-50\/60 { background-color: rgb(39 43 54 / 0.6) !important; }
+html.dark .bg-slate-50\/80 { background-color: rgb(39 43 54 / 0.8) !important; }
 
-/* --- Bordures & séparateurs --- */
-html.dark .border-slate-100 { border-color: rgb(58 64 79) !important; }
-html.dark .border-slate-200 { border-color: rgb(66 72 88) !important; }
-html.dark .ring-slate-200 { --tw-ring-color: rgb(66 72 88) !important; }
-html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(58 64 79) !important; }
+/* --- Bordures & séparateurs : discrets, la luminosité sépare les zones --- */
+html.dark .border-slate-100 { border-color: rgb(40 44 56) !important; }
+html.dark .border-slate-200 { border-color: rgb(46 51 63) !important; }
+html.dark .ring-slate-200 { --tw-ring-color: rgb(46 51 63) !important; }
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(40 44 56) !important; }
+
+/* --- Navigation (barre latérale + en-tête) : la zone la plus sombre --- */
+html.dark .app-sidebar,
+html.dark .app-header { background-color: rgb(20 22 29) !important; border-color: rgb(36 40 50) !important; }
+html.dark .app-sidebar .hover\:bg-white:hover { background-color: rgb(34 38 48) !important; }
+
+/* --- Violet plein (boutons, élément actif) : plus profond pour un texte blanc lisible --- */
+html.dark .bg-primary { background-color: rgb(109 76 233) !important; }
+html.dark .hover\:bg-primary-dark:hover { background-color: rgb(93 61 214) !important; }
 
 /* --- Textes (inversés pour le contraste) --- */
 html.dark .text-slate-900 { color: rgb(241 243 249) !important; }
@@ -152,11 +172,11 @@ html.dark .text-slate-400 { color: rgb(107 113 128) !important; }
 html.dark .text-slate-300 { color: rgb(74 79 92) !important; }
 
 /* --- États hover --- */
-html.dark .hover\:bg-slate-50:hover { background-color: rgb(54 59 72) !important; }
-html.dark .hover\:bg-slate-50\/60:hover { background-color: rgb(54 59 72 / 0.6) !important; }
-html.dark .hover\:bg-slate-50\/80:hover { background-color: rgb(54 59 72 / 0.8) !important; }
-html.dark .hover\:bg-slate-100:hover { background-color: rgb(66 72 88) !important; }
-html.dark .hover\:bg-white:hover { background-color: rgb(54 59 72) !important; }
+html.dark .hover\:bg-slate-50:hover { background-color: rgb(44 49 61) !important; }
+html.dark .hover\:bg-slate-50\/60:hover { background-color: rgb(44 49 61 / 0.6) !important; }
+html.dark .hover\:bg-slate-50\/80:hover { background-color: rgb(44 49 61 / 0.8) !important; }
+html.dark .hover\:bg-slate-100:hover { background-color: rgb(52 57 70) !important; }
+html.dark .hover\:bg-white:hover { background-color: rgb(44 49 61) !important; }
 
 /* --- Ombres douces : atténuées sur fond sombre --- */
 html.dark .shadow-soft { box-shadow: 0 1px 3px rgb(0 0 0 / 0.3), 0 1px 2px rgb(0 0 0 / 0.2); }
@@ -164,9 +184,9 @@ html.dark .shadow-card { box-shadow: 0 1px 3px rgb(0 0 0 / 0.35), 0 4px 16px rgb
 html.dark .shadow-sm { box-shadow: 0 1px 2px rgb(0 0 0 / 0.3); }
 
 /* --- Couleurs utilitaires claires encore utilisées par les badges/alertes --- */
-html.dark .bg-white\/70 { background-color: rgb(43 47 59 / 0.78) !important; }
-html.dark .bg-white\/80 { background-color: rgb(43 47 59 / 0.86) !important; }
-html.dark .bg-white\/50 { background-color: rgb(43 47 59 / 0.62) !important; }
+html.dark .bg-white\/70 { background-color: rgb(34 38 48 / 0.78) !important; }
+html.dark .bg-white\/80 { background-color: rgb(34 38 48 / 0.86) !important; }
+html.dark .bg-white\/50 { background-color: rgb(34 38 48 / 0.62) !important; }
 
 html.dark .bg-amber-50,
 html.dark .bg-amber-100 { background-color: rgb(76 57 24) !important; }
@@ -221,7 +241,10 @@ html.dark dialog { color: rgb(235 237 243); }
   .v-btn-primary { @apply h-10 px-4 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center justify-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed; }
   .v-btn-danger { @apply h-10 px-4 rounded-lg border border-error/30 text-error bg-white text-[13px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-error-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
   .v-th { @apply py-3 px-4 text-[12px] font-semibold text-slate-500 text-left whitespace-nowrap; }
-  .v-td { @apply py-3 px-4 text-[13px] text-slate-700 align-top; }
+  /* Couleur posée sans @apply text-slate-700 : la surcharge sombre « !important » de
+     .text-slate-700 était recopiée et écrasait text-error / text-success des cellules. */
+  .v-td { @apply py-3 px-4 text-[13px] align-top; color: rgb(51 65 85); }
+  :where(.dark) .v-td { color: rgb(211 215 226); }
 }
 
 /* Défilement sans barre visible (menu latéral) : molette, pavé et doigt restent actifs. */

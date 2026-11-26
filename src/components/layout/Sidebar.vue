@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="hidden md:flex flex-col bg-slate-100 border-r border-slate-200 h-full shrink-0"
+    class="app-sidebar hidden md:flex flex-col bg-slate-100 border-r border-slate-200 h-full shrink-0"
     style="width:280px"
   >
     <!-- Logo -->
