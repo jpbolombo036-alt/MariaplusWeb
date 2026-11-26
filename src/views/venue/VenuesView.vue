@@ -38,6 +38,26 @@
       <p class="text-sm text-slate-500 mt-1">Ajoutez votre première salle pour commencer à prendre des réservations.</p>
     </div>
 
+    <!-- Salles supprimées : restaurables (ex. suppression par erreur). -->
+    <div v-if="canManage && deleted.length" class="v-card p-4 mb-6">
+      <button class="w-full flex items-center justify-between text-left" :aria-expanded="showDeleted" @click="showDeleted = !showDeleted">
+        <span class="text-[13px] font-semibold text-slate-700">Salles supprimées ({{ deleted.length }})</span>
+        <span class="material-symbols-outlined text-[20px] text-slate-400">{{ showDeleted ? 'expand_less' : 'expand_more' }}</span>
+      </button>
+      <div v-if="showDeleted" class="mt-3 divide-y divide-slate-100">
+        <div v-for="d in deleted" :key="d.id" class="flex items-center justify-between gap-3 py-2.5">
+          <div class="min-w-0">
+            <p class="text-[13px] font-semibold text-slate-900 truncate">{{ d.name }}</p>
+            <p class="text-[12px] text-slate-500 truncate">{{ [d.address, d.city].filter(Boolean).join(', ') }}</p>
+          </div>
+          <button class="v-btn !h-9" :disabled="busy" :aria-label="`Restaurer la salle ${d.name}`" @click="restore(d)">
+            <span class="material-symbols-outlined text-[18px]">restore_from_trash</span>
+            Restaurer
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div v-for="v in venues" :key="v.id" class="v-card overflow-hidden">
         <div class="h-40 bg-slate-100 relative">
@@ -113,7 +133,8 @@ import { useAuthStore } from '../../stores/auth'
 import { useNotificationStore } from '../../stores/notifications'
 import { Perm } from '../../permissions'
 import {
-  addVenueRate, createVenue, deleteVenue, deleteVenueRate, formatMoney, listVenues, updateVenue, uploadVenueImage,
+  addVenueRate, createVenue, deleteVenue, deleteVenueRate, formatMoney, listDeletedVenues, listVenues, restoreVenue,
+  updateVenue, uploadVenueImage,
   type Venue, type VenueCurrency, type VenuePayload,
 } from '../../api/venues'
 
@@ -124,6 +145,8 @@ const venues = ref<Venue[]>([])
 const images = ref<Record<number, string>>({})
 const loading = ref(true)
 const busy = ref(false)
+const deleted = ref<Venue[]>([])
+const showDeleted = ref(false)
 const editing = ref<(VenuePayload & { id?: number }) | null>(null)
 const drafts = reactive<Record<number, { label: string; price: number | undefined; currency: VenueCurrency }>>({})
 
@@ -134,6 +157,7 @@ function rateDraft(venueId: number) {
 
 async function load() {
   venues.value = await listVenues()
+  if (canManage.value) deleted.value = await listDeletedVenues().catch(() => [])
   for (const v of venues.value) {
     if (v.imageUrl && !images.value[v.id]) void loadImage(v)
   }
@@ -172,9 +196,21 @@ async function save() {
 }
 
 async function remove(v: Venue) {
-  if (!window.confirm(`Supprimer la salle « ${v.name} » ? Ses réservations passées restent consultables.`)) return
+  if (!window.confirm(`Supprimer la salle « ${v.name} » ? Vous pourrez la restaurer depuis « Salles supprimées ».`)) return
+  // Refusé (409) si la salle a des réservations à venir : le message s'affiche en toast.
   await deleteVenue(v.id).catch(() => null)
   await load()
+}
+
+async function restore(d: Venue) {
+  busy.value = true
+  try {
+    await restoreVenue(d.id)
+    notify.push(`Salle « ${d.name} » restaurée`, 'success')
+    await load()
+  } catch { /* message affiché par l'intercepteur */ } finally {
+    busy.value = false
+  }
 }
 
 async function addRate(v: Venue) {

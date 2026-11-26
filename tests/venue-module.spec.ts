@@ -102,3 +102,26 @@ test('a venue manager books a slot for a new client, then records a CDF payment 
   await expect(page.getByText('1 400,00 USD')).toBeVisible()
   expect(fixture.unexpectedRequests.filter((r) => /venue|booking/.test(r))).toEqual([])
 })
+
+test('a venue deleted by mistake is listed and can be restored', async ({ page }) => {
+  let deleted = [{ ...venue, id: 1, name: 'Exodus', rates: [] }]
+  const restored: number[] = []
+  await signIn(page, true, async (route, url) => {
+    const method = route.request().method()
+    if (url.pathname === '/api/venues' && method === 'GET') await fulfillJson(route, deleted.length ? [] : [{ ...venue, id: 1, name: 'Exodus', rates: [] }])
+    else if (url.pathname === '/api/venues/deleted') await fulfillJson(route, deleted)
+    else if (url.pathname === '/api/venues/1/restore' && method === 'POST') {
+      restored.push(1)
+      deleted = []
+      await fulfillJson(route, { ...venue, id: 1, name: 'Exodus', rates: [] })
+    } else return false
+    return true
+  })
+  await page.goto('/dashboard/venue/venues')
+  await page.getByRole('button', { name: /Salles supprimées \(1\)/ }).click()
+  await page.getByRole('button', { name: 'Restaurer la salle Exodus' }).click()
+  await expect(page.getByText('Salle « Exodus » restaurée')).toBeVisible()
+  expect(restored).toEqual([1])
+  await expect(page.getByRole('button', { name: /Salles supprimées/ })).toHaveCount(0)
+  await expect(page.getByText('Exodus', { exact: true })).toBeVisible()
+})

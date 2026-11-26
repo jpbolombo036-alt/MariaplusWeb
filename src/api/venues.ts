@@ -236,6 +236,15 @@ export async function deleteVenue(id: number): Promise<void> {
   await http.delete(`/api/venues/${id}`)
 }
 
+/** Salles supprimées de l'organisation (pour les restaurer). */
+export async function listDeletedVenues(): Promise<Venue[]> {
+  return decodeList((await http.get('/api/venues/deleted')).data) as Venue[]
+}
+
+export async function restoreVenue(id: number): Promise<Venue> {
+  return decodeMap((await http.post(`/api/venues/${id}/restore`)).data) as unknown as Venue
+}
+
 export async function addVenueRate(venueId: number, payload: Omit<VenueRate, 'id' | 'venueId' | 'active'>): Promise<VenueRate> {
   return decodeMap((await http.post(`/api/venues/${venueId}/rates`, payload)).data) as unknown as VenueRate
 }
