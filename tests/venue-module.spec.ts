@@ -313,3 +313,27 @@ test('a venue cashier (AGENT_SALLE) lands on Ma caisse and cannot refund, cancel
   await expect(dialog.getByText('Le remboursement éventuel sera enregistré par le gérant.')).toBeVisible()
   await expect(dialog.getByRole('radiogroup', { name: 'Remboursement' })).toHaveCount(0)
 })
+
+test('the manager sees takings per cashier, split between cash and Mobile Money', async ({ page }) => {
+  await signIn(page, true, async (route, url) => {
+    if (url.pathname === '/api/venues/dashboard') {
+      await fulfillJson(route, { from: '2026-11-01', to: '2026-11-30', venueCount: 1, bookingsByStatus: {}, collected: [], refunded: [],
+        refunds: [], bookedValue: [], outstanding: [], occupancyRate: 0, occupiedVenueDays: 0, availableVenueDays: 30, unpaid: [], upcoming: [],
+        byCashier: [
+          { userId: 8, name: 'Caissier Salle', today: [{ currency: 'USD', amount: 300 }], collected: [{ currency: 'USD', amount: 300 }, { currency: 'CDF', amount: 280000 }],
+            cash: [{ currency: 'USD', amount: 300 }], mobileMoney: [{ currency: 'CDF', amount: 280000 }], transfer: [], paymentCount: 2, refundCount: 0 },
+          { userId: 5, name: 'Gaston Salle', today: [], collected: [{ currency: 'USD', amount: 100 }], cash: [{ currency: 'USD', amount: 100 }],
+            mobileMoney: [], transfer: [], paymentCount: 1, refundCount: 0 }] })
+    } else if (url.pathname === '/api/venues/exchange-rate') await fulfillJson(route, { current: null, history: [] })
+    else if (url.pathname === '/api/venues') await fulfillJson(route, [venue])
+    else return false
+    return true
+  })
+  await page.goto('/dashboard/venue')
+  const block = page.locator('.v-card', { has: page.getByRole('heading', { name: 'Encaissements par caissier' }) })
+  const cashierRow = block.getByRole('row', { name: /Caissier Salle/ })
+  await expect(cashierRow).toContainText('300,00 USD')
+  await expect(cashierRow).toContainText('280 000,00 CDF')
+  await expect(block.getByRole('row', { name: /Gaston Salle/ })).toContainText('100,00 USD')
+  await expect(block.getByText('2 personne(s)')).toBeVisible()
+})
