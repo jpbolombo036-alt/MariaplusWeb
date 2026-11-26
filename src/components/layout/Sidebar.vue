@@ -33,8 +33,13 @@
           <span class="material-symbols-outlined" style="font-size:26px">{{ item.icon }}</span>
           <span class="truncate">{{ item.label }}</span>
         </router-link>
-        <div class="h-px bg-slate-200 my-3 mx-3.5" aria-hidden="true" />
       </template>
+      <!-- Titre de groupe, comme « Ma salle » et « Gestion de l'événement ». -->
+      <p
+        class="px-3.5 pb-2.5 font-bold uppercase tracking-widest text-slate-500"
+        :class="venueItems.length ? 'pt-7' : 'pt-1'"
+        style="font-size:11px"
+      >Général</p>
       <router-link
         v-for="item in generalItems"
         :key="item.label"
