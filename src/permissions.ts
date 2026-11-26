@@ -69,6 +69,7 @@ export const Perm = {
   bookingManage: 'BOOKING_MANAGE',
   bookingPaymentRecord: 'BOOKING_PAYMENT_RECORD',
   venueReportView: 'VENUE_REPORT_VIEW',
+  bookingRefund: 'BOOKING_REFUND',
 } as const
 
 /** Vérifie qu'un utilisateur possède une permission (n'importe laquelle si plusieurs). */

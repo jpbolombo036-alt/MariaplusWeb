@@ -120,6 +120,7 @@
                   <option value="" disabled>Choisir un événement…</option>
                   <option v-for="w in weddings" :key="w.id" :value="w.id">{{ w.weddingDetails?.displayName || w.name }}</option>
                 </select>
+                <span v-else-if="m.roleCode === 'AGENT_SALLE'" class="text-sm text-slate-500">Toutes les salles</span>
                 <span v-else-if="m.eventId" class="text-sm text-slate-900">{{ weddingName(m.eventId) }}</span>
                 <span v-else class="text-sm text-slate-500">—</span>
               </td>
@@ -180,6 +181,7 @@ function isAgent(code: string): boolean {
 function roleLabel(code: string): string {
   if (code === 'GESTIONNAIRE_INVITES') return "Gestionnaire d'invités"
   if (code === 'AGENT_ACCUEIL') return "Agent d'accueil"
+  if (code === 'AGENT_SALLE') return 'Agent de salle'
   if (code === 'ORGANISATEUR') return 'Organisateur'
   if (code === 'SUPER_ADMIN') return 'Super administrateur'
   return code
@@ -192,6 +194,7 @@ function canRemove(m: OrgMember): boolean {
 function roleBadgeClass(code: string): string {
   if (code === 'GESTIONNAIRE_INVITES') return 'bg-primary-light text-primary-dark'
   if (code === 'AGENT_ACCUEIL') return 'bg-primary-light text-primary-dark'
+  if (code === 'AGENT_SALLE') return 'bg-attention-light text-attention'
   if (code === 'ORGANISATEUR') return 'bg-success-light text-success'
   return 'bg-gray-100 text-gray-700'
 }

@@ -46,9 +46,13 @@
               <select v-model="form.roleCode" required class="input">
                 <option value="GESTIONNAIRE_INVITES">Gestionnaire d'invités</option>
                 <option value="AGENT_ACCUEIL">Agent d'accueil</option>
+                <option v-if="venueModule.enabled" value="AGENT_SALLE">Agent de salle (caissier)</option>
               </select>
             </label>
-            <label class="block">
+            <p v-if="form.roleCode === 'AGENT_SALLE'" class="text-[12px] text-slate-500 self-end pb-2.5">
+              Réservations et encaissements sur toutes vos salles. Pas de remboursement ni de rapports.
+            </p>
+            <label v-else class="block">
               <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">Événement affecté *</span>
               <select v-model.number="form.eventId" required class="input">
                 <option v-for="w in weddings" :key="w.id" :value="w.id">{{ w.weddingDetails?.displayName || w.name }}</option>
@@ -78,12 +82,15 @@ import { useAuthStore } from '../../stores/auth'
 import { Perm } from '../../permissions'
 import { addMember } from '../../api/organization'
 import { listAllEvents, type Event } from '../../api/events'
+import { useVenueModuleStore } from '../../stores/venueModule'
 
 const route = useRoute()
 const auth = useAuthStore()
 const error = ref('')
 const saving = ref(false)
 const weddings = ref<Event[]>([])
+const venueModule = useVenueModuleStore()
+void venueModule.load()
 
 const form = reactive({
   firstName: '',
@@ -114,7 +121,8 @@ async function submitCreate() {
       phone: form.phone || undefined,
       password: form.password,
       roleCode: form.roleCode,
-      eventId: form.eventId,
+      // L'agent de salle couvre toute l'organisation : aucun événement.
+      eventId: form.roleCode === 'AGENT_SALLE' ? null : form.eventId,
     })
     window.history.length > 1 ? window.history.back() : window.location.href = '/dashboard/members'
   } catch (e: unknown) {

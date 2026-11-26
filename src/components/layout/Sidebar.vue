@@ -160,6 +160,7 @@ const ROLE_LABELS: Record<string, string> = {
   ORGANISATEUR: 'Organisateur',
   GESTIONNAIRE_INVITES: 'Gestionnaire d’invités',
   AGENT_ACCUEIL: 'Agent d’accueil',
+  AGENT_SALLE: 'Agent de salle',
 }
 const roleLabel = computed(() => {
   const role = (auth.user?.roles ?? [])[0]

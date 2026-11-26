@@ -443,6 +443,7 @@ const ROLE_LABELS: Record<string, string> = {
   ORGANISATEUR: 'Organisateur',
   GESTIONNAIRE_INVITES: 'Gest. invités',
   AGENT_ACCUEIL: 'Agent accueil',
+  AGENT_SALLE: 'Agent salle',
 }
 function roleLabel(code: string): string {
   return ROLE_LABELS[code] ?? code

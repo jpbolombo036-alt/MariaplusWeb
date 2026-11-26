@@ -2,7 +2,8 @@ import { test, expect, type Page } from '@playwright/test'
 import { fulfillJson, mockApi } from './support/e2e-api'
 
 const VENUE_PERMS = ['DASHBOARD_VIEW', 'VENUE_VIEW', 'VENUE_MANAGE', 'VENUE_CLIENT_MANAGE', 'BOOKING_VIEW',
-  'BOOKING_MANAGE', 'BOOKING_PAYMENT_RECORD', 'VENUE_REPORT_VIEW', 'EVENT_VIEW']
+  'BOOKING_MANAGE', 'BOOKING_PAYMENT_RECORD', 'VENUE_REPORT_VIEW', 'EVENT_VIEW', 'BOOKING_REFUND', 'EVENT_CREATE',
+  'ORGANIZATION_MANAGE_MEMBERS']
 
 const user = {
   id: 5, organizationId: 9, firstName: 'Gaston', lastName: 'Salle', email: 'gerant@example.test',
@@ -251,4 +252,48 @@ test('the dashboard shows the month refunds in a card and a list', async ({ page
   await page.screenshot({ path: 'output/venue-dashboard-refunds.png', fullPage: true })
   await list.getByText('RMB-00010').click()
   await expect(page).toHaveURL(/\/dashboard\/venue\/bookings\/42$/)
+})
+
+test('a venue cashier (AGENT_SALLE) lands on bookings and cannot refund, cancel a payment or create the event', async ({ page }) => {
+  const cashier = { ...user, firstName: 'Caissier', roles: ['AGENT_SALLE'],
+    permissions: ['VENUE_VIEW', 'VENUE_CLIENT_MANAGE', 'BOOKING_VIEW', 'BOOKING_MANAGE', 'BOOKING_PAYMENT_RECORD'] }
+  const paid = booking({ status: 'CONFIRMEE', optionExpiresAt: null, paidAmount: 600, balance: 900, payments: [
+    { id: 9, bookingId: 42, kind: 'PAYMENT', receiptNumber: 'REC-00009', amount: 600, currency: 'USD', amountInBookingCurrency: 600,
+      method: 'ESPECES', paidAt: '2026-11-20T10:00:00' }] })
+  await mockApi(page, async (route, url) => {
+    const p = url.pathname
+    if (p === '/auth/refresh') await fulfillJson(route, { accessToken: 'fixture-token', expiresIn: 900 })
+    else if (p === '/auth/me') await fulfillJson(route, cashier)
+    else if (p === '/api/venues/module-status') await fulfillJson(route, { enabled: true })
+    else if (p.startsWith('/api/platform/')) await fulfillJson(route, { enabled: true })
+    else if (p === '/api/events') await fulfillJson(route, { content: [], totalPages: 1, totalElements: 0 })
+    else if (p === '/api/venues') await fulfillJson(route, [venue])
+    else if (p === '/api/bookings') await fulfillJson(route, { content: [paid], totalPages: 1, totalElements: 1 })
+    else if (p === '/api/bookings/42') await fulfillJson(route, paid)
+    else if (p === '/api/venues/exchange-rate') await fulfillJson(route, { current: null, history: [] })
+    else if (p === '/api/venue-clients/11') await fulfillJson(route, { id: 11, lastName: 'Ilunga', fullName: 'Patrick Ilunga' })
+    else return false
+    return true
+  })
+
+  await page.goto('/dashboard')
+  await expect(page).toHaveURL(/\/dashboard\/venue\/bookings$/)
+  const menu = page.locator('aside nav')
+  await expect(menu.getByRole('link', { name: /Réservations/ })).toBeVisible()
+  await expect(menu.getByRole('link', { name: /Tableau de bord/ })).toHaveCount(0)
+  await expect(page.locator('aside').getByText('Agent de salle')).toBeVisible()
+
+  await page.goto('/dashboard/venue/bookings/42')
+  await expect(page.getByText('REC-00009')).toBeVisible()
+  // Encaisser : oui. Annuler un paiement, créer l'événement : non.
+  await expect(page.getByRole('button', { name: 'Encaisser' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Annuler le paiement/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Créer l'événement MariagePlus/ })).toHaveCount(0)
+  await expect(page.getByText("Le gérant crée l'événement pour le client.")).toBeVisible()
+
+  // Annulation : pas de choix de remboursement, le gérant s'en charge.
+  await page.getByRole('button', { name: /Annuler$/ }).click()
+  const dialog = page.getByRole('dialog', { name: 'Annuler la réservation' })
+  await expect(dialog.getByText('Le remboursement éventuel sera enregistré par le gérant.')).toBeVisible()
+  await expect(dialog.getByRole('radiogroup', { name: 'Remboursement' })).toHaveCount(0)
 })

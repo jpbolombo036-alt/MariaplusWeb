@@ -72,7 +72,7 @@
           <!-- Accès mobile au module Salles (la sidebar est masquée sous md). -->
           <router-link
             v-if="showVenue"
-            to="/dashboard/venue"
+            :to="venueHome"
             class="md:hidden flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
             @click="menuOpen = false"
           >
@@ -108,6 +108,7 @@ const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
 const venueModule = useVenueModuleStore()
+const venueHome = computed(() => hasAny(auth.permissions, Perm.venueReportView) ? '/dashboard/venue' : '/dashboard/venue/bookings')
 const showVenue = computed(() => venueModule.enabled && hasAny(auth.permissions, Perm.venueView, Perm.bookingView))
 const themeStore = useThemeStore()
 const dropdownButton = ref<HTMLElement | null>(null)

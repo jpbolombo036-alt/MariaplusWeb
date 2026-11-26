@@ -2,7 +2,7 @@
   <nav class="md:hidden fixed bottom-0 inset-x-0 bg-surface-container-lowest border-t border-outline-variant flex z-30">
     <router-link
       v-if="showVenue"
-      to="/dashboard/venue"
+      :to="venueHome"
       class="flex-1 flex flex-col items-center py-2 text-xs text-on-surface-variant"
       active-class="!text-primary"
     >
@@ -39,6 +39,7 @@ weddingStore.load()
 const activeWeddingId = computed(() => weddingStore.activeId)
 const venueModule = useVenueModuleStore()
 // Module prioritaire : « Ma salle » occupe la première place quand il est activé.
+const venueHome = computed(() => hasAny(auth.permissions, Perm.venueReportView) ? '/dashboard/venue' : '/dashboard/venue/bookings')
 const showVenue = computed(() => venueModule.enabled && hasAny(auth.permissions, Perm.venueView, Perm.bookingView))
 const visible = computed(() => filterNav(auth.permissions).slice(0, showVenue.value ? 3 : 4))
 </script>

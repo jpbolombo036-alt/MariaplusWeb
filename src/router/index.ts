@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { usePlatformStore } from '../stores/platform'
 import { useVenueModuleStore } from '../stores/venueModule'
+import { Perm } from '../permissions'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -149,6 +150,14 @@ router.beforeEach(async (to) => {
     const venueModule = useVenueModuleStore()
     await venueModule.load()
     if (!venueModule.enabled) return { path: '/dashboard' }
+    // Sans accès aux rapports (agent de salle) : la page d'accueil du module est la liste des réservations.
+    if (to.name === 'venue-dashboard' && !auth.can([Perm.venueReportView])) return { name: 'venue-bookings' }
+  }
+  // Agent de salle (pas de tableau de bord général) : il arrive directement sur ses réservations.
+  if (to.name === 'dashboard' && !auth.isSuperAdmin && !auth.can([Perm.dashboardView]) && auth.can([Perm.bookingView])) {
+    const venueModule = useVenueModuleStore()
+    await venueModule.load()
+    if (venueModule.enabled) return { name: 'venue-bookings' }
   }
   // Création d'événement : si le SUPER_ADMIN l'a désactivée, les utilisateurs
   // non-superadmin sont redirigés (le backend refuse aussi côté API).
