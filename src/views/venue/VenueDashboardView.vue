@@ -29,12 +29,18 @@
     <div v-if="loading && !dash" class="py-16 text-center text-slate-400 text-sm">Chargement…</div>
 
     <template v-else-if="dash">
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
         <div class="v-card p-5">
           <p class="text-[12px] font-semibold text-slate-500">Encaissé net ce mois</p>
           <p v-for="c in dash.collected" :key="c.currency" class="text-xl font-bold text-slate-900 mt-1">{{ formatMoney(c.amount, c.currency) }}</p>
           <p v-if="!dash.collected.length" class="text-xl font-bold text-slate-900 mt-1">0</p>
-          <p v-for="r in dash.refunded ?? []" :key="'r' + r.currency" class="text-[12px] text-error mt-1">dont remboursé : {{ formatMoney(r.amount, r.currency) }}</p>
+          <p class="text-[11.5px] text-slate-500 mt-1">Paiements reçus moins remboursements</p>
+        </div>
+        <div class="v-card p-5">
+          <p class="text-[12px] font-semibold text-slate-500">Remboursé ce mois</p>
+          <p v-for="r in dash.refunded ?? []" :key="'r' + r.currency" class="text-xl font-bold text-error mt-1">{{ formatMoney(r.amount, r.currency) }}</p>
+          <p v-if="!(dash.refunded ?? []).length" class="text-xl font-bold text-slate-900 mt-1">{{ formatMoney(0, 'USD') }}</p>
+          <p class="text-[11.5px] text-slate-500 mt-1">{{ (dash.refunds ?? []).length }} remboursement(s) aux clients</p>
         </div>
         <div class="v-card p-5">
           <p class="text-[12px] font-semibold text-slate-500">Reste à encaisser (toutes dates)</p>
@@ -63,6 +69,37 @@
             <BookingStatusBadge :status="status" />
             <span class="text-[14px] font-bold text-slate-900">{{ count }}</span>
           </span>
+        </div>
+      </div>
+
+      <!-- Remboursements du mois -->
+      <div class="v-card mb-6">
+        <div class="px-5 pt-5 pb-3 flex items-center justify-between">
+          <h2 class="text-[16px] font-bold text-slate-900">Remboursements du mois</h2>
+          <span class="text-[12px] text-slate-500">{{ (dash.refunds ?? []).length }} remboursement(s)</span>
+        </div>
+        <p v-if="!(dash.refunds ?? []).length" class="px-5 pb-6 text-sm text-slate-500">
+          Aucun remboursement ce mois-ci. Un remboursement s'enregistre en annulant une réservation déjà payée.
+        </p>
+        <div v-else class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-slate-50/80">
+                <th class="v-th">Date</th><th class="v-th">Reçu</th><th class="v-th">Réservation</th><th class="v-th">Client</th>
+                <th class="v-th">Mode</th><th class="v-th text-right">Montant</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in dash.refunds" :key="r.paymentId" class="border-t border-slate-100 hover:bg-primary-light/30 cursor-pointer" @click="open(r.bookingId)">
+                <td class="v-td whitespace-nowrap">{{ formatDateTime(r.paidAt) }}</td>
+                <td class="v-td font-semibold whitespace-nowrap">{{ r.receiptNumber }}</td>
+                <td class="v-td whitespace-nowrap">{{ r.bookingReference }}<div class="text-[11px] text-slate-400">{{ r.venueName }}</div></td>
+                <td class="v-td">{{ r.clientName }}</td>
+                <td class="v-td">{{ PAYMENT_METHOD_LABELS[r.method] }}<div v-if="r.reference" class="text-[11px] text-slate-400">{{ r.reference }}</div></td>
+                <td class="v-td text-right whitespace-nowrap font-semibold text-error">− {{ formatMoney(r.amount, r.currency) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -124,7 +161,7 @@ import BookingStatusBadge from '../../components/venue/BookingStatusBadge.vue'
 import { useAuthStore } from '../../stores/auth'
 import { Perm } from '../../permissions'
 import {
-  downloadVenueExport, formatDateTime, formatMoney, getExchangeRate, getVenueDashboard, listVenues,
+  PAYMENT_METHOD_LABELS, downloadVenueExport, formatDateTime, formatMoney, getExchangeRate, getVenueDashboard, listVenues,
   type ExchangeRate, type Venue, type VenueDashboard,
 } from '../../api/venues'
 

@@ -56,7 +56,12 @@
               <td class="v-td">{{ b.clientName }}<div class="text-[11px] text-slate-400">{{ b.title }}</div></td>
               <td class="v-td"><BookingStatusBadge :status="b.status" /></td>
               <td class="v-td text-right whitespace-nowrap">{{ formatMoney(b.totalAmount, b.currency) }}</td>
-              <td class="v-td text-right whitespace-nowrap font-semibold" :class="b.balance > 0 ? 'text-error' : 'text-success'">{{ formatMoney(b.balance, b.currency) }}</td>
+              <td v-if="b.status === 'ANNULEE'" class="v-td text-right whitespace-nowrap">
+                <span class="text-slate-400">—</span>
+                <div v-if="b.refundedAmount > 0" class="text-[11px] font-semibold text-error">Remboursé {{ formatMoney(b.refundedAmount, b.currency) }}</div>
+                <div v-if="(b.retainedAmount ?? 0) > 0" class="text-[11px] text-slate-500">Retenu {{ formatMoney(b.retainedAmount, b.currency) }}</div>
+              </td>
+              <td v-else class="v-td text-right whitespace-nowrap font-semibold" :class="b.balance > 0 ? 'text-error' : 'text-success'">{{ formatMoney(b.balance, b.currency) }}</td>
             </tr>
           </tbody>
         </table>
