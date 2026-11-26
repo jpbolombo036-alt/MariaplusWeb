@@ -92,9 +92,13 @@ export interface BookingExtra {
   lineTotal: number
 }
 
+export type PaymentKind = 'PAYMENT' | 'REFUND'
+
 export interface BookingPayment {
   id: number
   bookingId: number
+  /** PAYMENT = encaissement, REFUND = remboursement (montant positif). */
+  kind: PaymentKind
   receiptNumber: string
   amount: number
   currency: VenueCurrency
@@ -126,7 +130,13 @@ export interface Booking {
   extrasTotal: number
   discount: number
   totalAmount: number
+  /** Total des paiements reçus. */
   paidAmount: number
+  /** Total remboursé au client. */
+  refundedAmount: number
+  /** Réservation annulée : ce que la salle garde (payé − remboursé). */
+  retainedAmount?: number | null
+  /** Reste à payer (0 si annulée). */
   balance: number
   optionExpiresAt?: string | null
   notes?: string | null
@@ -176,7 +186,9 @@ export interface VenueDashboard {
   venueId?: number | null
   venueCount: number
   bookingsByStatus: Record<BookingStatus, number>
+  /** Encaissé net (paiements − remboursements). */
   collected: CurrencyAmount[]
+  refunded: CurrencyAmount[]
   bookedValue: CurrencyAmount[]
   outstanding: CurrencyAmount[]
   occupancyRate: number
@@ -272,6 +284,33 @@ export async function downloadVenueExport(params: { from?: string; to?: string }
   saveBlob(res.data as Blob, `salles-${params.from ?? 'mois'}-${params.to ?? ''}.xlsx`)
 }
 
+// ---- Taux de change ----------------------------------------------------------------
+
+export interface ExchangeRate {
+  id: number
+  /** Francs congolais pour 1 dollar. */
+  cdfPerUsd: number
+  effectiveAt: string
+  setByName?: string | null
+  note?: string | null
+}
+
+export interface ExchangeRateOverview {
+  current: ExchangeRate | null
+  history: ExchangeRate[]
+}
+
+/** Taux du jour de la salle (fixé à la main par le gérant) et historique. */
+export async function getExchangeRate(): Promise<ExchangeRateOverview> {
+  const j = decodeMap((await http.get('/api/venues/exchange-rate')).data)
+  return { current: (j.current ?? null) as ExchangeRate | null, history: decodeList(j.history) as ExchangeRate[] }
+}
+
+export async function setExchangeRate(cdfPerUsd: number, note?: string): Promise<ExchangeRateOverview> {
+  const j = decodeMap((await http.post('/api/venues/exchange-rate', { cdfPerUsd, note })).data)
+  return { current: (j.current ?? null) as ExchangeRate | null, history: decodeList(j.history) as ExchangeRate[] }
+}
+
 // ---- Clients ---------------------------------------------------------------------
 
 export async function listVenueClients(q = '', pageIndex = 0, size = 25): Promise<Page<VenueClient>> {
@@ -320,8 +359,14 @@ export async function bookingAction(id: number, action: 'confirm' | 'complete'):
   return decodeMap((await http.post(`/api/bookings/${id}/${action}`)).data) as unknown as Booking
 }
 
-export async function cancelBooking(id: number, reason?: string): Promise<Booking> {
-  return decodeMap((await http.post(`/api/bookings/${id}/cancel`, { reason })).data) as unknown as Booking
+/** Annule la réservation ; `refund` enregistre en même temps le remboursement du client. */
+export async function cancelBooking(id: number, reason?: string, refund?: PaymentPayload): Promise<Booking> {
+  return decodeMap((await http.post(`/api/bookings/${id}/cancel`, { reason, refund })).data) as unknown as Booking
+}
+
+/** Remboursement (total ou partiel) d'une réservation annulée. */
+export async function recordRefund(id: number, payload: PaymentPayload): Promise<BookingPayment> {
+  return decodeMap((await http.post(`/api/bookings/${id}/refunds`, payload)).data) as unknown as BookingPayment
 }
 
 export async function addBookingExtra(id: number, payload: { label: string; quantity: number; unitPrice: number }): Promise<Booking> {

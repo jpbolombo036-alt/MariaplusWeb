@@ -20,7 +20,7 @@ function booking(overrides: Record<string, unknown> = {}) {
     id: 42, reference: 'RES-00042', venueId: 3, venueName: 'Salle Le Palmier', clientId: 11, clientName: 'Patrick Ilunga',
     clientPhone: '+243812345678', title: 'Mariage Ilunga', eventType: 'WEDDING', startAt: '2027-03-20T14:00:00',
     endAt: '2027-03-20T23:00:00', guestCount: 300, status: 'OPTION', currency: 'USD', rateId: 7, basePrice: 1500,
-    extrasTotal: 0, discount: 0, totalAmount: 1500, paidAmount: 0, balance: 1500, optionExpiresAt: '2027-01-10T10:00:00',
+    extrasTotal: 0, discount: 0, totalAmount: 1500, paidAmount: 0, refundedAmount: 0, balance: 1500, optionExpiresAt: '2027-01-10T10:00:00',
     eventId: null, extras: [], payments: [], ...overrides,
   }
 }
@@ -56,6 +56,7 @@ test('a venue manager books a slot for a new client, then records a CDF payment 
     if (url.pathname === '/api/venues' && method === 'GET') await fulfillJson(route, [venue])
     else if (url.pathname === '/api/venue-clients' && method === 'GET') await fulfillJson(route, { content: [], totalPages: 1, totalElements: 0 })
     else if (url.pathname === '/api/venue-clients/11') await fulfillJson(route, { id: 11, lastName: 'Ilunga', fullName: 'Patrick Ilunga', email: 'patrick@example.test' })
+    else if (url.pathname === '/api/venues/exchange-rate') await fulfillJson(route, { current: null, history: [] })
     else if (url.pathname === '/api/bookings' && method === 'POST') {
       sent.booking = route.request().postDataJSON()
       await fulfillJson(route, current, 201)
@@ -63,7 +64,7 @@ test('a venue manager books a slot for a new client, then records a CDF payment 
     else if (url.pathname === '/api/bookings/42/payments' && method === 'POST') {
       sent.payment = route.request().postDataJSON()
       current = booking({ paidAmount: 100, balance: 1400, payments: [{
-        id: 9, bookingId: 42, receiptNumber: 'REC-00009', amount: 280000, currency: 'CDF', exchangeRate: 2800,
+        id: 9, bookingId: 42, kind: 'PAYMENT', receiptNumber: 'REC-00009', amount: 280000, currency: 'CDF', exchangeRate: 2800,
         amountInBookingCurrency: 100, method: 'MPESA', reference: 'MP-123', paidAt: '2026-11-26T10:00:00',
       }] })
       await fulfillJson(route, current.payments[0], 201)
@@ -91,7 +92,8 @@ test('a venue manager books a slot for a new client, then records a CDF payment 
 
   await page.getByLabel('Montant *').fill('280000')
   await page.getByLabel('Devise du paiement').selectOption('CDF')
-  await page.getByLabel('Taux du jour (CDF pour 1 USD) *').fill('2800')
+  await expect(page.getByRole('link', { name: 'Fixer le taux du jour' })).toBeVisible()
+  await page.getByLabel('Taux (CDF pour 1 USD)').fill('2800')
   await expect(page.getByText('Équivalent : 100,00 USD')).toBeVisible()
   await page.getByLabel('Mode *').selectOption('MPESA')
   await page.getByLabel('Référence').fill('MP-123')
@@ -124,4 +126,101 @@ test('a venue deleted by mistake is listed and can be restored', async ({ page }
   expect(restored).toEqual([1])
   await expect(page.getByRole('button', { name: /Salles supprimées/ })).toHaveCount(0)
   await expect(page.getByText('Exodus', { exact: true })).toBeVisible()
+})
+
+test('Ma salle comes first in the menu when the module is enabled', async ({ page }) => {
+  await signIn(page, true, async (route, url) => {
+    if (url.pathname === '/api/venues/dashboard') {
+      await fulfillJson(route, { from: '2026-11-01', to: '2026-11-30', venueCount: 0, bookingsByStatus: {}, collected: [], refunded: [],
+        bookedValue: [], outstanding: [], occupancyRate: 0, occupiedVenueDays: 0, availableVenueDays: 0, unpaid: [], upcoming: [] })
+    } else if (url.pathname === '/api/venues/exchange-rate') await fulfillJson(route, { current: null, history: [] })
+    else if (url.pathname === '/api/venues') await fulfillJson(route, [])
+    else return false
+    return true
+  })
+  await page.goto('/dashboard/venue')
+  const links = page.locator('aside nav a')
+  await expect(links.first()).toHaveAttribute('href', '/dashboard/venue')
+  await expect(page.locator('aside nav').getByText('Ma salle', { exact: true })).toBeVisible()
+  const hrefs = await links.evaluateAll((els) => els.map((e) => e.getAttribute('href')))
+  expect(hrefs.indexOf('/dashboard/venue/exchange-rate')).toBeLessThan(hrefs.indexOf('/dashboard'))
+})
+
+test('the manager sets the daily rate, which is then proposed on a CDF payment', async ({ page }) => {
+  let overview: { current: unknown; history: unknown[] } = { current: null, history: [] }
+  const sent: Record<string, unknown>[] = []
+  await signIn(page, true, async (route, url) => {
+    const method = route.request().method()
+    if (url.pathname === '/api/venues/exchange-rate' && method === 'GET') await fulfillJson(route, overview)
+    else if (url.pathname === '/api/venues/exchange-rate' && method === 'POST') {
+      const body = route.request().postDataJSON()
+      sent.push({ rate: body })
+      const rate = { id: 1, cdfPerUsd: body.cdfPerUsd, effectiveAt: new Date().toISOString().slice(0, 19), setByName: 'Gaston Salle', note: body.note }
+      overview = { current: rate, history: [rate] }
+      await fulfillJson(route, overview)
+    } else if (url.pathname === '/api/bookings/42' && method === 'GET') await fulfillJson(route, booking())
+    else if (url.pathname === '/api/venue-clients/11') await fulfillJson(route, { id: 11, lastName: 'Ilunga', fullName: 'Patrick Ilunga' })
+    else if (url.pathname === '/api/bookings/42/payments' && method === 'POST') {
+      sent.push({ payment: route.request().postDataJSON() })
+      await fulfillJson(route, { id: 9, bookingId: 42, kind: 'PAYMENT', receiptNumber: 'REC-00009', amount: 285000, currency: 'CDF',
+        exchangeRate: 2850, amountInBookingCurrency: 100, method: 'MPESA', paidAt: '2026-11-26T10:00:00' }, 201)
+    } else return false
+    return true
+  })
+
+  await page.goto('/dashboard/venue/exchange-rate')
+  await expect(page.getByText('Aucun taux défini')).toBeVisible()
+  await page.getByLabel('CDF pour 1 USD').fill('2850')
+  await expect(page.getByText('100 USD = 285 000 CDF')).toBeVisible()
+  await page.getByRole('button', { name: 'Appliquer ce taux' }).click()
+  await expect(page.getByText('1 USD = 2 850 CDF')).toBeVisible()
+  expect(sent[0]).toEqual({ rate: { cdfPerUsd: 2850 } })
+
+  await page.goto('/dashboard/venue/bookings/42')
+  await page.getByLabel('Montant *').fill('285000')
+  await page.getByLabel('Devise du paiement').selectOption('CDF')
+  await expect(page.getByLabel('Taux (CDF pour 1 USD)')).toHaveValue('2850')
+  await expect(page.getByText('Équivalent : 100,00 USD')).toBeVisible()
+  await page.getByRole('button', { name: 'Encaisser' }).click()
+  await expect.poll(() => sent.length).toBe(2)
+  expect(sent[1]).toMatchObject({ payment: { amount: 285000, currency: 'CDF', exchangeRate: 2850 } })
+})
+
+test('cancelling a paid booking refunds part of it and keeps the rest', async ({ page }) => {
+  const paid = booking({ status: 'CONFIRMEE', optionExpiresAt: null, paidAmount: 600, balance: 900, payments: [
+    { id: 9, bookingId: 42, kind: 'PAYMENT', receiptNumber: 'REC-00009', amount: 600, currency: 'USD', amountInBookingCurrency: 600,
+      method: 'ESPECES', paidAt: '2026-11-20T10:00:00' }] })
+  let current = paid
+  let cancelBody: Record<string, unknown> | undefined
+  await signIn(page, true, async (route, url) => {
+    const method = route.request().method()
+    if (url.pathname === '/api/venues/exchange-rate') await fulfillJson(route, { current: null, history: [] })
+    else if (url.pathname === '/api/venue-clients/11') await fulfillJson(route, { id: 11, lastName: 'Ilunga', fullName: 'Patrick Ilunga' })
+    else if (url.pathname === '/api/bookings/42' && method === 'GET') await fulfillJson(route, current)
+    else if (url.pathname === '/api/bookings/42/cancel' && method === 'POST') {
+      cancelBody = route.request().postDataJSON()
+      current = { ...paid, status: 'ANNULEE', cancelReason: 'Client empêché', refundedAmount: 400, retainedAmount: 200, balance: 0,
+        payments: [...paid.payments, { id: 10, bookingId: 42, kind: 'REFUND', receiptNumber: 'RMB-00010', amount: 400, currency: 'USD',
+          amountInBookingCurrency: 400, method: 'MPESA', reference: 'MP-9', paidAt: '2026-11-26T10:00:00' }] }
+      await fulfillJson(route, current)
+    } else return false
+    return true
+  })
+
+  await page.goto('/dashboard/venue/bookings/42')
+  await page.getByRole('button', { name: /Annuler$/ }).click()
+  const dialog = page.getByRole('dialog', { name: 'Annuler la réservation' })
+  await expect(dialog.getByText('Le client a déjà payé')).toBeVisible()
+  await dialog.getByLabel('Motif').fill('Client empêché')
+  await dialog.getByText('Rembourser une partie').click()
+  await dialog.getByLabel('Montant remboursé').fill('400')
+  await expect(dialog.getByText('Retenu par la salle : 200,00 USD')).toBeVisible()
+  await dialog.getByLabel('Mode de remboursement').selectOption('MPESA')
+  await dialog.getByLabel('Référence').fill('MP-9')
+  await dialog.getByRole('button', { name: "Confirmer l'annulation" }).click()
+
+  await expect(page.getByText('RMB-00010')).toBeVisible()
+  expect(cancelBody).toEqual({ reason: 'Client empêché', refund: { amount: 400, currency: 'USD', method: 'MPESA', reference: 'MP-9' } })
+  await expect(page.getByText('Retenu (frais d\'annulation)')).toBeVisible()
+  await expect(page.getByText('200,00 USD').first()).toBeVisible()
 })

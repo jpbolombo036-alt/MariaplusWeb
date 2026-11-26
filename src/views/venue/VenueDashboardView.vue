@@ -16,14 +16,25 @@
       </router-link>
     </VenuePageHeader>
 
+    <router-link to="/dashboard/venue/exchange-rate" class="v-card px-5 py-3 mb-6 flex flex-wrap items-center justify-between gap-2 hover:bg-primary-light/30 transition-colors">
+      <span class="flex items-center gap-2 text-[13px] text-slate-700">
+        <span class="material-symbols-outlined text-[20px] text-primary">currency_exchange</span>
+        <template v-if="rate">Taux du jour : <strong>1 USD = {{ Number(rate.cdfPerUsd).toLocaleString('fr-FR') }} CDF</strong>
+          <span class="text-slate-400">· {{ formatDateTime(rate.effectiveAt) }}</span></template>
+        <template v-else>Aucun taux du jour défini</template>
+      </span>
+      <span class="text-[12px] font-semibold text-primary">{{ rate ? 'Modifier' : 'Fixer le taux' }}</span>
+    </router-link>
+
     <div v-if="loading && !dash" class="py-16 text-center text-slate-400 text-sm">Chargement…</div>
 
     <template v-else-if="dash">
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         <div class="v-card p-5">
-          <p class="text-[12px] font-semibold text-slate-500">Encaissé ce mois</p>
+          <p class="text-[12px] font-semibold text-slate-500">Encaissé net ce mois</p>
           <p v-for="c in dash.collected" :key="c.currency" class="text-xl font-bold text-slate-900 mt-1">{{ formatMoney(c.amount, c.currency) }}</p>
           <p v-if="!dash.collected.length" class="text-xl font-bold text-slate-900 mt-1">0</p>
+          <p v-for="r in dash.refunded ?? []" :key="'r' + r.currency" class="text-[12px] text-error mt-1">dont remboursé : {{ formatMoney(r.amount, r.currency) }}</p>
         </div>
         <div class="v-card p-5">
           <p class="text-[12px] font-semibold text-slate-500">Reste à encaisser (toutes dates)</p>
@@ -113,8 +124,8 @@ import BookingStatusBadge from '../../components/venue/BookingStatusBadge.vue'
 import { useAuthStore } from '../../stores/auth'
 import { Perm } from '../../permissions'
 import {
-  downloadVenueExport, formatDateTime, formatMoney, getVenueDashboard, listVenues,
-  type Venue, type VenueDashboard,
+  downloadVenueExport, formatDateTime, formatMoney, getExchangeRate, getVenueDashboard, listVenues,
+  type ExchangeRate, type Venue, type VenueDashboard,
 } from '../../api/venues'
 
 const auth = useAuthStore()
@@ -126,6 +137,7 @@ const venues = ref<Venue[]>([])
 const dash = ref<VenueDashboard | null>(null)
 const loading = ref(false)
 const exporting = ref(false)
+const rate = ref<ExchangeRate | null>(null)
 
 function period() {
   const [y, m] = month.value.split('-').map(Number)
@@ -158,6 +170,7 @@ function open(id: number) {
 
 watch([month, venueId], load)
 onMounted(async () => {
+  rate.value = (await getExchangeRate().catch(() => null))?.current ?? null
   if (auth.can([Perm.venueView])) venues.value = await listVenues().catch(() => [])
   await load()
 })
