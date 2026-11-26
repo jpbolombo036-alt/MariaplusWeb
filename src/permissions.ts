@@ -61,6 +61,14 @@ export const Perm = {
   reportExport: 'REPORT_EXPORT',
   settingsView: 'SETTINGS_VIEW',
   settingsUpdate: 'SETTINGS_UPDATE',
+  // Module « Salles » (V54) — visible seulement si le SUPER_ADMIN l'a activé.
+  venueView: 'VENUE_VIEW',
+  venueManage: 'VENUE_MANAGE',
+  venueClientManage: 'VENUE_CLIENT_MANAGE',
+  bookingView: 'BOOKING_VIEW',
+  bookingManage: 'BOOKING_MANAGE',
+  bookingPaymentRecord: 'BOOKING_PAYMENT_RECORD',
+  venueReportView: 'VENUE_REPORT_VIEW',
 } as const
 
 /** Vérifie qu'un utilisateur possède une permission (n'importe laquelle si plusieurs). */

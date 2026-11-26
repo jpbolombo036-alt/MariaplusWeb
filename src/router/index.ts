@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { usePlatformStore } from '../stores/platform'
+import { useVenueModuleStore } from '../stores/venueModule'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -63,6 +64,20 @@ const router = createRouter({
         { path: 'members', name: 'members', component: () => import('../views/MembersView.vue') },
         { path: 'members/new', name: 'members-new', component: () => import('../views/forms/MembersForm.vue') },
         { path: 'settings', name: 'settings', component: () => import('../views/SettingsView.vue') },
+        {
+          // Module « Salles » : gardé par beforeEach (module activé par le SUPER_ADMIN).
+          path: 'venue',
+          children: [
+            { path: '', name: 'venue-dashboard', component: () => import('../views/venue/VenueDashboardView.vue'), meta: { wide: true } },
+            { path: 'bookings', name: 'venue-bookings', component: () => import('../views/venue/VenueBookingsView.vue'), meta: { wide: true } },
+            { path: 'bookings/new', name: 'venue-bookings-new', component: () => import('../views/venue/VenueBookingFormView.vue') },
+            { path: 'bookings/:bookingId', name: 'venue-booking-detail', component: () => import('../views/venue/VenueBookingDetailView.vue'), meta: { wide: true } },
+            { path: 'bookings/:bookingId/edit', name: 'venue-bookings-edit', component: () => import('../views/venue/VenueBookingFormView.vue') },
+            { path: 'venues', name: 'venue-venues', component: () => import('../views/venue/VenuesView.vue'), meta: { wide: true } },
+            { path: 'clients', name: 'venue-clients', component: () => import('../views/venue/VenueClientsView.vue'), meta: { wide: true } },
+            { path: 'clients/:clientId', name: 'venue-client-detail', component: () => import('../views/venue/VenueClientDetailView.vue') },
+          ],
+        },
         {
           // Console SUPER_ADMIN (gardée par beforeEach : redirection si autre rôle).
           path: 'admin',
@@ -127,6 +142,12 @@ router.beforeEach(async (to) => {
   // Réglages plateforme (interrupteurs globaux) : SUPER_ADMIN uniquement.
   if (to.path.startsWith('/dashboard/settings') && !auth.isSuperAdmin) {
     return { path: '/dashboard' }
+  }
+  // Module « Salles » : seulement si le SUPER_ADMIN l'a activé pour l'organisation.
+  if (to.path.startsWith('/dashboard/venue')) {
+    const venueModule = useVenueModuleStore()
+    await venueModule.load()
+    if (!venueModule.enabled) return { path: '/dashboard' }
   }
   // Création d'événement : si le SUPER_ADMIN l'a désactivée, les utilisateurs
   // non-superadmin sont redirigés (le backend refuse aussi côté API).

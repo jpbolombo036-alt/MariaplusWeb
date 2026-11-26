@@ -211,3 +211,15 @@ html.dark .hover\:bg-gray-100:hover { background-color: rgb(66 72 88) !important
 html.dark [role='dialog'],
 html.dark dialog { color: rgb(235 237 243); }
 
+
+/* Module « Salles » : briques partagées par les écrans /dashboard/venue. */
+@layer components {
+  .v-card { @apply bg-white border border-slate-200 rounded-xl shadow-sm; }
+  .v-label { @apply block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5; }
+  .v-input { @apply block w-full px-3.5 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-slate-400 disabled:bg-slate-50 disabled:text-slate-400; }
+  .v-btn { @apply h-10 px-4 rounded-lg border border-slate-200 bg-white text-slate-700 text-[13px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+  .v-btn-primary { @apply h-10 px-4 rounded-lg bg-primary text-white text-[13px] font-semibold inline-flex items-center justify-center gap-2 shadow-sm shadow-primary/20 hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed; }
+  .v-btn-danger { @apply h-10 px-4 rounded-lg border border-error/30 text-error bg-white text-[13px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-error-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
+  .v-th { @apply py-3 px-4 text-[12px] font-semibold text-slate-500 text-left whitespace-nowrap; }
+  .v-td { @apply py-3 px-4 text-[13px] text-slate-700 align-top; }
+}

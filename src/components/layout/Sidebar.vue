@@ -48,6 +48,22 @@
       </router-link>
     </template>
 
+    <template v-if="venueItems.length">
+      <p class="px-3.5 pt-7 pb-2.5 font-bold uppercase tracking-widest text-slate-500" style="font-size:11px">Ma salle</p>
+      <router-link
+        v-for="item in venueItems"
+        :key="item.to"
+        :to="item.to"
+        :title="item.label"
+        class="flex items-center gap-3.5 px-3.5 rounded-lg font-medium transition-all duration-200"
+        :class="[isVenueActive(item.to) ? 'bg-primary text-white shadow-sm shadow-primary/20' : 'text-slate-700 hover:bg-white hover:text-slate-900']"
+        style="height:44px;font-size:15px"
+      >
+        <span class="material-symbols-outlined" style="font-size:26px">{{ item.icon }}</span>
+        <span class="truncate">{{ item.label }}</span>
+      </router-link>
+    </template>
+
     <template>
       <p class="px-3.5 pt-7 pb-2.5 font-bold uppercase tracking-widest text-slate-400" style="font-size:11px">Bientôt</p>
       <div
@@ -85,10 +101,29 @@ import { useAuthStore } from '../../stores/auth'
 import { useWeddingStore } from '../../stores/wedding'
 import { hasAny, Perm } from '../../permissions'
 import { filterNav, type NavSection } from '../../navigation'
+import { useVenueModuleStore } from '../../stores/venueModule'
 
 const auth = useAuthStore()
 const weddingStore = useWeddingStore()
+const venueModule = useVenueModuleStore()
 const route = useRoute()
+
+// Module « Salles » : affiché seulement si le SUPER_ADMIN l'a activé.
+const venueItems = computed(() => {
+  if (!venueModule.enabled) return []
+  const p = auth.permissions
+  const items: Array<{ label: string; icon: string; to: string }> = []
+  if (hasAny(p, Perm.venueReportView)) items.push({ label: 'Tableau de bord', icon: 'monitoring', to: '/dashboard/venue' })
+  if (hasAny(p, Perm.bookingView)) items.push({ label: 'Réservations', icon: 'event_available', to: '/dashboard/venue/bookings' })
+  if (hasAny(p, Perm.venueClientManage)) items.push({ label: 'Clients', icon: 'contacts', to: '/dashboard/venue/clients' })
+  if (hasAny(p, Perm.venueView)) items.push({ label: 'Mes salles', icon: 'storefront', to: '/dashboard/venue/venues' })
+  return items
+})
+
+function isVenueActive(to: string): boolean {
+  if (to === '/dashboard/venue') return route.path === to
+  return route.path === to || route.path.startsWith(to + '/')
+}
 
 const canCreate = computed(() => hasAny(auth.permissions, Perm.weddingCreate))
 
@@ -181,5 +216,6 @@ function isActive(match: string): boolean {
 
 onMounted(() => {
   weddingStore.load()
+  if (!auth.isSuperAdmin) void venueModule.load()
 })
 </script>

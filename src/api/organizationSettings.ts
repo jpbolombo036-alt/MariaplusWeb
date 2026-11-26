@@ -7,8 +7,11 @@ import { http, decodeMap } from './http'
 export interface OrgSettings {
   whatsappEnabled: boolean | null
   eventCreationEnabled: boolean | null
+  /** Module « Salles » : null ou false = désactivé (pas d'héritage global). */
+  venueModuleEnabled: boolean | null
   effectiveWhatsapp: boolean
   effectiveEventCreation: boolean
+  effectiveVenueModule: boolean
 }
 
 function mapSettings(data: unknown): OrgSettings {
@@ -18,6 +21,8 @@ function mapSettings(data: unknown): OrgSettings {
     eventCreationEnabled: (j.eventCreationEnabled ?? null) as boolean | null,
     effectiveWhatsapp: Boolean(j.effectiveWhatsapp),
     effectiveEventCreation: Boolean(j.effectiveEventCreation),
+    venueModuleEnabled: (j.venueModuleEnabled ?? null) as boolean | null,
+    effectiveVenueModule: Boolean(j.effectiveVenueModule),
   }
 }
 
@@ -33,7 +38,11 @@ export async function getOrgSettings(orgId: number): Promise<OrgSettings> {
  */
 export async function updateOrgSettings(
   orgId: number,
-  body: { whatsappEnabled?: boolean | 'inherit'; eventCreationEnabled?: boolean | 'inherit' },
+  body: {
+    whatsappEnabled?: boolean | 'inherit'
+    eventCreationEnabled?: boolean | 'inherit'
+    venueModuleEnabled?: boolean
+  },
 ): Promise<OrgSettings> {
   const res = await http.put(`/api/admin/organizations/${orgId}/settings`, body)
   return mapSettings(res.data)

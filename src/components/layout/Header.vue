@@ -69,6 +69,16 @@
             <span class="material-symbols-outlined text-[18px] text-slate-400">person</span>
             Mon profil
           </router-link>
+          <!-- Accès mobile au module Salles (la sidebar est masquée sous md). -->
+          <router-link
+            v-if="showVenue"
+            to="/dashboard/venue"
+            class="md:hidden flex items-center gap-3 px-4 py-2.5 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+            @click="menuOpen = false"
+          >
+            <span class="material-symbols-outlined text-[18px] text-slate-400">storefront</span>
+            Ma salle
+          </router-link>
           <button
             class="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-error hover:bg-error/5 transition-colors border-t border-slate-100"
             @click="doLogout"
@@ -90,11 +100,15 @@ import { initialsOf } from '../../utils/initials'
 import { useThemeStore } from '../../stores/theme'
 import AdminNotificationBell from './AdminNotificationBell.vue'
 import UserNotificationBell from './UserNotificationBell.vue'
+import { useVenueModuleStore } from '../../stores/venueModule'
+import { hasAny, Perm } from '../../permissions'
 
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
+const venueModule = useVenueModuleStore()
+const showVenue = computed(() => venueModule.enabled && hasAny(auth.permissions, Perm.venueView, Perm.bookingView))
 const themeStore = useThemeStore()
 const dropdownButton = ref<HTMLElement | null>(null)
 const dropdownRight = ref('0px')
@@ -129,6 +143,10 @@ const TITLES: Array<[string, string]> = [
   ['/dashboard/events/', 'Détail événement'],
   ['/dashboard/events', 'Mes Événements'],
   ['/dashboard/members', 'Équipe'],
+  ['/dashboard/venue/bookings', 'Réservations de salle'],
+  ['/dashboard/venue/venues', 'Mes salles'],
+  ['/dashboard/venue/clients', 'Clients de salle'],
+  ['/dashboard/venue', 'Ma salle'],
   ['/dashboard/profile', 'Mon profil'],
   ['/dashboard', 'Dashboard'],
 ]
