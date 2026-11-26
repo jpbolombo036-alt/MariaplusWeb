@@ -1,5 +1,5 @@
 <template>
-  <header class="flex items-center gap-4 px-4 md:px-6 h-14 bg-white border-b border-slate-200 shrink-0 relative z-50">
+  <header class="app-header flex items-center gap-4 px-4 md:px-6 h-14 bg-white border-b border-slate-200 shrink-0 relative z-50">
     <!-- Mobile : logo seul (comme la landing), pas de bouton menu -->
     <RouterLink to="/dashboard" class="md:hidden flex items-center gap-2">
       <span class="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-primary/20 grid place-items-center">
