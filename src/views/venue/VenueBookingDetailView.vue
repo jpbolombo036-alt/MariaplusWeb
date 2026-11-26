@@ -119,7 +119,7 @@
                       <button class="text-slate-500 hover:text-primary mr-2" :aria-label="`Reçu ${p.receiptNumber}`" title="Reçu PDF" @click="pdf(p.id)">
                         <span class="material-symbols-outlined text-[18px]">receipt_long</span>
                       </button>
-                      <button v-if="canPay" class="text-slate-400 hover:text-error" :aria-label="`${p.kind === 'REFUND' ? 'Annuler le remboursement' : 'Annuler le paiement'} ${p.receiptNumber}`" title="Annuler ce mouvement (saisie erronée)" @click="removePayment(p.id)">
+                      <button v-if="canRefund" class="text-slate-400 hover:text-error" :aria-label="`${p.kind === 'REFUND' ? 'Annuler le remboursement' : 'Annuler le paiement'} ${p.receiptNumber}`" title="Annuler ce mouvement (saisie erronée)" @click="removePayment(p.id)">
                         <span class="material-symbols-outlined text-[18px]">delete</span>
                       </button>
                     </td>
@@ -129,7 +129,7 @@
             </div>
             <p v-else class="px-5 pb-4 text-[13px] text-slate-500">Aucun paiement enregistré.</p>
 
-            <form v-if="canPay && (cancelled ? (booking.retainedAmount ?? 0) > 0 : booking.balance > 0)" class="px-5 pb-5 pt-3 border-t border-slate-100 space-y-3" @submit.prevent="addPayment">
+            <form v-if="(cancelled ? canRefund && (booking.retainedAmount ?? 0) > 0 : canPay && booking.balance > 0)" class="px-5 pb-5 pt-3 border-t border-slate-100 space-y-3" @submit.prevent="addPayment">
               <p class="text-[13px] font-bold text-slate-900">{{ cancelled ? 'Rembourser le client' : 'Enregistrer un paiement' }}</p>
               <p v-if="cancelled" class="text-[12px] text-slate-500">Encore remboursable : {{ formatMoney(booking.retainedAmount ?? 0, booking.currency) }}. Ce qui n'est pas remboursé reste retenu.</p>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -182,7 +182,7 @@
                 Ouvrir l'événement
               </router-link>
 
-              <div v-if="canManage && booking.status !== 'ANNULEE'" class="pt-3 border-t border-slate-100 space-y-2">
+              <div v-if="canGrantAccess && booking.status !== 'ANNULEE'" class="pt-3 border-t border-slate-100 space-y-2">
                 <p class="text-[13px] font-semibold text-slate-900">Accès du client à ses invités</p>
                 <p class="text-[12px] text-slate-500">Le client gère lui-même ses invités, invitations et réponses, uniquement pour cet événement.</p>
                 <input v-model.trim="accessEmail" type="email" placeholder="Email du client" class="v-input" />
@@ -202,7 +202,7 @@
                 </div>
               </div>
             </template>
-            <template v-else-if="booking.status === 'CONFIRMEE' && canManage">
+            <template v-else-if="booking.status === 'CONFIRMEE' && canManage && canCreateEvent">
               <p class="text-[13px] text-slate-600">Créez l'événement pré-rempli (date, salle, adresse) pour gérer invitations et réponses.</p>
               <div v-if="booking.eventType === 'WEDDING'" class="grid grid-cols-2 gap-2">
                 <input v-model.trim="couple.groomFirstName" placeholder="Prénom du marié" class="v-input" />
@@ -215,6 +215,7 @@
                 Créer l'événement MariagePlus
               </button>
             </template>
+            <p v-else-if="booking.status === 'CONFIRMEE'" class="text-[13px] text-slate-500">Le gérant crée l'événement pour le client.</p>
             <p v-else class="text-[13px] text-slate-500">Disponible une fois la réservation confirmée.</p>
           </div>
         </div>
@@ -233,14 +234,14 @@
 
         <template v-if="netPaid > 0">
           <div class="rounded-lg bg-slate-50 border border-slate-200 p-3 text-[13px]">
-            Le client a déjà payé <strong>{{ formatMoney(netPaid, booking.currency) }}</strong>. Que lui rendez-vous ?
+            Le client a déjà payé <strong>{{ formatMoney(netPaid, booking.currency) }}</strong>.<template v-if="canRefund"> Que lui rendez-vous ?</template>
           </div>
-          <div class="space-y-2 text-[13px]" role="radiogroup" aria-label="Remboursement">
+          <div v-if="canRefund" class="space-y-2 text-[13px]" role="radiogroup" aria-label="Remboursement">
             <label class="flex items-center gap-2"><input v-model="cancelDialog.refundMode" type="radio" value="all" /> Tout rembourser ({{ formatMoney(netPaid, booking.currency) }})</label>
             <label class="flex items-center gap-2"><input v-model="cancelDialog.refundMode" type="radio" value="part" /> Rembourser une partie (le reste est retenu)</label>
             <label class="flex items-center gap-2"><input v-model="cancelDialog.refundMode" type="radio" value="none" /> Ne rien rembourser pour l'instant</label>
           </div>
-          <div v-if="cancelDialog.refundMode !== 'none'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div v-if="canRefund && cancelDialog.refundMode !== 'none'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label v-if="cancelDialog.refundMode === 'part'">
               <span class="v-label">Montant remboursé ({{ booking.currency }}) *</span>
               <input v-model.number="cancelDialog.amount" required type="number" min="0.01" :max="netPaid" step="0.01" class="v-input" aria-label="Montant remboursé" />
@@ -256,10 +257,10 @@
               <input v-model.trim="cancelDialog.reference" maxlength="100" placeholder="N° de transaction" class="v-input" />
             </label>
           </div>
-          <p v-if="cancelDialog.refundMode !== 'none'" class="text-[12px] text-slate-500">
+          <p v-if="canRefund && cancelDialog.refundMode !== 'none'" class="text-[12px] text-slate-500">
             Retenu par la salle : {{ formatMoney(retainedPreview, booking.currency) }}
           </p>
-          <p v-if="cancelDialog.refundMode !== 'none' && !canPay" class="text-[12px] text-error">Votre rôle ne permet pas d'enregistrer un remboursement.</p>
+          <p v-if="!canRefund" class="text-[12px] text-slate-500">Le remboursement éventuel sera enregistré par le gérant.</p>
         </template>
 
         <div class="flex justify-end gap-2 pt-2">
@@ -325,6 +326,10 @@ const retainedPreview = computed(() => {
   return netPaid.value
 })
 const canPay = computed(() => auth.can([Perm.bookingPaymentRecord]))
+/** Sorties d'argent (remboursement, annulation d'un paiement) : gérant uniquement. */
+const canRefund = computed(() => auth.can([Perm.bookingRefund]))
+const canCreateEvent = computed(() => auth.can([Perm.eventCreate]))
+const canGrantAccess = computed(() => auth.can([Perm.organizationManageMembers]))
 const editable = computed(() => !!booking.value && booking.value.status !== 'ANNULEE' && booking.value.status !== 'REALISEE')
 const coupleReady = computed(() => booking.value?.eventType !== 'WEDDING'
   || Object.values(couple).every((v) => v.length > 0))
@@ -371,7 +376,7 @@ function act(action: 'confirm' | 'complete') {
 }
 
 function openCancel() {
-  Object.assign(cancelDialog, { open: true, reason: '', refundMode: netPaid.value > 0 && canPay.value ? 'all' : 'none',
+  Object.assign(cancelDialog, { open: true, reason: '', refundMode: netPaid.value > 0 && canRefund.value ? 'all' : 'none',
     amount: undefined, method: 'ESPECES', reference: '' })
 }
 
