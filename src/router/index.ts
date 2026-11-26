@@ -77,6 +77,7 @@ const router = createRouter({
             { path: 'venues', name: 'venue-venues', component: () => import('../views/venue/VenuesView.vue'), meta: { wide: true } },
             { path: 'clients', name: 'venue-clients', component: () => import('../views/venue/VenueClientsView.vue'), meta: { wide: true } },
             { path: 'clients/:clientId', name: 'venue-client-detail', component: () => import('../views/venue/VenueClientDetailView.vue') },
+            { path: 'my-cash', name: 'venue-my-cash', component: () => import('../views/venue/VenueMyCashView.vue'), meta: { wide: true } },
             { path: 'exchange-rate', name: 'venue-exchange-rate', component: () => import('../views/venue/VenueExchangeRateView.vue') },
           ],
         },
@@ -151,13 +152,15 @@ router.beforeEach(async (to) => {
     await venueModule.load()
     if (!venueModule.enabled) return { path: '/dashboard' }
     // Sans accès aux rapports (agent de salle) : la page d'accueil du module est la liste des réservations.
-    if (to.name === 'venue-dashboard' && !auth.can([Perm.venueReportView])) return { name: 'venue-bookings' }
+    if (to.name === 'venue-dashboard' && !auth.can([Perm.venueReportView])) {
+      return { name: auth.can([Perm.bookingPaymentRecord]) ? 'venue-my-cash' : 'venue-bookings' }
+    }
   }
   // Agent de salle (pas de tableau de bord général) : il arrive directement sur ses réservations.
   if (to.name === 'dashboard' && !auth.isSuperAdmin && !auth.can([Perm.dashboardView]) && auth.can([Perm.bookingView])) {
     const venueModule = useVenueModuleStore()
     await venueModule.load()
-    if (venueModule.enabled) return { name: 'venue-bookings' }
+    if (venueModule.enabled) return { name: auth.can([Perm.bookingPaymentRecord]) ? 'venue-my-cash' : 'venue-bookings' }
   }
   // Création d'événement : si le SUPER_ADMIN l'a désactivée, les utilisateurs
   // non-superadmin sont redirigés (le backend refuse aussi côté API).

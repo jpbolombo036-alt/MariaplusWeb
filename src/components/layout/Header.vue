@@ -108,7 +108,8 @@ const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
 const venueModule = useVenueModuleStore()
-const venueHome = computed(() => hasAny(auth.permissions, Perm.venueReportView) ? '/dashboard/venue' : '/dashboard/venue/bookings')
+const venueHome = computed(() => hasAny(auth.permissions, Perm.venueReportView) ? '/dashboard/venue'
+  : hasAny(auth.permissions, Perm.bookingPaymentRecord) ? '/dashboard/venue/my-cash' : '/dashboard/venue/bookings')
 const showVenue = computed(() => venueModule.enabled && hasAny(auth.permissions, Perm.venueView, Perm.bookingView))
 const themeStore = useThemeStore()
 const dropdownButton = ref<HTMLElement | null>(null)
@@ -148,6 +149,7 @@ const TITLES: Array<[string, string]> = [
   ['/dashboard/venue/venues', 'Mes salles'],
   ['/dashboard/venue/clients', 'Clients de salle'],
   ['/dashboard/venue/exchange-rate', 'Taux de change'],
+  ['/dashboard/venue/my-cash', 'Ma caisse'],
   ['/dashboard/venue', 'Ma salle'],
   ['/dashboard/profile', 'Mon profil'],
   ['/dashboard', 'Dashboard'],

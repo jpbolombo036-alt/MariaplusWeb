@@ -328,6 +328,47 @@ export async function setExchangeRate(cdfPerUsd: number, note?: string): Promise
   return { current: (j.current ?? null) as ExchangeRate | null, history: decodeList(j.history) as ExchangeRate[] }
 }
 
+// ---- Ma caisse ---------------------------------------------------------------------
+
+export interface CashMethodTotal {
+  method: PaymentMethod
+  currency: VenueCurrency
+  amount: number
+  count: number
+}
+
+export interface CashLine {
+  paymentId: number
+  receiptNumber: string
+  kind: PaymentKind
+  bookingId: number
+  bookingReference?: string | null
+  clientName?: string | null
+  venueName?: string | null
+  amount: number
+  currency: VenueCurrency
+  method: PaymentMethod
+  reference?: string | null
+  paidAt: string
+}
+
+/** Ce que l'utilisateur connecté a lui-même encaissé (pas le chiffre d'affaires global). */
+export interface CashierSummary {
+  from: string
+  to: string
+  today: CurrencyAmount[]
+  collected: CurrencyAmount[]
+  paymentCount: number
+  refundCount: number
+  byMethod: CashMethodTotal[]
+  movements: CashLine[]
+  upcoming: Booking[]
+}
+
+export async function getMyCash(params: { from?: string; to?: string }): Promise<CashierSummary> {
+  return decodeMap((await http.get('/api/venues/my-cash', { params })).data) as unknown as CashierSummary
+}
+
 // ---- Clients ---------------------------------------------------------------------
 
 export async function listVenueClients(q = '', pageIndex = 0, size = 25): Promise<Page<VenueClient>> {

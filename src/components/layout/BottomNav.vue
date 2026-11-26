@@ -39,7 +39,8 @@ weddingStore.load()
 const activeWeddingId = computed(() => weddingStore.activeId)
 const venueModule = useVenueModuleStore()
 // Module prioritaire : « Ma salle » occupe la première place quand il est activé.
-const venueHome = computed(() => hasAny(auth.permissions, Perm.venueReportView) ? '/dashboard/venue' : '/dashboard/venue/bookings')
+const venueHome = computed(() => hasAny(auth.permissions, Perm.venueReportView) ? '/dashboard/venue'
+  : hasAny(auth.permissions, Perm.bookingPaymentRecord) ? '/dashboard/venue/my-cash' : '/dashboard/venue/bookings')
 const showVenue = computed(() => venueModule.enabled && hasAny(auth.permissions, Perm.venueView, Perm.bookingView))
 const visible = computed(() => filterNav(auth.permissions).slice(0, showVenue.value ? 3 : 4))
 </script>
