@@ -254,7 +254,7 @@ test('the dashboard shows the month refunds in a card and a list', async ({ page
   await expect(page).toHaveURL(/\/dashboard\/venue\/bookings\/42$/)
 })
 
-test('a venue cashier (AGENT_SALLE) lands on bookings and cannot refund, cancel a payment or create the event', async ({ page }) => {
+test('a venue cashier (AGENT_SALLE) lands on Ma caisse and cannot refund, cancel a payment or create the event', async ({ page }) => {
   const cashier = { ...user, firstName: 'Caissier', roles: ['AGENT_SALLE'],
     permissions: ['VENUE_VIEW', 'VENUE_CLIENT_MANAGE', 'BOOKING_VIEW', 'BOOKING_MANAGE', 'BOOKING_PAYMENT_RECORD'] }
   const paid = booking({ status: 'CONFIRMEE', optionExpiresAt: null, paidAmount: 600, balance: 900, payments: [
@@ -272,15 +272,31 @@ test('a venue cashier (AGENT_SALLE) lands on bookings and cannot refund, cancel 
     else if (p === '/api/bookings/42') await fulfillJson(route, paid)
     else if (p === '/api/venues/exchange-rate') await fulfillJson(route, { current: null, history: [] })
     else if (p === '/api/venue-clients/11') await fulfillJson(route, { id: 11, lastName: 'Ilunga', fullName: 'Patrick Ilunga' })
-    else return false
+    else if (p === '/api/venues/my-cash') {
+      await fulfillJson(route, { from: '2026-11-01', to: '2026-11-30',
+        today: [{ currency: 'USD', amount: 300 }, { currency: 'CDF', amount: 280000 }], collected: [{ currency: 'USD', amount: 900 }],
+        paymentCount: 3, refundCount: 0,
+        byMethod: [{ method: 'ESPECES', currency: 'USD', amount: 900, count: 2 }, { method: 'MPESA', currency: 'CDF', amount: 280000, count: 1 }],
+        movements: [{ paymentId: 9, receiptNumber: 'REC-00009', kind: 'PAYMENT', bookingId: 42, bookingReference: 'RES-00042',
+          clientName: 'Patrick Ilunga', venueName: 'Salle Le Palmier', amount: 600, currency: 'USD', method: 'ESPECES', paidAt: '2026-11-26T10:00:00' }],
+        upcoming: [paid] })
+    } else return false
     return true
   })
 
   await page.goto('/dashboard')
-  await expect(page).toHaveURL(/\/dashboard\/venue\/bookings$/)
+  await expect(page).toHaveURL(/\/dashboard\/venue\/my-cash$/)
+  const today = page.locator('.v-card', { has: page.getByText("Encaissé aujourd'hui") })
+  await expect(today.getByText('300,00 USD')).toBeVisible()
+  await expect(today.getByText('280 000,00 CDF')).toBeVisible()
+  await expect(page.getByText('REC-00009')).toBeVisible()
+  await expect(page.locator('.v-card', { has: page.getByText('Par mode de paiement') }).getByText('M-Pesa')).toBeVisible()
   const menu = page.locator('aside nav')
+  await expect(menu.getByRole('link', { name: /Ma caisse/ })).toBeVisible()
   await expect(menu.getByRole('link', { name: /Réservations/ })).toBeVisible()
   await expect(menu.getByRole('link', { name: /Tableau de bord/ })).toHaveCount(0)
+  await expect(menu.getByRole('link', { name: /^grid_view\s*Dashboard$|^Dashboard$/ })).toHaveCount(0)
+  await expect(menu.getByText('Général', { exact: true })).toHaveCount(0)
   await expect(page.locator('aside').getByText('Agent de salle')).toBeVisible()
 
   await page.goto('/dashboard/venue/bookings/42')

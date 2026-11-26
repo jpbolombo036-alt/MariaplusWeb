@@ -36,6 +36,7 @@
       </template>
       <!-- Titre de groupe, comme « Ma salle » et « Gestion de l'événement ». -->
       <p
+        v-if="generalItems.length"
         class="shrink-0 px-3.5 pb-2.5 font-bold uppercase tracking-widest text-slate-500"
         :class="venueItems.length ? 'pt-7' : 'pt-1'"
         style="font-size:11px"
@@ -121,6 +122,7 @@ const venueItems = computed(() => {
   const p = auth.permissions
   const items: Array<{ label: string; icon: string; to: string }> = []
   if (hasAny(p, Perm.venueReportView)) items.push({ label: 'Tableau de bord', icon: 'monitoring', to: '/dashboard/venue' })
+  if (hasAny(p, Perm.bookingPaymentRecord)) items.push({ label: 'Ma caisse', icon: 'point_of_sale', to: '/dashboard/venue/my-cash' })
   if (hasAny(p, Perm.bookingView)) items.push({ label: 'Réservations', icon: 'event_available', to: '/dashboard/venue/bookings' })
   if (hasAny(p, Perm.venueClientManage)) items.push({ label: 'Clients', icon: 'contacts', to: '/dashboard/venue/clients' })
   if (hasAny(p, Perm.venueView)) items.push({ label: 'Mes salles', icon: 'storefront', to: '/dashboard/venue/venues' })
@@ -175,9 +177,12 @@ const initials = computed(() => {
 
 // Entrées générales (hors mariage) — filtrées par permissions.
 const generalItems = computed(() => {
-  const items: Array<{ label: string; icon: string; to: string; match: string; perm: string }> = [
-    { label: 'Dashboard', icon: 'grid_view', to: '/dashboard', match: '/dashboard', perm: Perm.dashboardView },
-  ]
+  const items: Array<{ label: string; icon: string; to: string; match: string; perm: string }> = []
+  // Agent de salle : pas de tableau de bord général (il serait renvoyé vers « Ma caisse »).
+  const venueOnly = venueModule.enabled && !hasAny(auth.permissions, Perm.dashboardView) && hasAny(auth.permissions, Perm.bookingView)
+  if (!venueOnly) {
+    items.push({ label: 'Dashboard', icon: 'grid_view', to: '/dashboard', match: '/dashboard', perm: Perm.dashboardView })
+  }
   if (canAccessEvents.value) {
     items.push({ label: 'Événements', icon: 'calendar_month', to: '/dashboard/events', match: '/dashboard/events', perm: Perm.eventView })
   }
