@@ -195,6 +195,19 @@ export interface VenueRefundLine {
   paidAt: string
 }
 
+/** Encaissements d'une personne (caissier, gérant) pour le contrôle de caisse. */
+export interface CashierTotal {
+  userId: number
+  name: string
+  today: CurrencyAmount[]
+  collected: CurrencyAmount[]
+  cash: CurrencyAmount[]
+  mobileMoney: CurrencyAmount[]
+  transfer: CurrencyAmount[]
+  paymentCount: number
+  refundCount: number
+}
+
 export interface VenueDashboard {
   from: string
   to: string
@@ -206,6 +219,8 @@ export interface VenueDashboard {
   refunded: CurrencyAmount[]
   /** Remboursements de la période, les plus récents d'abord. */
   refunds?: VenueRefundLine[]
+  /** Encaissements par personne (contrôle de caisse). */
+  byCashier?: CashierTotal[]
   bookedValue: CurrencyAmount[]
   outstanding: CurrencyAmount[]
   occupancyRate: number

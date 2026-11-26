@@ -72,6 +72,42 @@
         </div>
       </div>
 
+      <!-- Encaissements par caissier : contrôle de caisse -->
+      <div class="v-card mb-6">
+        <div class="px-5 pt-5 pb-3 flex items-center justify-between">
+          <h2 class="text-[16px] font-bold text-slate-900">Encaissements par caissier</h2>
+          <span class="text-[12px] text-slate-500">{{ (dash.byCashier ?? []).length }} personne(s)</span>
+        </div>
+        <p v-if="!(dash.byCashier ?? []).length" class="px-5 pb-6 text-sm text-slate-500">Aucun encaissement sur la période.</p>
+        <div v-else class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-slate-50/80">
+                <th class="v-th">Caissier</th><th class="v-th text-right">Aujourd'hui</th><th class="v-th text-right">Sur le mois</th>
+                <th class="v-th text-right">Espèces</th><th class="v-th text-right">Mobile Money</th><th class="v-th text-right">Virement</th>
+                <th class="v-th text-right">Paiements</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="c in dash.byCashier" :key="c.userId" class="border-t border-slate-100">
+                <td class="v-td font-semibold text-slate-900">{{ c.name }}</td>
+                <td v-for="(col, i) in [c.today, c.collected, c.cash, c.mobileMoney, c.transfer]" :key="i" class="v-td text-right whitespace-nowrap">
+                  <div v-for="a in col" :key="a.currency" :class="{ 'font-semibold text-slate-900': i === 1 }">{{ formatMoney(a.amount, a.currency) }}</div>
+                  <span v-if="!col.length" class="text-slate-400">—</span>
+                </td>
+                <td class="v-td text-right">
+                  {{ c.paymentCount }}
+                  <div v-if="c.refundCount" class="text-[11px] text-error">{{ c.refundCount }} rembours.</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="px-5 py-3 text-[11.5px] text-slate-500 border-t border-slate-100">
+          Montants nets des remboursements. Les espèces doivent se retrouver dans la caisse de chaque personne.
+        </p>
+      </div>
+
       <!-- Remboursements du mois -->
       <div class="v-card mb-6">
         <div class="px-5 pt-5 pb-3 flex items-center justify-between">
