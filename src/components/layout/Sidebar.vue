@@ -5,7 +5,7 @@
   >
     <!-- Logo -->
     <div class="px-6 pt-6 pb-5">
-      <div class="flex items-center gap-3.5">
+      <div class="shrink-0 flex items-center gap-3.5">
         <span class="w-10 h-10 rounded-lg overflow-hidden grid place-items-center shrink-0 bg-slate-50 border border-slate-200">
           <img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" />
         </span>
@@ -17,16 +17,16 @@
     </div>
 
     <!-- Menu -->
-    <nav class="flex-1 flex flex-col px-4 pt-3 gap-1 overflow-y-auto">
+    <nav class="flex-1 min-h-0 flex flex-col px-4 pt-3 pb-3 gap-1 overflow-y-auto no-scrollbar">
       <!-- Module prioritaire : « Ma salle » en tête du menu quand il est activé. -->
       <template v-if="venueItems.length">
-        <p class="px-3.5 pt-1 pb-2.5 font-bold uppercase tracking-widest text-slate-500" style="font-size:11px">Ma salle</p>
+        <p class="shrink-0 px-3.5 pt-1 pb-2.5 font-bold uppercase tracking-widest text-slate-500" style="font-size:11px">Ma salle</p>
         <router-link
           v-for="item in venueItems"
           :key="item.to"
           :to="item.to"
           :title="item.label"
-          class="flex items-center gap-3.5 px-3.5 rounded-lg font-medium transition-all duration-200"
+          class="shrink-0 flex items-center gap-3.5 px-3.5 rounded-lg font-medium transition-all duration-200"
           :class="[isVenueActive(item.to) ? 'bg-primary text-white shadow-sm shadow-primary/20' : 'text-slate-700 hover:bg-white hover:text-slate-900']"
           style="height:44px;font-size:15px"
         >
@@ -36,7 +36,7 @@
       </template>
       <!-- Titre de groupe, comme « Ma salle » et « Gestion de l'événement ». -->
       <p
-        class="px-3.5 pb-2.5 font-bold uppercase tracking-widest text-slate-500"
+        class="shrink-0 px-3.5 pb-2.5 font-bold uppercase tracking-widest text-slate-500"
         :class="venueItems.length ? 'pt-7' : 'pt-1'"
         style="font-size:11px"
       >Général</p>
@@ -45,7 +45,7 @@
         :key="item.label"
         :to="item.to"
         :title="item.label"
-        class="flex items-center gap-3.5 px-3.5 rounded-lg font-medium transition-all duration-200"
+        class="shrink-0 flex items-center gap-3.5 px-3.5 rounded-lg font-medium transition-all duration-200"
         :class="[isActive(item.match) ? 'bg-primary text-white shadow-sm shadow-primary/20' : 'text-slate-700 hover:bg-white hover:text-slate-900']"
         style="height:44px;font-size:15px"
       >
@@ -54,14 +54,14 @@
       </router-link>
 
       <template v-if="sectionItems.length">
-        <p class="px-3.5 pt-7 pb-2.5 font-bold uppercase tracking-widest text-slate-500" style="font-size:11px">Gestion de l'événement</p>
+        <p class="shrink-0 px-3.5 pt-7 pb-2.5 font-bold uppercase tracking-widest text-slate-500" style="font-size:11px">Gestion de l'événement</p>
 
         <router-link
           v-for="item in sectionItems"
           :key="item.label"
           :to="sectionRoute(item.section)"
           :title="item.label"
-          class="flex items-center gap-3.5 rounded-lg font-medium transition-all duration-200"
+          class="shrink-0 flex items-center gap-3.5 rounded-lg font-medium transition-all duration-200"
           :class="[isSectionActive(item.section) ? 'bg-primary text-white shadow-sm shadow-primary/20' : 'text-slate-700 hover:bg-white hover:text-slate-900']"
           style="height:44px;font-size:15px;padding-left:14px;padding-right:16px"
         >
@@ -72,11 +72,11 @@
 
 
     <template>
-      <p class="px-3.5 pt-7 pb-2.5 font-bold uppercase tracking-widest text-slate-400" style="font-size:11px">Bientôt</p>
+      <p class="shrink-0 px-3.5 pt-7 pb-2.5 font-bold uppercase tracking-widest text-slate-400" style="font-size:11px">Bientôt</p>
       <div
         v-for="item in soonItems"
         :key="item.label"
-        class="flex items-center gap-3.5 px-3.5 rounded-lg font-medium text-slate-500 cursor-not-allowed"
+        class="shrink-0 flex items-center gap-3.5 px-3.5 rounded-lg font-medium text-slate-500 cursor-not-allowed"
         style="height:44px;font-size:15px"
       >
         <span class="material-symbols-outlined" style="font-size:26px">{{ item.icon }}</span>
@@ -88,7 +88,7 @@
 
     <!-- Profil -->
     <div class="px-4 py-3.5 border-t border-slate-200">
-      <router-link to="/dashboard/profile" class="flex items-center gap-3.5" title="Mon profil">
+      <router-link to="/dashboard/profile" class="shrink-0 flex items-center gap-3.5" title="Mon profil">
         <span class="w-10 h-10 rounded-lg bg-primary text-white grid place-items-center overflow-hidden shrink-0" style="font-size:14px">
           {{ initials }}
         </span>

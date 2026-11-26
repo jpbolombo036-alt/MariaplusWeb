@@ -223,3 +223,9 @@ html.dark dialog { color: rgb(235 237 243); }
   .v-th { @apply py-3 px-4 text-[12px] font-semibold text-slate-500 text-left whitespace-nowrap; }
   .v-td { @apply py-3 px-4 text-[13px] text-slate-700 align-top; }
 }
+
+/* Défilement sans barre visible (menu latéral) : molette, pavé et doigt restent actifs. */
+@layer utilities {
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}
