@@ -44,6 +44,11 @@ export async function mockApi(
         await fulfillJson(route, { unreadCount: 0, items: [] })
         return
       }
+      // The sidebar asks this for every signed-in non-admin user (venue module off by default).
+      if (url.pathname === '/api/venues/module-status' && route.request().method() === 'GET') {
+        await fulfillJson(route, { enabled: false })
+        return
+      }
       unexpectedRequests.push(`${route.request().method()} ${url.pathname}${url.search}`)
       await fulfillJson(route, { error: 'No fixture for this request' }, 404)
       return

@@ -10,11 +10,13 @@ import { parseAuthUser, parseLoginResponse, type AuthUser } from '../models/auth
 import { hasAny } from '../permissions'
 import { useWeddingStore } from './wedding'
 import { usePlatformStore } from './platform'
+import { useVenueModuleStore } from './venueModule'
 import { invalidateStoreRequests, storeRequestState } from './requestState'
 
 function resetAccountStores(pinia: Pinia | undefined = getActivePinia()) {
   useWeddingStore(pinia).reset()
   usePlatformStore(pinia).reset()
+  useVenueModuleStore(pinia).reset()
 }
 
 interface AuthState {

@@ -180,6 +180,30 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Module Salles (gestion de salle de fête) -->
+              <div class="bg-white border border-slate-200 rounded-lg p-4 sm:col-span-2">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-[13px] font-semibold text-slate-900">Module Salles</p>
+                    <p class="text-[11.5px] mt-0.5" :class="st(o).venueEffective ? 'text-success' : 'text-slate-500'">
+                      {{ st(o).venueEffective ? 'Activé' : 'Désactivé' }}
+                      <span class="text-slate-400">· gestion de salle de fête : réservations, paiements, rapports</span>
+                    </p>
+                  </div>
+                  <label class="toggle shrink-0" :class="{ 'toggle-disabled': st(o).busy }">
+                    <input
+                      type="checkbox"
+                      class="toggle-input"
+                      aria-label="Module Salles"
+                      :checked="st(o).venueEffective"
+                      :disabled="st(o).busy"
+                      @change="applyOrgSetting(o, 'venue', !st(o).venueEffective)"
+                    />
+                    <span class="toggle-track"><span class="toggle-thumb" /></span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -272,6 +296,7 @@ interface OrgSettingsState {
   whatsappEffective: boolean
   eventOverride: boolean | null
   eventEffective: boolean
+  venueEffective: boolean
 }
 const settingsState = ref<Record<number, OrgSettingsState>>({})
 
@@ -285,6 +310,7 @@ function st(o: AdminOrganization): OrgSettingsState {
       whatsappEffective: true,
       eventOverride: null,
       eventEffective: true,
+      venueEffective: false,
     }
   )
 }
@@ -328,6 +354,7 @@ async function toggleExpand(o: AdminOrganization) {
     whatsappEffective: true,
     eventOverride: null,
     eventEffective: true,
+    venueEffective: false,
   }
   try {
     const s = await getOrgSettings(o.id)
@@ -339,6 +366,7 @@ async function toggleExpand(o: AdminOrganization) {
       whatsappEffective: s.effectiveWhatsapp,
       eventOverride: s.eventCreationEnabled,
       eventEffective: s.effectiveEventCreation,
+      venueEffective: s.effectiveVenueModule,
     }
   } catch {
     settingsState.value[o.id] = {
@@ -349,6 +377,7 @@ async function toggleExpand(o: AdminOrganization) {
       whatsappEffective: true,
       eventOverride: null,
       eventEffective: true,
+      venueEffective: false,
     }
   }
   try {
@@ -363,7 +392,7 @@ async function toggleExpand(o: AdminOrganization) {
 /** Applique un réglage d'organisation : true/false = override, 'inherit' = global. */
 async function applyOrgSetting(
   o: AdminOrganization,
-  key: 'event' | 'whatsapp',
+  key: 'event' | 'whatsapp' | 'venue',
   value: boolean | 'inherit',
 ) {
   const s = settingsState.value[o.id]
@@ -373,12 +402,17 @@ async function applyOrgSetting(
   try {
     const res = await updateOrgSettings(
       o.id,
-      key === 'event' ? { eventCreationEnabled: value } : { whatsappEnabled: value },
+      key === 'event'
+        ? { eventCreationEnabled: value }
+        : key === 'venue'
+          ? { venueModuleEnabled: value === true }
+          : { whatsappEnabled: value },
     )
     s.eventOverride = res.eventCreationEnabled
     s.eventEffective = res.effectiveEventCreation
     s.whatsappOverride = res.whatsappEnabled
     s.whatsappEffective = res.effectiveWhatsapp
+    s.venueEffective = res.effectiveVenueModule
   } catch {
     s.error = 'Modification refusée par le serveur'
   } finally {
