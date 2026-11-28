@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /agent/
+Disallow: /invitations/
+Disallow: /change-password
+
+Sitemap: https://www.eventiaeasy.com/sitemap.xml

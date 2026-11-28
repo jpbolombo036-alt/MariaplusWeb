@@ -196,8 +196,17 @@ router.onError((error, to) => {
     window.location.assign(to?.fullPath || window.location.href)
   }
 })
-router.afterEach(() => {
+const DEFAULT_TITLE = 'EventiaEasy — Invitations WhatsApp et gestion de salles de fête en RD Congo'
+router.afterEach((to) => {
   sessionStorage.removeItem(CHUNK_RELOAD_FLAG)
+  if (to.name === 'login') {
+    document.title = to.query.mode === 'register' ? 'Créer mon espace — EventiaEasy' : 'Connexion — EventiaEasy'
+  } else if (to.path.startsWith('/dashboard') || to.path.startsWith('/agent')) {
+    document.title = 'EventiaEasy'
+  } else if (to.name !== 'public-invitation') {
+    // La page d'invitation garde le titre qu'elle se donne elle-même.
+    document.title = DEFAULT_TITLE
+  }
 })
 
 export default router
