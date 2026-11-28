@@ -38,7 +38,7 @@
               <label for="login-email" class="text-sm font-medium mb-1.5 block">Email</label>
               <div class="relative">
                 <span aria-hidden="true" class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">mail</span>
-                <input id="login-email" v-model="email" type="email" required autocomplete="email" class="auth-input pl-11" placeholder="vous@exemple.com" />
+                <input id="login-email" v-model="email" type="email" required autocomplete="email" class="auth-input with-icon" placeholder="vous@exemple.com" />
               </div>
             </div>
 
@@ -46,7 +46,7 @@
               <label for="login-password" class="text-sm font-medium mb-1.5 block">Mot de passe</label>
               <div class="relative">
                 <span aria-hidden="true" class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">lock</span>
-                <input id="login-password" v-model="password" :type="showPwd ? 'text' : 'password'" required autocomplete="current-password" class="auth-input pl-11 pr-11" placeholder="••••••••" />
+                <input id="login-password" v-model="password" :type="showPwd ? 'text' : 'password'" required autocomplete="current-password" class="auth-input with-icon with-eye" placeholder="••••••••" />
                 <button type="button" class="auth-eye" :aria-label="showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'" :aria-pressed="showPwd" @click="showPwd = !showPwd">
                   <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showPwd ? 'visibility_off' : 'visibility' }}</span>
                 </button>
@@ -127,7 +127,7 @@
               <div>
                 <label for="reg-password" class="text-sm font-medium mb-1.5 block">Mot de passe</label>
                 <span class="relative block">
-                  <input id="reg-password" v-model="reg.password" :type="showRegPwd ? 'text' : 'password'" required minlength="8" autocomplete="new-password" class="auth-input pr-11" placeholder="8 caractères minimum" />
+                  <input id="reg-password" v-model="reg.password" :type="showRegPwd ? 'text' : 'password'" required minlength="8" autocomplete="new-password" class="auth-input with-eye" placeholder="8 caractères minimum" />
                   <button type="button" class="auth-eye" :aria-label="showRegPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'" :aria-pressed="showRegPwd" @click="showRegPwd = !showRegPwd">
                     <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showRegPwd ? 'visibility_off' : 'visibility' }}</span>
                   </button>
@@ -143,7 +143,7 @@
                 <label for="reg-confirm" class="text-sm font-medium mb-1.5 block">Confirmation du mot de passe</label>
                 <span class="relative block">
                   <input id="reg-confirm" v-model="reg.confirm" :type="showRegConfirm ? 'text' : 'password'" required autocomplete="new-password"
-                    :class="['auth-input pr-11', confirmState === 'mismatch' ? '!border-error' : '', confirmState === 'ok' ? '!border-success' : '']"
+                    :class="['auth-input with-eye', confirmState === 'mismatch' ? '!border-error' : '', confirmState === 'ok' ? '!border-success' : '']"
                     placeholder="••••••••" />
                   <button type="button" class="auth-eye" :aria-label="showRegConfirm ? 'Masquer la confirmation du mot de passe' : 'Afficher la confirmation du mot de passe'" :aria-pressed="showRegConfirm" @click="showRegConfirm = !showRegConfirm">
                     <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showRegConfirm ? 'visibility_off' : 'visibility' }}</span>
@@ -417,6 +417,13 @@ async function onSubmit() {
 <style scoped>
 .auth-input {
   @apply w-full h-12 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-[15px] outline-none transition-all placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/15;
+}
+/* Place réservée à l'icône (gauche) et au bouton « œil » (droite) : plus spécifique que .auth-input. */
+.auth-input.with-icon {
+  padding-left: 2.75rem;
+}
+.auth-input.with-eye {
+  padding-right: 2.75rem;
 }
 .auth-eye {
   @apply absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors;
