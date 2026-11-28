@@ -1,57 +1,32 @@
 <template>
-  <div class="min-h-screen relative isolate flex flex-col font-sans text-on-surface bg-background lg:bg-[#17122f]">
-    <!-- Ordinateur (version A) : photo de réception floutée en plein écran -->
-    <div class="hidden lg:block absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-      <img src="/images/invitations/preview-reception.jpg" alt="" class="w-full h-full object-cover scale-110 blur-[6px]" />
-      <div class="absolute inset-0 bg-gradient-to-br from-[#17122f]/95 via-[#2b1f63]/85 to-[#17122f]/95"></div>
-    </div>
-
-    <header class="w-full max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-      <RouterLink to="/" class="flex items-center gap-2.5">
-        <img src="/logo.png" alt="" class="w-9 h-9 rounded-lg object-contain ring-1 ring-outline-variant lg:ring-white/20" />
-        <span class="text-lg font-bold tracking-tight lg:text-white">Eventia<span class="text-primary lg:text-[#c4b5fd]">Easy</span></span>
-      </RouterLink>
-      <RouterLink to="/" class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-on-surface-variant hover:text-primary lg:text-white/75 lg:hover:text-white transition-colors">
-        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
-        Accueil
-      </RouterLink>
-    </header>
-
-    <!-- Mobile (version B) : vitrine du produit au-dessus du formulaire -->
-    <section class="lg:hidden px-4" aria-label="Aperçu d'EventiaEasy (exemple)">
-      <div class="relative h-[230px] rounded-3xl overflow-hidden shadow-lg shadow-primary/15">
-        <img src="/images/invitations/preview-reception.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-gradient-to-t from-[#17122f]/95 via-[#17122f]/40 to-transparent"></div>
-        <div class="absolute left-3 top-3 w-[168px] rounded-xl bg-white/95 text-slate-900 shadow-lg px-3 py-2">
-          <p class="text-[10px] font-semibold uppercase tracking-wider text-primary">Invitation · exemple</p>
-          <p class="text-[14px] font-bold leading-tight">Grace &amp; Patrick</p>
-          <p class="text-[11px] text-slate-500">Sam. 20 mars · Bukavu</p>
-        </div>
-        <div class="absolute right-3 top-[86px] rounded-xl bg-white/95 text-slate-900 shadow-lg px-2.5 py-2 flex items-center gap-2">
-          <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 grid place-items-center">
-            <span class="material-symbols-outlined text-[17px]" aria-hidden="true">qr_code_scanner</span>
-          </span>
-          <span>
-            <span class="block text-[12px] font-semibold leading-tight">Entrée validée</span>
-            <span class="block text-[10.5px] text-slate-500">Table 4 · 2 pers.</span>
-          </span>
-        </div>
-        <div class="absolute left-4 right-4 bottom-3.5 text-white">
-          <p class="text-[19px] font-extrabold leading-tight">Vos invités, votre salle, <span class="text-[#fcd34d]">au même endroit.</span></p>
-          <p class="mt-1.5 text-[11.5px] text-white/75">WhatsApp · QR hors ligne · USD et CDF</p>
-        </div>
+  <div class="min-h-screen font-sans text-on-surface bg-[#17122f] lg:bg-background lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+    <div class="relative isolate min-h-screen flex flex-col">
+      <!-- Mobile (version A) : photo de réception floutée en plein écran -->
+      <div class="lg:hidden absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        <img src="/images/invitations/preview-reception.jpg" alt="" class="w-full h-full object-cover scale-110 blur-[6px]" />
+        <div class="absolute inset-0 bg-gradient-to-br from-[#17122f]/95 via-[#2b1f63]/85 to-[#17122f]/95"></div>
       </div>
-    </section>
 
-    <main class="flex-1 flex items-start lg:items-center justify-center px-4 pt-6 pb-8 lg:py-10">
-      <div class="w-full max-w-[440px] lg:rounded-3xl lg:bg-surface-container-lowest lg:shadow-2xl lg:shadow-black/40 lg:ring-1 lg:ring-white/10 lg:px-9 lg:py-9">
+      <header class="w-full px-4 md:px-6 lg:px-12 h-16 flex items-center justify-between">
+        <RouterLink to="/" class="flex items-center gap-2.5">
+          <img src="/logo.png" alt="" class="w-9 h-9 rounded-lg object-contain ring-1 ring-white/20 lg:ring-outline-variant" />
+          <span class="text-lg font-bold tracking-tight text-white lg:text-on-surface">Eventia<span class="text-[#c4b5fd] lg:text-primary">Easy</span></span>
+        </RouterLink>
+        <RouterLink to="/" class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-white/75 hover:text-white lg:text-on-surface-variant lg:hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
+          Accueil
+        </RouterLink>
+      </header>
+
+      <main class="flex-1 flex items-center justify-center px-4 py-8 lg:px-12">
+        <div class="w-full max-w-[440px] rounded-3xl bg-surface-container-lowest shadow-2xl shadow-black/40 ring-1 ring-white/10 px-6 py-7 sm:px-8 sm:py-8 lg:rounded-none lg:bg-transparent lg:shadow-none lg:ring-0 lg:p-0">
         <!-- ==================== CONNEXION ==================== -->
         <template v-if="mode === 'login'">
-          <div class="hidden lg:grid w-12 h-12 mx-auto mb-4 rounded-2xl bg-primary-light text-primary place-items-center">
+          <div class="grid lg:hidden w-12 h-12 mx-auto mb-4 rounded-2xl bg-primary-light text-primary place-items-center">
             <span class="material-symbols-outlined" aria-hidden="true">lock</span>
           </div>
-          <h1 class="text-[24px] font-extrabold tracking-tight lg:text-center">Connexion à votre espace</h1>
-          <p class="mt-1 text-[14.5px] text-on-surface-variant lg:text-center">Événements, invités et salle de fête</p>
+          <h1 class="text-[24px] lg:text-[30px] font-extrabold tracking-tight text-center lg:text-left">Connexion à votre espace</h1>
+          <p class="mt-1 text-[14.5px] text-on-surface-variant text-center lg:text-left">Événements, invités et salle de fête</p>
 
           <div v-if="error" role="alert" class="mt-5 flex items-start gap-2.5 p-3.5 rounded-xl bg-error-light border border-error/20 text-error text-sm">
             <span class="material-symbols-outlined text-[19px] shrink-0" aria-hidden="true">error</span>
@@ -111,7 +86,7 @@
             Besoin d'aide ? WhatsApp
           </a>
 
-          <p class="mt-6 text-sm text-on-surface-variant text-center">
+          <p class="mt-6 text-sm text-on-surface-variant text-center lg:text-left">
             Nouveau sur EventiaEasy ?
             <button type="button" class="font-semibold text-primary hover:underline" @click="mode = 'register'">Créer mon espace</button>
           </p>
@@ -231,13 +206,51 @@
             <button type="button" class="font-semibold text-primary hover:underline" @click="mode = 'login'">Me connecter</button>
           </p>
         </template>
-      </div>
-    </main>
+        </div>
+      </main>
 
-    <footer class="pb-6 text-center text-[12px] text-on-surface-variant lg:text-white/60">
-      © {{ year }} EventiaEasy ·
-      <a :href="`mailto:${contactEmail}`" class="hover:underline">{{ contactEmail }}</a>
-    </footer>
+      <footer class="pb-6 text-center text-[12px] text-white/60 lg:text-on-surface-variant">
+        © {{ year }} EventiaEasy ·
+        <a :href="`mailto:${contactEmail}`" class="hover:underline">{{ contactEmail }}</a>
+      </footer>
+    </div>
+
+    <!-- Ordinateur (version B) : vitrine du produit à droite -->
+    <aside class="hidden lg:block p-4 h-screen sticky top-0" aria-label="Aperçu d'EventiaEasy (exemple)">
+      <div class="relative h-full rounded-[2rem] overflow-hidden">
+        <img src="/images/invitations/preview-reception.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#17122f]/95 via-[#17122f]/35 to-[#17122f]/10"></div>
+
+        <div class="login-float absolute left-8 top-10 w-[250px] rounded-2xl bg-[#ffffff]/95 text-[#0f172a] shadow-xl p-4">
+          <p class="text-[10.5px] font-semibold uppercase tracking-wider text-primary">Invitation · exemple</p>
+          <p class="mt-1 text-[18px] font-bold leading-tight">Grace &amp; Patrick</p>
+          <p class="text-[12.5px] text-[#64748b]">Samedi 20 mars · 14 h · Bukavu</p>
+          <div class="mt-3 flex gap-2">
+            <span class="flex-1 h-8 rounded-lg bg-primary text-white text-[12px] font-semibold grid place-items-center">Je serai là</span>
+            <span class="flex-1 h-8 rounded-lg border border-[#e2e8f0] text-[12px] font-semibold grid place-items-center">Je ne peux pas</span>
+          </div>
+        </div>
+
+        <div class="login-float login-float-delay absolute right-8 top-[34%] rounded-2xl bg-[#ffffff]/95 text-[#0f172a] shadow-xl px-3.5 py-3 flex items-center gap-3">
+          <span class="w-10 h-10 rounded-xl bg-[#d1fae5] text-[#059669] grid place-items-center">
+            <span class="material-symbols-outlined" aria-hidden="true">qr_code_scanner</span>
+          </span>
+          <span>
+            <span class="block text-[13px] font-semibold">Entrée validée</span>
+            <span class="block text-[12px] text-[#64748b]">Table 4 · 2 personnes</span>
+          </span>
+        </div>
+
+        <div class="absolute left-8 right-8 bottom-8 text-white">
+          <p class="text-[32px] xl:text-[38px] font-extrabold leading-[1.1] tracking-tight max-w-lg">
+            Vos invités, votre salle, <span class="text-[#fcd34d]">au même endroit.</span>
+          </p>
+          <ul class="mt-5 flex flex-wrap gap-2 text-[13px]">
+            <li v-for="h in ['WhatsApp', 'QR code hors ligne', 'USD et CDF', 'Mobile Money']" :key="h" class="rounded-full bg-white/15 backdrop-blur px-3 py-1.5 ring-1 ring-white/20">{{ h }}</li>
+          </ul>
+        </div>
+      </div>
+    </aside>
   </div>
 </template>
 
@@ -407,6 +420,19 @@ async function onSubmit() {
 }
 .auth-eye {
   @apply absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors;
+}
+.login-float {
+  animation: login-float 6s ease-in-out infinite;
+}
+.login-float-delay {
+  animation-delay: -3s;
+}
+@keyframes login-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-float { animation: none; }
 }
 .auth-primary {
   @apply h-12 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-white text-[15px] font-semibold shadow-lg shadow-primary/25 hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed transition-all;
