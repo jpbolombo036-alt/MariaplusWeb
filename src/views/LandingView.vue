@@ -60,72 +60,114 @@
 
     <main>
       <!-- ===== Accroche ===== -->
-      <section class="max-w-6xl mx-auto px-4 md:px-6 pt-14 md:pt-20 pb-16 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center">
-        <div>
-          <p class="inline-flex items-center gap-2 text-[13px] font-semibold text-primary bg-primary-light rounded-full px-3 py-1">
-            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">location_on</span>
-            Conçu en RD Congo, pour les événements d'ici
-          </p>
-          <h1 class="mt-5 text-[34px] leading-[1.1] md:text-5xl md:leading-[1.08] font-extrabold tracking-tight">
-            Vos invitations, vos invités et votre salle de fête, gérés au même endroit.
-          </h1>
-          <p class="mt-5 text-[17px] leading-relaxed text-on-surface-variant max-w-xl">
-            EventiaEasy envoie vos invitations par WhatsApp, recueille les réponses de vos invités, contrôle l'entrée par QR code
-            le jour&nbsp;J — et aide les salles de fête à tenir leurs réservations et leur caisse.
-          </p>
-          <div class="mt-8 flex flex-wrap gap-3">
-            <RouterLink to="/login?mode=register" class="h-12 px-6 rounded-lg bg-primary text-white font-semibold inline-flex items-center gap-2 hover:bg-primary-dark transition-colors">
-              Créer mon espace
-              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">arrow_forward</span>
-            </RouterLink>
-            <a v-if="whatsappUrl" :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="h-12 px-6 rounded-lg border border-outline-variant bg-surface-container-lowest font-semibold inline-flex items-center gap-2 hover:border-primary/50 transition-colors">
-              <WhatsappIcon class="w-5 h-5 text-[#25D366]" />
-              Parler à l'équipe
-            </a>
-          </div>
-          <ul class="mt-8 grid sm:grid-cols-3 gap-3 text-[13px] text-on-surface-variant">
-            <li v-for="p in proofs" :key="p" class="flex items-start gap-2">
-              <span class="material-symbols-outlined text-[18px] text-success" aria-hidden="true">check_circle</span>
-              {{ p }}
-            </li>
-          </ul>
+      <section class="relative isolate overflow-hidden">
+        <!-- Décor : halos de couleur et trame de points -->
+        <div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+          <div class="absolute -top-40 left-1/2 -translate-x-[70%] w-[780px] h-[780px] rounded-full bg-primary/15 blur-3xl"></div>
+          <div class="absolute top-24 -right-40 w-[520px] h-[520px] rounded-full bg-attention/15 blur-3xl"></div>
+          <div class="hero-dots absolute inset-0 text-on-surface/[0.07]"></div>
         </div>
 
-        <!-- Illustration produit (exemple) -->
-        <div class="relative" aria-label="Aperçu de l'invitation et des réponses (exemple)">
-          <div class="rounded-2xl overflow-hidden border border-outline-variant shadow-xl shadow-black/10 aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5]">
-            <img src="/images/invitations/preview-reception.jpg" alt="Table de réception dressée pour un mariage" class="w-full h-full object-cover" />
-          </div>
-          <div class="absolute left-3 sm:-left-6 top-6 w-[230px] rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-4">
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Invitation · exemple</p>
-            <p class="mt-1 text-[17px] font-bold">Grace &amp; Patrick</p>
-            <p class="text-[12.5px] text-on-surface-variant">Samedi 20 mars · 14 h · Bukavu</p>
-            <div class="mt-3 flex gap-2">
-              <span class="flex-1 h-8 rounded-md bg-primary text-white text-[12px] font-semibold grid place-items-center">Je serai là</span>
-              <span class="flex-1 h-8 rounded-md border border-outline-variant text-[12px] font-semibold grid place-items-center">Je ne peux pas</span>
+        <div class="max-w-6xl mx-auto px-4 md:px-6 pt-12 md:pt-20 pb-16 md:pb-24 grid lg:grid-cols-[1.05fr_1fr] gap-14 lg:gap-10 items-center">
+          <div>
+            <p class="inline-flex items-center gap-2 text-[13px] font-semibold text-primary bg-surface-container-lowest/80 backdrop-blur border border-primary/20 rounded-full pl-1.5 pr-3.5 py-1 shadow-sm">
+              <span class="rounded-full bg-primary text-white text-[11px] font-bold px-2 py-0.5">RDC</span>
+              Conçu en RD Congo, pour les événements d'ici
+            </p>
+            <h1 class="mt-6 text-[36px] leading-[1.08] sm:text-5xl md:text-[58px] md:leading-[1.04] font-extrabold tracking-tight">
+              Vos invités, vos invitations et votre salle,
+              <span class="hero-gradient bg-clip-text text-transparent">enfin au même endroit.</span>
+            </h1>
+            <p class="mt-6 text-[17px] md:text-[18px] leading-relaxed text-on-surface-variant max-w-xl">
+              Envoyez vos invitations par WhatsApp, suivez les réponses en direct et contrôlez l'entrée par QR code le jour&nbsp;J.
+              Les salles de fête y tiennent aussi leurs réservations, leurs paiements et leur caisse.
+            </p>
+            <div class="mt-9 flex flex-wrap gap-3">
+              <RouterLink to="/login?mode=register" class="h-12 px-6 rounded-xl bg-primary text-white font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/30 hover:bg-primary-dark hover:-translate-y-0.5 transition-all">
+                Créer mon espace
+                <span class="material-symbols-outlined text-[20px]" aria-hidden="true">arrow_forward</span>
+              </RouterLink>
+              <a v-if="whatsappUrl" :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
+                class="h-12 px-6 rounded-xl border border-outline-variant bg-surface-container-lowest font-semibold inline-flex items-center gap-2 hover:border-primary/50 hover:-translate-y-0.5 transition-all">
+                <WhatsappIcon class="w-5 h-5 text-[#25D366]" />
+                Parler à l'équipe
+              </a>
             </div>
+            <ul class="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-[13.5px] text-on-surface-variant">
+              <li v-for="p in proofs" :key="p" class="inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px] text-success" aria-hidden="true">check_circle</span>
+                {{ p }}
+              </li>
+            </ul>
           </div>
-          <div class="absolute right-3 sm:-right-5 bottom-8 w-[220px] rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-4">
-            <div class="flex items-center gap-2">
-              <span class="w-8 h-8 rounded-full bg-success-light text-success grid place-items-center">
-                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">how_to_reg</span>
-              </span>
-              <div class="min-w-0">
-                <p class="text-[13px] font-semibold">Réponse reçue</p>
-                <p class="text-[12px] text-on-surface-variant">2 personnes · Jus d'orange</p>
+
+          <!-- Illustration produit (exemple) -->
+          <div class="relative mx-auto w-full max-w-[520px] lg:max-w-none" aria-label="Aperçu de l'invitation, des réponses et du contrôle d'entrée (exemple)">
+            <div class="absolute -inset-4 -z-10 rounded-[2rem] hero-gradient opacity-20 blur-2xl" aria-hidden="true"></div>
+            <div class="relative rounded-[1.75rem] overflow-hidden ring-1 ring-black/5 shadow-2xl shadow-primary/20 aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5]">
+              <img src="/images/invitations/preview-reception.jpg" alt="Table de réception dressée pour un mariage" class="w-full h-full object-cover" fetchpriority="high" />
+              <div class="absolute inset-0 rounded-[1.75rem] bg-gradient-to-t from-black/45 via-transparent to-transparent" aria-hidden="true"></div>
+            </div>
+
+            <!-- Invitation -->
+            <div class="hero-float absolute left-3 sm:-left-8 top-6 w-[220px] sm:w-[236px] rounded-2xl bg-surface-container-lowest/95 backdrop-blur border border-outline-variant shadow-xl p-4">
+              <p class="text-[10.5px] font-semibold uppercase tracking-wider text-primary">Invitation · exemple</p>
+              <p class="mt-1 text-[18px] font-bold leading-tight">Grace &amp; Patrick</p>
+              <p class="text-[12.5px] text-on-surface-variant">Samedi 20 mars · 14 h · Bukavu</p>
+              <div class="mt-3 flex gap-2">
+                <span class="flex-1 h-8 rounded-lg bg-primary text-white text-[12px] font-semibold grid place-items-center">Je serai là</span>
+                <span class="flex-1 h-8 rounded-lg border border-outline-variant text-[12px] font-semibold grid place-items-center">Je ne peux pas</span>
               </div>
             </div>
-            <div class="mt-3 flex items-center gap-2 text-[12px] text-on-surface-variant">
-              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">qr_code_2</span>
-              QR code d'entrée envoyé
+
+            <!-- Entrée validée -->
+            <div class="hero-float hero-float-delay absolute right-3 sm:-right-6 top-[42%] rounded-2xl bg-surface-container-lowest/95 backdrop-blur border border-outline-variant shadow-xl px-3.5 py-3 flex items-center gap-3">
+              <span class="w-10 h-10 rounded-xl bg-success-light text-success grid place-items-center">
+                <span class="material-symbols-outlined" aria-hidden="true">qr_code_scanner</span>
+              </span>
+              <span>
+                <span class="block text-[13px] font-semibold">Entrée validée</span>
+                <span class="block text-[12px] text-on-surface-variant">Table 4 · 2 personnes</span>
+              </span>
+            </div>
+
+            <!-- Suivi des réponses -->
+            <div class="absolute left-3 right-3 sm:left-auto sm:-right-4 bottom-5 sm:w-[260px] rounded-2xl bg-surface-container-lowest/95 backdrop-blur border border-outline-variant shadow-xl p-4">
+              <div class="flex items-center justify-between">
+                <p class="text-[13px] font-semibold">Réponses des invités</p>
+                <span class="text-[10.5px] font-semibold uppercase tracking-wider text-on-surface-variant">exemple</span>
+              </div>
+              <div class="mt-3 h-2 rounded-full bg-surface-container-high overflow-hidden flex" aria-hidden="true">
+                <span class="h-full bg-success" style="width: 68%"></span>
+                <span class="h-full bg-attention" style="width: 18%"></span>
+              </div>
+              <dl class="mt-3 grid grid-cols-3 gap-2 text-center">
+                <div><dt class="text-[11px] text-on-surface-variant">Viennent</dt><dd class="text-[16px] font-bold text-success">102</dd></div>
+                <div><dt class="text-[11px] text-on-surface-variant">En attente</dt><dd class="text-[16px] font-bold text-attention">27</dd></div>
+                <div><dt class="text-[11px] text-on-surface-variant">Excusés</dt><dd class="text-[16px] font-bold">21</dd></div>
+              </dl>
             </div>
           </div>
         </div>
       </section>
 
+      <!-- ===== Atouts locaux ===== -->
+      <section class="border-y border-outline-variant bg-surface-container-lowest">
+        <ul class="max-w-6xl mx-auto px-4 md:px-6 py-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+          <li v-for="h in highlights" :key="h.title" class="flex items-center gap-3">
+            <span class="w-10 h-10 shrink-0 rounded-xl bg-primary-light text-primary grid place-items-center">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">{{ h.icon }}</span>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-[14px] font-semibold leading-tight">{{ h.title }}</span>
+              <span class="block text-[12.5px] text-on-surface-variant leading-snug">{{ h.text }}</span>
+            </span>
+          </li>
+        </ul>
+      </section>
+
       <!-- ===== Pour qui ===== -->
-      <section class="border-y border-outline-variant bg-surface-container-low">
+      <section class="border-b border-outline-variant bg-surface-container-low">
         <div class="max-w-6xl mx-auto px-4 md:px-6 py-16">
           <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">Pour qui ?</h2>
           <div class="mt-8 grid md:grid-cols-3 gap-5">
@@ -245,6 +287,12 @@
             </RouterLink>
           </div>
           <ul class="space-y-3 text-[15px]">
+            <li>
+              <a :href="`mailto:${contactEmail}`" class="flex items-center gap-3 rounded-lg border border-outline-variant p-4 hover:border-primary/50 transition-colors">
+                <span class="material-symbols-outlined text-primary" aria-hidden="true">mail</span>
+                <span><span class="block font-semibold">Email</span><span class="text-on-surface-variant">{{ contactEmail }}</span></span>
+              </a>
+            </li>
             <li v-if="whatsappUrl">
               <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 rounded-lg border border-outline-variant p-4 hover:border-primary/50 transition-colors">
                 <WhatsappIcon class="w-6 h-6 text-[#25D366]" />
@@ -269,18 +317,70 @@
     </main>
 
     <!-- ===== Pied de page ===== -->
-    <footer class="border-t border-outline-variant">
-      <div class="max-w-6xl mx-auto px-4 md:px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] text-on-surface-variant">
-        <div class="flex items-center gap-2">
-          <img src="/logo.png" alt="" class="w-7 h-7 rounded-md object-contain" />
-          <span class="font-semibold text-on-surface">Eventia<span class="text-primary">Easy</span></span>
-          <span>· Gestion d'événements et de salles de fête</span>
+    <footer class="border-t border-outline-variant bg-surface-container-low">
+      <div class="max-w-6xl mx-auto px-4 md:px-6 pt-14 pb-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.3fr]">
+        <div>
+          <RouterLink to="/" class="inline-flex items-center gap-2.5">
+            <img src="/logo.png" alt="" class="w-9 h-9 rounded-lg object-contain ring-1 ring-outline-variant" />
+            <span class="text-lg font-bold tracking-tight">Eventia<span class="text-primary">Easy</span></span>
+          </RouterLink>
+          <p class="mt-4 text-[14px] leading-relaxed text-on-surface-variant max-w-xs">
+            La plateforme de gestion d'événements et de salles de fête, conçue en RD Congo.
+          </p>
+          <a href="https://www.facebook.com/EventiaEasy" target="_blank" rel="noopener noreferrer"
+            class="mt-5 inline-flex items-center gap-2 text-[14px] font-medium text-on-surface-variant hover:text-primary transition-colors"
+            aria-label="EventiaEasy sur Facebook">
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.971H15.83c-1.491 0-1.956.93-1.956 1.886v2.264h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+            Facebook
+          </a>
         </div>
-        <nav class="flex flex-wrap justify-center gap-5" aria-label="Pied de page">
-          <a v-for="s in sections" :key="s.hash" :href="s.hash" class="hover:text-on-surface">{{ s.label }}</a>
-          <RouterLink to="/login" class="hover:text-on-surface">Se connecter</RouterLink>
+
+        <nav aria-label="Plateforme">
+          <p class="text-[13px] font-semibold uppercase tracking-wider text-on-surface">Plateforme</p>
+          <ul class="mt-4 space-y-3 text-[14px] text-on-surface-variant">
+            <li v-for="s in sections.filter((x) => x.hash !== '#contact')" :key="s.hash">
+              <a :href="s.hash" class="hover:text-primary transition-colors">{{ s.label }}</a>
+            </li>
+          </ul>
         </nav>
-        <span>© {{ year }} EventiaEasy</span>
+
+        <nav aria-label="Votre espace">
+          <p class="text-[13px] font-semibold uppercase tracking-wider text-on-surface">Votre espace</p>
+          <ul class="mt-4 space-y-3 text-[14px] text-on-surface-variant">
+            <li><RouterLink to="/login" class="hover:text-primary transition-colors">Se connecter</RouterLink></li>
+            <li><RouterLink to="/login?mode=register" class="hover:text-primary transition-colors">Créer mon espace</RouterLink></li>
+          </ul>
+        </nav>
+
+        <div>
+          <p class="text-[13px] font-semibold uppercase tracking-wider text-on-surface">Contact</p>
+          <ul class="mt-4 space-y-3 text-[14px] text-on-surface-variant">
+            <li>
+              <a :href="`mailto:${contactEmail}`" class="inline-flex items-center gap-2 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">mail</span>{{ contactEmail }}
+              </a>
+            </li>
+            <li v-if="whatsappUrl">
+              <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 hover:text-primary transition-colors">
+                <WhatsappIcon class="w-[18px] h-[18px]" />WhatsApp · {{ phoneLabel }}
+              </a>
+            </li>
+            <li>
+              <a :href="`tel:${phoneTel}`" class="inline-flex items-center gap-2 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">call</span>{{ phoneLabel }}
+              </a>
+            </li>
+            <li class="inline-flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">location_on</span>RD Congo
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-outline-variant">
+        <div class="max-w-6xl mx-auto px-4 md:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[13px] text-on-surface-variant">
+          <span>© {{ year }} EventiaEasy. Tous droits réservés.</span>
+          <span>Gestion d'événements et de salles de fête</span>
+        </div>
       </div>
     </footer>
   </div>
@@ -316,6 +416,7 @@ const whatsappUrl = contactNumber
   ? `https://wa.me/${contactNumber}?text=${encodeURIComponent("Bonjour EventiaEasy, je souhaite avoir plus d'informations.")}`
   : ''
 const phoneTel = `+${contactNumber || '243847381745'}`
+const contactEmail = ApiConfig.contactEmail
 /** « +243 847 381 745 » à partir de « 243847381745 ». */
 const phoneLabel = phoneTel.replace(/^\+(\d{3})(\d{3})(\d{3})(\d{3})$/, '+$1 $2 $3 $4')
 
@@ -323,6 +424,13 @@ const proofs = [
   'Invitations envoyées par WhatsApp',
   'Contrôle d’entrée par QR code, même sans internet',
   'Dollars et francs congolais',
+]
+
+const highlights = [
+  { icon: 'chat', title: 'WhatsApp', text: 'Invitations et rappels' },
+  { icon: 'wifi_off', title: 'Hors connexion', text: 'Scan QR sans internet' },
+  { icon: 'payments', title: 'USD et CDF', text: 'Taux du jour fixé par vous' },
+  { icon: 'smartphone', title: 'Mobile Money', text: 'M-Pesa, Orange, Airtel' },
 ]
 
 const audiences = [
@@ -459,3 +567,28 @@ const faq = [
   },
 ]
 </script>
+
+<style scoped>
+.hero-gradient {
+  background-image: linear-gradient(100deg, rgb(var(--c-primary)) 0%, #c026d3 55%, rgb(var(--c-attention)) 100%);
+}
+.hero-dots {
+  background-image: radial-gradient(currentColor 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+}
+.hero-float {
+  animation: hero-float 6s ease-in-out infinite;
+}
+.hero-float-delay {
+  animation-delay: -3s;
+}
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-float { animation: none; }
+}
+</style>
