@@ -1,337 +1,254 @@
 <template>
-  <div class="min-h-full">
+  <div ref="wizardTop" class="min-h-full pb-10 scroll-mt-20">
     <div class="max-w-3xl mx-auto">
       <!-- En-tête -->
-      <div class="flex items-center gap-3 mb-6">
-        <button @click="$router.back()" class="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-600 inline-flex items-center justify-center hover:bg-slate-50 transition-colors">
-          <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+      <div class="flex items-start gap-3">
+        <button type="button" class="h-10 w-10 shrink-0 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface-variant grid place-items-center hover:text-primary hover:border-primary/40 transition-colors" aria-label="Retour" @click="$router.back()">
+          <span class="material-symbols-outlined text-[20px]" aria-hidden="true">arrow_back</span>
         </button>
-        <div>
-          <h1 class="text-[22px] font-bold text-slate-900 tracking-tight">Nouvel événement</h1>
-          <p class="text-[13px] text-slate-500 mt-0.5 font-medium">Configurez votre événement en quelques étapes simples.</p>
+        <div class="min-w-0">
+          <h1 class="text-[24px] font-extrabold tracking-tight text-on-surface">Nouvel événement</h1>
+          <p class="text-[14px] text-on-surface-variant mt-0.5">Quelques minutes suffisent ; tout reste modifiable ensuite.</p>
         </div>
       </div>
 
-      <!-- Fil d'étapes -->
-      <ol class="flex items-start mb-6">
-        <template v-for="(s, i) in steps" :key="s.n">
-          <li class="flex flex-col items-center gap-1.5 w-20 shrink-0">
+      <!-- Progression -->
+      <nav class="mt-6" aria-label="Étapes de création">
+        <div class="flex items-center justify-between text-[13px]">
+          <span class="font-semibold text-primary">Étape {{ step }} sur {{ steps.length }} · {{ current.label }}</span>
+          <span class="text-on-surface-variant">{{ Math.round((step / steps.length) * 100) }} %</span>
+        </div>
+        <ol class="mt-2.5 grid gap-1.5" :style="{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }">
+          <li v-for="s in steps" :key="s.n">
             <button
               type="button"
-              :disabled="s.n > step"
-              class="w-11 h-11 rounded-full grid place-items-center border-2 transition-all"
-              :class="step > s.n
-                ? 'bg-primary border-primary text-white cursor-pointer hover:bg-primary-dark'
-                : step === s.n
-                  ? 'border-primary text-primary bg-white ring-4 ring-primary/10'
-                  : 'border-slate-200 text-slate-400 bg-white cursor-default'"
+              class="w-full text-left group"
+              :disabled="s.n >= step"
+              :aria-current="s.n === step ? 'step' : undefined"
+              :aria-label="`Étape ${s.n} : ${s.label}`"
               @click="goTo(s.n)"
             >
-              <span v-if="step > s.n" class="material-symbols-outlined text-[20px]">check</span>
-              <span v-else class="material-symbols-outlined text-[20px]">{{ s.icon }}</span>
+              <span class="block h-1.5 rounded-full transition-colors" :class="s.n <= step ? 'bg-primary' : 'bg-surface-container-high'"></span>
+              <span class="hidden sm:flex items-center gap-1.5 mt-2 text-[12.5px] font-medium transition-colors"
+                :class="s.n === step ? 'text-on-surface' : s.n < step ? 'text-primary group-hover:underline' : 'text-on-surface-variant'">
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">{{ s.n < step ? 'check_circle' : s.icon }}</span>
+                {{ s.label }}
+              </span>
             </button>
-            <span class="text-[11px] font-semibold text-center" :class="step >= s.n ? 'text-primary' : 'text-slate-400'">{{ s.label }}</span>
           </li>
-          <li v-if="i < steps.length - 1" class="flex-1 h-0.5 mt-[21px] mx-1 rounded" :class="step > s.n ? 'bg-primary' : 'bg-slate-200'"></li>
-        </template>
-      </ol>
+        </ol>
+      </nav>
 
-      <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-        <!-- ============ ÉTAPE 1 : INFORMATIONS ============ -->
-        <div v-if="step === 1">
-          <!-- 1. Identité -->
-          <section class="pb-5">
-            <div class="flex items-center gap-2.5 mb-4">
-              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
-                <span class="material-symbols-outlined text-[16px]">badge</span>
-              </span>
-              <h2 class="text-[13px] font-bold text-slate-800">Identité de l'événement</h2>
-              <span class="text-[11px] font-medium text-slate-400 ml-auto">* obligatoire</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
-              <label class="block">
-                <span class="field-label">Nom de l'événement <span class="text-error">*</span></span>
-                <input v-model="form.name" placeholder="Ex : Mariage de Jean et Marie" class="input" />
-              </label>
-              <label class="block">
-                <span class="field-label">Type <span class="text-error">*</span></span>
-                <select v-model="form.type" class="input">
-                  <option value="WEDDING">Mariage</option>
-                  <option value="COLLATION">Collation</option>
-                  <option value="ANNIVERSARY">Anniversaire</option>
-                  <option value="BAPTISM">Baptême</option>
-                  <option value="GRADUATION">Graduation</option>
-                  <option value="OTHER">Autre</option>
-                </select>
-              </label>
-            </div>
-          </section>
+      <div class="mt-6 rounded-2xl border border-outline-variant bg-surface-container-lowest shadow-sm">
+        <div class="px-5 sm:px-8 pt-6 sm:pt-7">
+          <h2 class="text-[19px] font-bold text-on-surface">{{ current.title }}</h2>
+          <p class="mt-1 text-[14px] text-on-surface-variant">{{ current.hint }}</p>
+        </div>
 
-          <!-- 2. Les mariés -->
-          <section v-if="form.type === 'WEDDING'" class="border-t border-slate-100 py-5">
-            <div class="flex items-center gap-2.5 mb-4">
-              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
-                <span class="material-symbols-outlined text-[16px]">favorite</span>
-              </span>
-              <h2 class="text-[13px] font-bold text-slate-800">Les mariés</h2>
-              <span class="text-[11px] font-medium text-slate-400 ml-auto">requis pour un mariage</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <p class="flex items-center gap-1.5 text-[12px] font-bold text-slate-700 mb-3">
-                  <span class="text-[15px] leading-none">🎩</span> Marié
-                </p>
+        <div class="px-5 sm:px-8 py-6">
+          <!-- ============ ÉTAPE 1 : L'ESSENTIEL ============ -->
+          <div v-if="step === 1" class="space-y-7">
+            <fieldset>
+              <legend class="field-label">Type d'événement</legend>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <label v-for="t in typeOptions" :key="t.value"
+                  class="cursor-pointer rounded-xl border px-3.5 py-3 flex items-center gap-2.5 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40"
+                  :class="form.type === t.value ? 'border-primary bg-primary-light text-primary' : 'border-outline-variant text-on-surface hover:border-primary/40'">
+                  <input v-model="form.type" type="radio" name="event-type" :value="t.value" class="sr-only" />
+                  <span class="material-symbols-outlined text-[20px]" aria-hidden="true">{{ t.icon }}</span>
+                  <span class="text-[14px] font-semibold">{{ t.label }}</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div v-if="form.type === 'WEDDING'" class="grid sm:grid-cols-2 gap-4">
+              <div class="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+                <p class="text-[14px] font-semibold text-on-surface mb-3">Le marié</p>
                 <div class="grid grid-cols-2 gap-3">
-                  <label class="block">
-                    <span class="micro-label">Prénom</span>
-                    <input v-model="form.groomFirstName" placeholder="Jean" class="input" />
-                  </label>
-                  <label class="block">
-                    <span class="micro-label">Nom</span>
-                    <input v-model="form.groomLastName" placeholder="Kabongo" class="input" />
-                  </label>
+                  <label class="block"><span class="field-label">Prénom</span><input v-model="form.groomFirstName" autocomplete="off" placeholder="Jean" class="input" /></label>
+                  <label class="block"><span class="field-label">Nom</span><input v-model="form.groomLastName" autocomplete="off" placeholder="Kabongo" class="input" /></label>
                 </div>
               </div>
-              <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                <p class="flex items-center gap-1.5 text-[12px] font-bold text-slate-700 mb-3">
-                  <span class="text-[15px] leading-none">👰</span> Mariée
-                </p>
+              <div class="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+                <p class="text-[14px] font-semibold text-on-surface mb-3">La mariée</p>
                 <div class="grid grid-cols-2 gap-3">
-                  <label class="block">
-                    <span class="micro-label">Prénom</span>
-                    <input v-model="form.brideFirstName" placeholder="Marie" class="input" />
-                  </label>
-                  <label class="block">
-                    <span class="micro-label">Nom</span>
-                    <input v-model="form.brideLastName" placeholder="Mukendi" class="input" />
-                  </label>
+                  <label class="block"><span class="field-label">Prénom</span><input v-model="form.brideFirstName" autocomplete="off" placeholder="Marie" class="input" /></label>
+                  <label class="block"><span class="field-label">Nom</span><input v-model="form.brideLastName" autocomplete="off" placeholder="Mukendi" class="input" /></label>
                 </div>
               </div>
             </div>
-          </section>
 
-          <!-- 3. Date & horaire -->
-          <section class="border-t border-slate-100 py-5">
-            <div class="flex items-center gap-2.5 mb-4">
-              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
-                <span class="material-symbols-outlined text-[16px]">schedule</span>
-              </span>
-              <h2 class="text-[13px] font-bold text-slate-800">Date & horaire</h2>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-4">
-              <label class="block">
-                <span class="field-label">Date</span>
-                <input v-model="form.eventDate" type="date" class="input" />
-              </label>
-              <label class="block">
-                <span class="field-label">Heure de début</span>
-                <input v-model="form.startTime" type="time" class="input" />
-              </label>
-              <label class="block">
-                <span class="field-label">Heure de fin</span>
-                <input v-model="form.endTime" type="time" class="input" />
-              </label>
-            </div>
-          </section>
-          <!-- 4. Lieu -->
-          <section class="border-t border-slate-100 py-5">
-            <div class="flex items-center gap-2.5 mb-4">
-              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
-                <span class="material-symbols-outlined text-[16px]">location_on</span>
-              </span>
-              <h2 class="text-[13px] font-bold text-slate-800">Lieu</h2>
-              <span class="text-[11px] font-medium text-slate-400 ml-auto">facultatif</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
-              <label class="block">
-                <span class="field-label">Nom du lieu</span>
-                <input v-model="form.venueName" placeholder="Ex : Église Saint-Roch" class="input" />
-              </label>
-              <label class="block sm:col-span-2">
-                <span class="field-label">Adresse complète</span>
-                <input v-model="form.venueAddress" placeholder="Rue, numéro, repère…" class="input" />
-              </label>
-              <label class="block">
-                <span class="field-label">Ville</span>
-                <input v-model="form.city" placeholder="Ex : Kinshasa" class="input" />
-              </label>
-              <label class="block">
-                <span class="field-label">Commune</span>
-                <input v-model="form.commune" placeholder="Ex : Gombe" class="input" />
-              </label>
-              <label class="block">
-                <span class="field-label">Pays</span>
-                <input v-model="form.country" placeholder="Ex : RDC" class="input" />
-              </label>
-              <label class="block">
-                <span class="field-label">Latitude <span class="font-normal text-slate-400">(optionnel)</span></span>
-                <input v-model="form.latitude" inputmode="decimal" placeholder="Ex : -4.3250" class="input" />
-              </label>
-              <label class="block">
-                <span class="field-label">Longitude <span class="font-normal text-slate-400">(optionnel)</span></span>
-                <input v-model="form.longitude" inputmode="decimal" placeholder="Ex : 15.3222" class="input" />
-              </label>
-              <label class="block sm:col-span-2">
-                <span class="field-label">Lien Google Maps <span class="font-normal text-slate-400">(optionnel)</span></span>
-                <input v-model="form.mapUrl" type="url" placeholder="Collez le lien Google Maps du lieu" class="input" />
-              </label>
-            </div>
-          </section>
+            <label class="block">
+              <span class="field-label">Nom de l'événement</span>
+              <input v-model="form.name" placeholder="Mariage de Jean et Marie" class="input" @input="nameTouched = true" />
+              <span v-if="form.type === 'WEDDING' && !nameTouched" class="mt-1.5 block text-[12.5px] text-on-surface-variant">Rempli à partir des prénoms ; vous pouvez le changer.</span>
+            </label>
 
-          <!-- 5. Votre message -->
-          <section class="border-t border-slate-100 py-5">
-            <div class="flex items-center gap-2.5 mb-4">
-              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
-                <span class="material-symbols-outlined text-[16px]">chat_bubble</span>
-              </span>
-              <h2 class="text-[13px] font-bold text-slate-800">Votre message</h2>
-              <span class="text-[11px] font-medium text-slate-400 ml-auto">facultatif</span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <label class="block col-span-2 sm:col-span-1"><span class="field-label">Date</span><input v-model="form.eventDate" type="date" class="input" /></label>
+              <label class="block"><span class="field-label">Début</span><input v-model="form.startTime" type="time" class="input" /></label>
+              <label class="block"><span class="field-label">Fin</span><input v-model="form.endTime" type="time" class="input" /></label>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label class="block">
-                <span class="field-label">Description</span>
-                <textarea v-model="form.description" rows="3" placeholder="Quelques mots sur l'événement…" class="input resize-none"></textarea>
-              </label>
+          </div>
+
+          <!-- ============ ÉTAPE 2 : LIEU ET DÉTAILS ============ -->
+          <div v-else-if="step === 2" class="space-y-8">
+            <section class="space-y-4">
+              <h3 class="section-title"><span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">location_on</span>Lieu</h3>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <label class="block"><span class="field-label">Nom du lieu</span><input v-model="form.venueName" placeholder="Salle Exodus, église Saint-Roch…" class="input" /></label>
+                <label class="block"><span class="field-label">Ville</span><input v-model="form.city" placeholder="Kinshasa" class="input" /></label>
+                <label class="block sm:col-span-2"><span class="field-label">Adresse</span><input v-model="form.venueAddress" placeholder="Avenue, numéro, point de repère" class="input" /></label>
+                <label class="block"><span class="field-label">Commune</span><input v-model="form.commune" placeholder="Gombe" class="input" /></label>
+                <label class="block"><span class="field-label">Pays</span><input v-model="form.country" placeholder="RD Congo" class="input" /></label>
+                <label class="block sm:col-span-2">
+                  <span class="field-label">Lien Google Maps</span>
+                  <input v-model="form.mapUrl" type="url" placeholder="Collez le lien de partage Google Maps" class="input" />
+                  <span class="mt-1.5 block text-[12.5px] text-on-surface-variant">Vos invités pourront ouvrir l'itinéraire depuis leur invitation.</span>
+                </label>
+              </div>
+              <details class="group rounded-xl border border-outline-variant" :open="!!(form.latitude || form.longitude)">
+                <summary class="cursor-pointer list-none px-4 py-3 flex items-center justify-between text-[13.5px] font-medium text-on-surface-variant hover:text-on-surface">
+                  Coordonnées GPS (avancé)
+                  <span class="material-symbols-outlined text-[20px] transition-transform group-open:rotate-180" aria-hidden="true">expand_more</span>
+                </summary>
+                <div class="px-4 pb-4 grid grid-cols-2 gap-4">
+                  <label class="block"><span class="field-label">Latitude</span><input v-model="form.latitude" inputmode="decimal" placeholder="-4.3250" class="input" /></label>
+                  <label class="block"><span class="field-label">Longitude</span><input v-model="form.longitude" inputmode="decimal" placeholder="15.3222" class="input" /></label>
+                </div>
+              </details>
+            </section>
+
+            <section class="space-y-4 border-t border-outline-variant pt-7">
+              <h3 class="section-title"><span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">chat_bubble</span>Message aux invités</h3>
               <label class="block">
                 <span class="field-label">Message d'invitation</span>
-                <textarea v-model="form.message" rows="3" placeholder="Nous avons l'immense joie de vous inviter…" class="input resize-none"></textarea>
+                <textarea v-model="form.message" rows="3" placeholder="Nous avons l'immense joie de vous inviter…" class="input resize-y"></textarea>
               </label>
-            </div>
-          </section>
+              <label class="block">
+                <span class="field-label">Description</span>
+                <textarea v-model="form.description" rows="2" placeholder="Quelques mots sur l'événement" class="input resize-y"></textarea>
+              </label>
+            </section>
 
-          <!-- 6. Tenue demandée -->
-          <section class="border-t border-slate-100 pt-5">
-            <div class="flex items-center gap-2.5 mb-4">
-              <span class="w-7 h-7 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
-                <span class="material-symbols-outlined text-[16px]">checkroom</span>
-              </span>
-              <h2 class="text-[13px] font-bold text-slate-800">Tenue demandée</h2>
-              <span class="text-[11px] font-medium text-slate-400 ml-auto">facultatif</span>
-            </div>
-            <DressCodeField v-model="form.dressColors" @pending-file="dressFile = $event" />
-          </section>
-        </div>
+            <section class="space-y-4 border-t border-outline-variant pt-7">
+              <h3 class="section-title"><span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">checkroom</span>Tenue demandée</h3>
+              <DressCodeField v-model="form.dressColors" @pending-file="dressFile = $event" />
+            </section>
+          </div>
 
-        <!-- ============ ÉTAPE 2 : VISUELS ============ -->
-        <div v-else-if="step === 2" class="space-y-6">
-          <InvitationTemplatePicker v-model="form.invitationCardTemplate" :preview="cardPreviewData(form)" :photo-url="photoState.couple.preview || coverPreview" :disabled="loading" />
-          <div>
-            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">Photo de couverture <span class="text-slate-400 normal-case font-medium">(16:9 — bannière, invitation, WhatsApp)</span></span>
-            <div class="flex items-center gap-4">
-              <div class="w-28 h-20 rounded-lg overflow-hidden bg-slate-50 border border-slate-200 grid place-items-center shrink-0">
-                <img v-if="coverPreview" :src="coverPreview" alt="Aperçu" class="w-full h-full object-cover" />
-                <span v-else class="material-symbols-outlined text-3xl text-slate-300">image</span>
-              </div>
-              <div class="min-w-0">
-                <button type="button" class="px-4 h-9 rounded-lg bg-primary/10 text-primary text-[13px] font-semibold inline-flex items-center gap-2 hover:bg-primary/20 transition-colors" @click="coverInput?.click()">
-                  <span class="material-symbols-outlined text-[17px]">photo_camera</span> {{ coverFile ? 'Remplacer' : 'Choisir une photo' }}
+          <!-- ============ ÉTAPE 3 : VISUELS ============ -->
+          <div v-else-if="step === 3" class="space-y-8">
+            <InvitationTemplatePicker v-model="form.invitationCardTemplate" :preview="cardPreviewData(form)" :photo-url="photoState.couple.preview || coverPreview" :disabled="loading" />
+
+            <section class="border-t border-outline-variant pt-7">
+              <h3 class="section-title">Photo de couverture</h3>
+              <p class="mt-1 text-[13px] text-on-surface-variant">Format paysage 16:9 : bannière, invitation et aperçu WhatsApp.</p>
+              <div class="mt-4 flex flex-wrap items-center gap-4">
+                <button type="button" class="w-40 aspect-video rounded-xl overflow-hidden border border-dashed border-outline grid place-items-center bg-surface-container-low hover:border-primary transition-colors" aria-label="Choisir la photo de couverture" @click="coverInput?.click()">
+                  <img v-if="coverPreview" :src="coverPreview" alt="" class="w-full h-full object-cover" />
+                  <span v-else class="material-symbols-outlined text-[28px] text-on-surface-variant" aria-hidden="true">add_photo_alternate</span>
                 </button>
-                <button v-if="coverFile" type="button" class="ml-2 text-[12px] text-error hover:bg-error/10 rounded-lg px-2 py-1 transition-colors" @click="clearCover">Retirer</button>
-                <p class="text-[11px] text-slate-400 mt-1.5">Un outil de recadrage s'ouvrira automatiquement après le choix de l'image.</p>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" class="btn-soft" @click="coverInput?.click()">{{ coverFile ? 'Remplacer' : 'Choisir une photo' }}</button>
+                  <button v-if="coverFile" type="button" class="btn-ghost-danger" @click="clearCover">Retirer</button>
+                </div>
+              </div>
+              <input ref="coverInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onCoverPick" />
+            </section>
+
+            <section v-if="form.type === 'WEDDING'" class="border-t border-outline-variant pt-7">
+              <h3 class="section-title">Photos des mariés</h3>
+              <p class="mt-1 text-[13px] text-on-surface-variant">Format carré ; le recadrage s'ouvre après le choix.</p>
+              <div class="mt-4 grid grid-cols-3 gap-3 sm:gap-5 max-w-lg">
+                <div v-for="ph in photoFields" :key="ph.kind" class="min-w-0">
+                  <button type="button" class="w-full aspect-square rounded-xl overflow-hidden border border-dashed border-outline grid place-items-center bg-surface-container-low hover:border-primary transition-colors" :aria-label="`Choisir : ${ph.label}`" @click="pickPhoto(ph.kind)">
+                    <img v-if="photoState[ph.kind].preview" :src="photoState[ph.kind].preview!" alt="" class="w-full h-full object-cover" />
+                    <span v-else class="material-symbols-outlined text-[26px] text-on-surface-variant" aria-hidden="true">add_a_photo</span>
+                  </button>
+                  <p class="mt-2 text-[12.5px] font-medium text-on-surface truncate">{{ ph.label }}</p>
+                  <button v-if="photoState[ph.kind].file" type="button" class="text-[12px] text-error hover:underline" @click="clearPhoto(ph.kind)">Retirer</button>
+                  <input :id="`wizard-photo-input-${ph.kind}`" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onPick(ph.kind, $event)" />
+                </div>
+              </div>
+            </section>
+
+            <p v-if="photoError" role="alert" class="text-error text-[13px] inline-flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">error</span>{{ photoError }}
+            </p>
+          </div>
+
+          <!-- ============ ÉTAPE 4 : PROGRAMME ============ -->
+          <div v-else-if="step === 4" class="space-y-5">
+            <ol v-if="sessions.length" class="space-y-2">
+              <li v-for="(sess, i) in sessions" :key="i" class="flex items-center gap-3 rounded-xl border border-outline-variant px-3.5 py-3">
+                <span class="w-8 h-8 rounded-full bg-primary text-white text-[13px] font-bold grid place-items-center shrink-0">{{ i + 1 }}</span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-[14px] font-semibold text-on-surface truncate">{{ sess.name }}</p>
+                  <p class="text-[12.5px] text-on-surface-variant">{{ sessionTypeLabel(sess.type) }}<template v-if="sess.startTime"> · {{ sess.startTime }}</template><template v-if="sess.endTime"> – {{ sess.endTime }}</template></p>
+                </div>
+                <button type="button" class="btn-ghost-danger" @click="sessions.splice(i, 1)">Retirer</button>
+              </li>
+            </ol>
+            <p v-else class="rounded-xl border border-dashed border-outline-variant px-4 py-6 text-center text-[13.5px] text-on-surface-variant">
+              Aucune étape pour le moment. Exemple : cérémonie civile à 10 h, réception à 18 h.
+            </p>
+
+            <div class="rounded-xl border border-outline-variant bg-surface-container-low p-4 space-y-3">
+              <p class="text-[14px] font-semibold text-on-surface">Ajouter une étape</p>
+              <div class="grid sm:grid-cols-2 gap-3">
+                <label class="block"><span class="field-label">Nom</span><input v-model="sessionDraft.name" placeholder="Cérémonie religieuse" class="input" @keydown.enter.prevent="addSession" /></label>
+                <label class="block"><span class="field-label">Type</span>
+                  <select v-model="sessionDraft.type" class="input">
+                    <option v-for="t in sessionTypes" :key="t.value" :value="t.value">{{ t.label }}</option>
+                  </select>
+                </label>
+                <label class="block"><span class="field-label">Début</span><input v-model="sessionDraft.startTime" type="time" class="input" /></label>
+                <label class="block"><span class="field-label">Fin</span><input v-model="sessionDraft.endTime" type="time" class="input" /></label>
+              </div>
+              <p v-if="sessionError" role="alert" class="text-error text-[12.5px]">{{ sessionError }}</p>
+              <button type="button" class="btn-soft w-full justify-center" @click="addSession">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span> Ajouter au programme
+              </button>
+            </div>
+          </div>
+
+          <!-- ============ ÉTAPE 5 : VÉRIFICATION ============ -->
+          <div v-else class="space-y-5">
+            <div class="rounded-xl border border-outline-variant divide-y divide-outline-variant">
+              <div v-for="row in summary" :key="row.label" class="px-4 py-3.5 flex items-start gap-4">
+                <span class="material-symbols-outlined text-[20px] text-primary mt-0.5" aria-hidden="true">{{ row.icon }}</span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-[12.5px] text-on-surface-variant">{{ row.label }}</p>
+                  <p class="text-[14.5px] font-medium text-on-surface break-words" :class="{ 'text-on-surface-variant font-normal': !row.value }">{{ row.value || 'Non renseigné' }}</p>
+                </div>
+                <button type="button" class="text-[13px] font-semibold text-primary hover:underline shrink-0" @click="goTo(row.step)">Modifier</button>
               </div>
             </div>
-            <input ref="coverInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onCoverPick" />
-          </div>
-<!-- PART3 -->
-
-          <div v-if="form.type === 'WEDDING'" class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div v-for="p in photoFields" :key="p.kind">
-              <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">{{ p.label }}</span>
-              <div class="w-full aspect-[4/3] rounded-lg overflow-hidden bg-slate-50 border border-slate-200 grid place-items-center mb-2">
-                <img v-if="photoState[p.kind].preview" :src="photoState[p.kind].preview!" alt="Aperçu" class="w-full h-full object-cover" />
-                <span v-else class="material-symbols-outlined text-3xl text-slate-300">image</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <button type="button" class="px-3 h-8 rounded-lg bg-primary/10 text-primary text-[12px] font-semibold inline-flex items-center gap-1 hover:bg-primary/20 transition-colors" @click="pickPhoto(p.kind)">
-                  <span class="material-symbols-outlined text-[15px]">photo_camera</span> {{ photoState[p.kind].file ? 'Remplacer' : 'Choisir' }}
-                </button>
-                <button v-if="photoState[p.kind].file" type="button" class="text-[12px] text-error hover:bg-error/10 rounded-lg px-2 py-1 transition-colors" @click="clearPhoto(p.kind)">Retirer</button>
-              </div>
-              <input :id="`wizard-photo-input-${p.kind}`" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="onPick(p.kind, $event)" />
-            </div>
+            <p class="flex items-start gap-2 rounded-xl bg-primary-light px-4 py-3 text-[13.5px] text-on-surface">
+              <span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">info</span>
+              Ensuite, depuis le tableau de bord de l'événement : invités, invitations WhatsApp, tables et boissons.
+            </p>
           </div>
 
-          <p v-if="photoError" class="text-error text-[13px] inline-flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px]">error</span>{{ photoError }}
+          <p v-if="error" role="alert" class="mt-5 flex items-start gap-2 rounded-xl bg-error-light border border-error/20 px-4 py-3 text-[13.5px] text-error">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">error</span>{{ error }}
           </p>
-          <p class="text-[12px] text-slate-400">Optionnel — vous pourrez toujours ajouter les visuels plus tard depuis le tableau de bord.</p>
-        </div>
-
-        <!-- ============ ÉTAPE 3 : PROGRAMME ============ -->
-        <div v-else-if="step === 3" class="space-y-5">
-          <p class="text-[13px] text-slate-500">Décrivez le déroulé de la journée (cérémonie, réception, cocktail…). Il sera affiché automatiquement <strong>sur l'invitation de vos invités</strong>. Optionnel.</p>
-
-          <div v-if="sessions.length" class="space-y-2">
-            <div v-for="(s, i) in sessions" :key="i" class="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2.5">
-              <span class="w-7 h-7 rounded-full bg-primary text-white text-[12px] font-bold grid place-items-center shrink-0">{{ i + 1 }}</span>
-              <div class="min-w-0 flex-1">
-                <p class="text-[13px] font-semibold text-slate-800 truncate">{{ s.name }}</p>
-                <p class="text-[11.5px] text-slate-500">{{ sessionTypeLabel(s.type) }}<template v-if="s.startTime"> · {{ s.startTime }}</template><template v-if="s.endTime"> – {{ s.endTime }}</template></p>
-              </div>
-              <button type="button" class="text-error hover:bg-error/10 rounded-lg px-2 py-1 text-[12px]" @click="sessions.splice(i, 1)">Retirer</button>
-            </div>
-          </div>
-          <p v-else class="rounded-lg border border-dashed border-slate-300 bg-slate-50/60 px-4 py-6 text-center text-[13px] text-slate-400">Aucune étape pour le moment.</p>
-
-          <div class="rounded-lg border border-slate-200 p-4 space-y-3">
-            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Ajouter une étape</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input v-model="sessionDraft.name" placeholder="Ex : Cérémonie religieuse" class="input" />
-              <select v-model="sessionDraft.type" class="input">
-                <option v-for="t in sessionTypes" :key="t.value" :value="t.value">{{ t.label }}</option>
-              </select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <input v-model="sessionDraft.startTime" type="time" class="input" />
-              <input v-model="sessionDraft.endTime" type="time" class="input" />
-            </div>
-            <p v-if="sessionError" class="text-error text-[12px]">{{ sessionError }}</p>
-            <button type="button" class="w-full h-9 rounded-lg border border-primary/30 text-primary text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-primary/5 transition-colors" @click="addSession">
-              <span class="material-symbols-outlined text-[17px]">add</span> Ajouter au programme
-            </button>
-          </div>
-        </div>
-<!-- PART4 -->
-
-        <!-- ============ ÉTAPE 4 : PUBLICATION ============ -->
-        <div v-else class="space-y-5">
-          <p class="text-[13px] text-slate-500">Vérifiez les informations avant de créer l'événement.</p>
-          <dl class="rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden">
-            <div class="px-4 py-3 grid grid-cols-3 gap-3"><dt class="text-[12px] font-bold text-slate-400 uppercase tracking-wide">Nom</dt><dd class="col-span-2 text-[13px] text-slate-800 font-medium">{{ form.name }}</dd></div>
-            <div class="px-4 py-3 grid grid-cols-3 gap-3"><dt class="text-[12px] font-bold text-slate-400 uppercase tracking-wide">Type</dt><dd class="col-span-2 text-[13px] text-slate-800">{{ typeLabel }}</dd></div>
-            <div v-if="form.type === 'WEDDING'" class="px-4 py-3 grid grid-cols-3 gap-3"><dt class="text-[12px] font-bold text-slate-400 uppercase tracking-wide">Mariés</dt><dd class="col-span-2 text-[13px] text-slate-800">{{ form.groomFirstName }} {{ form.groomLastName }} &amp; {{ form.brideFirstName }} {{ form.brideLastName }}</dd></div>
-            <div v-if="form.eventDate" class="px-4 py-3 grid grid-cols-3 gap-3"><dt class="text-[12px] font-bold text-slate-400 uppercase tracking-wide">Date</dt><dd class="col-span-2 text-[13px] text-slate-800">{{ form.eventDate }}<template v-if="form.startTime"> · {{ form.startTime }}</template><template v-if="form.endTime"> – {{ form.endTime }}</template></dd></div>
-            <div v-if="form.venueName || form.city" class="px-4 py-3 grid grid-cols-3 gap-3"><dt class="text-[12px] font-bold text-slate-400 uppercase tracking-wide">Lieu</dt><dd class="col-span-2 text-[13px] text-slate-800">{{ [form.venueName, form.commune, form.city, form.country].filter(Boolean).join(', ') }}</dd></div>
-            <div class="px-4 py-3 grid grid-cols-3 gap-3"><dt class="text-[12px] font-bold text-slate-400 uppercase tracking-wide">Visuels</dt><dd class="col-span-2 text-[13px] text-slate-800">{{ visualsCount }} photo(s)</dd></div>
-            <div v-if="sessions.length" class="px-4 py-3 grid grid-cols-3 gap-3"><dt class="text-[12px] font-bold text-slate-400 uppercase tracking-wide">Programme</dt><dd class="col-span-2 text-[13px] text-slate-800">{{ sessions.length }} étape(s)</dd></div>
-          </dl>
-          <p class="rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 text-[12.5px] text-slate-600">
-            <span class="material-symbols-outlined text-[15px] align-[-3px] text-primary">info</span>
-            Après la création, vous serez redirigé vers le tableau de bord : <strong>invités, invitations, tables et boissons</strong> s'y gèrent en un clic.
-          </p>
-          <p v-if="error" class="text-error text-[13px]">{{ error }}</p>
         </div>
 
         <!-- Navigation -->
-        <div class="flex justify-between gap-3 pt-6 mt-2 border-t border-slate-100">
-          <button type="button" class="px-4 h-10 rounded-lg text-slate-500 text-[13px] font-medium inline-flex items-center gap-1.5 hover:bg-slate-50 transition-colors" @click="step === 1 ? $router.back() : back()">
-            <span class="material-symbols-outlined text-[18px]">arrow_back</span> {{ step === 1 ? 'Annuler' : 'Retour' }}
+        <div class="px-5 sm:px-8 py-4 border-t border-outline-variant flex items-center justify-between gap-3">
+          <button type="button" class="h-11 px-4 rounded-xl text-on-surface-variant text-[14px] font-semibold inline-flex items-center gap-1.5 hover:bg-surface-container transition-colors" @click="step === 1 ? $router.back() : back()">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
+            {{ step === 1 ? 'Annuler' : 'Retour' }}
           </button>
-          <button
-            v-if="step < 4"
-            type="button"
-            class="px-6 h-10 rounded-xl bg-primary text-white text-[13px] font-bold inline-flex items-center gap-2 shadow-sm shadow-primary/25 hover:bg-primary-dark transition-all"
-            @click="next"
-          >Continuer <span class="material-symbols-outlined text-[18px]">arrow_forward</span></button>
-          <button
-            v-else
-            type="button"
-            :disabled="loading"
-            class="px-6 h-10 rounded-xl bg-primary text-white text-[13px] font-bold inline-flex items-center gap-2 shadow-sm shadow-primary/25 hover:bg-primary-dark transition-all disabled:opacity-60"
-            @click="submitCreate"
-          >
-            <span v-if="loading" class="material-symbols-outlined text-base animate-spin">progress_activity</span>
-            <span v-else class="material-symbols-outlined text-[18px]">rocket_launch</span> Créer l'événement
+          <button v-if="step < steps.length" type="button" class="btn-primary" @click="next">
+            Continuer <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
+          </button>
+          <button v-else type="button" :disabled="loading" class="btn-primary" @click="submitCreate">
+            <span v-if="loading" class="material-symbols-outlined text-[18px] animate-spin" aria-hidden="true">progress_activity</span>
+            <span v-else class="material-symbols-outlined text-[18px]" aria-hidden="true">check</span>
+            Créer l'événement
           </button>
         </div>
       </div>
@@ -350,7 +267,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { createEvent, uploadEventDressImage, uploadEventPhoto, uploadEventImage, type EventPhotoKind } from '../../api/events'
 import InvitationTemplatePicker from '../../components/events/InvitationTemplatePicker.vue'
@@ -555,26 +472,38 @@ const notifications = useNotificationStore()
 
 /* ---------- Étapes ---------- */
 const steps = [
-  { n: 1, label: 'Informations', icon: 'edit' },
-  { n: 2, label: 'Visuels', icon: 'image' },
-  { n: 3, label: 'Programme', icon: 'event_note' },
-  { n: 4, label: 'Publication', icon: 'rocket_launch' },
+  { n: 1, label: 'L’essentiel', icon: 'edit', title: 'L’essentiel', hint: 'Le type d’événement, qui on célèbre et quand.' },
+  { n: 2, label: 'Lieu et détails', icon: 'location_on', title: 'Lieu et détails', hint: 'Où se passe l’événement et ce que vos invités doivent savoir. Tout est facultatif.' },
+  { n: 3, label: 'Visuels', icon: 'image', title: 'Visuels', hint: 'Le modèle de carte et les photos. Facultatif : vous pourrez les ajouter plus tard.' },
+  { n: 4, label: 'Programme', icon: 'event_note', title: 'Programme de la journée', hint: 'Le déroulé s’affiche sur l’invitation de vos invités. Facultatif.' },
+  { n: 5, label: 'Vérification', icon: 'task_alt', title: 'Vérification', hint: 'Relisez avant de créer l’événement.' },
 ]
 const step = ref(1)
+const current = computed(() => steps[step.value - 1])
 const error = ref('')
 const loading = ref(false)
 
 function goTo(n: number) {
-  if (n < step.value) step.value = n
+  if (n < step.value) {
+    error.value = ''
+    step.value = n
+    toTop()
+  }
 }
 function back() {
   error.value = ''
   step.value--
+  toTop()
 }
 function next() {
   error.value = ''
   if (step.value === 1 && !validateInfos()) return
   step.value++
+  toTop()
+}
+const wizardTop = ref<HTMLElement | null>(null)
+function toTop() {
+  wizardTop.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 /* ---------- Formulaire (identique à WeddingForm) ---------- */
@@ -616,6 +545,48 @@ const TYPE_LABELS: Record<string, string> = {
   BAPTISM: 'Baptême', GRADUATION: 'Graduation', OTHER: 'Autre',
 }
 const typeLabel = computed(() => TYPE_LABELS[form.type] ?? form.type)
+const typeOptions = [
+  { value: 'WEDDING', label: 'Mariage', icon: 'favorite' },
+  { value: 'COLLATION', label: 'Collation', icon: 'local_bar' },
+  { value: 'ANNIVERSARY', label: 'Anniversaire', icon: 'cake' },
+  { value: 'BAPTISM', label: 'Baptême', icon: 'child_care' },
+  { value: 'GRADUATION', label: 'Graduation', icon: 'school' },
+  { value: 'OTHER', label: 'Autre', icon: 'celebration' },
+]
+
+/* Nom proposé à partir des prénoms, tant que l'utilisateur ne l'a pas saisi lui-même. */
+const nameTouched = ref(false)
+watch(
+  () => [form.type, form.groomFirstName, form.brideFirstName],
+  () => {
+    if (nameTouched.value || form.type !== 'WEDDING') return
+    const groom = form.groomFirstName.trim()
+    const bride = form.brideFirstName.trim()
+    if (groom && bride) form.name = `Mariage de ${groom} et ${bride}`
+  },
+)
+
+const summary = computed(() => {
+  const place = [form.venueName, form.commune, form.city, form.country].filter(Boolean).join(', ')
+  const when = form.eventDate
+    ? new Date(`${form.eventDate}T00:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      + (form.startTime ? ` · ${form.startTime.replace(':', ' h ')}` : '')
+      + (form.endTime ? ` – ${form.endTime.replace(':', ' h ')}` : '')
+    : ''
+  const rows = [
+    { icon: 'badge', label: 'Événement', value: `${form.name} · ${typeLabel.value}`, step: 1 },
+  ]
+  if (form.type === 'WEDDING') {
+    rows.push({ icon: 'favorite', label: 'Les mariés', value: `${form.groomFirstName} ${form.groomLastName} et ${form.brideFirstName} ${form.brideLastName}`, step: 1 })
+  }
+  rows.push(
+    { icon: 'calendar_month', label: 'Date', value: when, step: 1 },
+    { icon: 'location_on', label: 'Lieu', value: place, step: 2 },
+    { icon: 'image', label: 'Visuels', value: visualsCount.value ? `${visualsCount.value} photo${visualsCount.value > 1 ? 's' : ''}` : '', step: 3 },
+    { icon: 'event_note', label: 'Programme', value: sessions.value.length ? `${sessions.value.length} étape${sessions.value.length > 1 ? 's' : ''}` : '', step: 4 },
+  )
+  return rows
+})
 
 function validateInfos(): boolean {
   if (!form.name.trim()) {
@@ -631,8 +602,11 @@ function validateInfos(): boolean {
 </script>
 
 <style scoped>
-.input { @apply block w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-[13px] outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-slate-400; }
-.field-label { @apply block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5; }
-.micro-label { @apply block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1; }
+.input { @apply block w-full h-11 px-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface text-[14.5px] outline-none transition-all placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/15; }
+textarea.input { @apply h-auto py-2.5; }
+.field-label { @apply block text-[13px] font-medium text-on-surface mb-1.5; }
+.section-title { @apply flex items-center gap-2 text-[15px] font-bold text-on-surface; }
+.btn-primary { @apply h-11 px-6 rounded-xl bg-primary text-white text-[14px] font-semibold inline-flex items-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary-dark transition-all disabled:opacity-60; }
+.btn-soft { @apply h-10 px-4 rounded-xl bg-primary-light text-primary text-[13.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-primary/20 transition-colors; }
+.btn-ghost-danger { @apply h-9 px-3 rounded-lg text-[13px] font-medium text-error hover:bg-error/10 transition-colors; }
 </style>
-
