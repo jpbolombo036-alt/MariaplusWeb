@@ -142,6 +142,7 @@ onBeforeUnmount(() => {
 })
 
 const TITLES: Array<[string, string]> = [
+  ['/dashboard/events/new', 'Nouvel événement'],
   ['/dashboard/events/', 'Détail événement'],
   ['/dashboard/events', 'Mes Événements'],
   ['/dashboard/members', 'Équipe'],

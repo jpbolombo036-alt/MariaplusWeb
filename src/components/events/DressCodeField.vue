@@ -2,7 +2,7 @@
   <div class="space-y-4">
     <!-- ============ Couleurs de tenue (max 3) ============ -->
     <div>
-      <span class="field-label">Couleurs de tenue demandées (facultatif)</span>
+      <span class="field-label">Couleurs de tenue (3 au maximum)</span>
       <div class="flex flex-wrap gap-2">
         <button
           v-for="c in options"
@@ -31,7 +31,7 @@
 
     <!-- ============ Photo du pagne / tissu ============ -->
     <div>
-      <span class="field-label">Photo du pagne / tissu à porter (facultatif)</span>
+      <span class="field-label">Photo du pagne ou du tissu</span>
       <p class="text-[11px] text-slate-500 mb-1.5">
         Pour les mariages coutumiers : montrez le tissu exact que les invités doivent coudre.
       </p>
@@ -204,5 +204,5 @@ function clear() {
 </script>
 
 <style scoped>
-.field-label { @apply text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5 block; }
+.field-label { @apply text-[13px] font-medium text-on-surface mb-1.5 block; }
 </style>
