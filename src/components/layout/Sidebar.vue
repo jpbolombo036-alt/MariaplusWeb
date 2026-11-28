@@ -123,6 +123,7 @@ const venueItems = computed(() => {
   const items: Array<{ label: string; icon: string; to: string }> = []
   if (hasAny(p, Perm.venueReportView)) items.push({ label: 'Tableau de bord', icon: 'monitoring', to: '/dashboard/venue' })
   if (hasAny(p, Perm.bookingPaymentRecord)) items.push({ label: 'Ma caisse', icon: 'point_of_sale', to: '/dashboard/venue/my-cash' })
+  if (hasAny(p, Perm.expenseRecord)) items.push({ label: 'Dépenses', icon: 'receipt_long', to: '/dashboard/venue/expenses' })
   if (hasAny(p, Perm.bookingView)) items.push({ label: 'Réservations', icon: 'event_available', to: '/dashboard/venue/bookings' })
   if (hasAny(p, Perm.venueClientManage)) items.push({ label: 'Clients', icon: 'contacts', to: '/dashboard/venue/clients' })
   if (hasAny(p, Perm.venueView)) items.push({ label: 'Mes salles', icon: 'storefront', to: '/dashboard/venue/venues' })

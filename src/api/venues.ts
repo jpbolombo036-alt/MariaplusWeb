@@ -206,6 +206,10 @@ export interface CashierTotal {
   transfer: CurrencyAmount[]
   paymentCount: number
   refundCount: number
+  /** Dépenses payées par la personne sur la période. */
+  spent?: CurrencyAmount[]
+  /** Espèces encaissées − dépenses en espèces : ce que la caisse doit contenir. */
+  cashInHand?: CurrencyAmount[]
 }
 
 export interface VenueDashboard {
@@ -216,6 +220,12 @@ export interface VenueDashboard {
   bookingsByStatus: Record<BookingStatus, number>
   /** Encaissé net (paiements − remboursements). */
   collected: CurrencyAmount[]
+  /** Dépensé sur la période. */
+  spent?: CurrencyAmount[]
+  /** Encaissé net − dépensé. */
+  result?: CurrencyAmount[]
+  expensesByCategory?: ExpenseCategoryTotal[]
+  expenseCount?: number
   refunded: CurrencyAmount[]
   /** Remboursements de la période, les plus récents d'abord. */
   refunds?: VenueRefundLine[]
@@ -423,10 +433,131 @@ export interface CashierSummary {
   byMethod: CashMethodTotal[]
   movements: CashLine[]
   upcoming: Booking[]
+  /** Dépenses payées par l'utilisateur sur la période. */
+  spent?: CurrencyAmount[]
+  todaySpent?: CurrencyAmount[]
+  /** Encaissé net − dépensé. */
+  balance?: CurrencyAmount[]
+  expenseCount?: number
+  expenses?: VenueExpense[]
 }
 
 export async function getMyCash(params: { from?: string; to?: string }): Promise<CashierSummary> {
   return decodeMap((await http.get('/api/venues/my-cash', { params })).data) as unknown as CashierSummary
+}
+
+// ---- Dépenses ----------------------------------------------------------------------
+
+export type ExpenseCategory =
+  | 'ELECTRICITE' | 'CARBURANT' | 'EAU' | 'PERSONNEL' | 'ENTRETIEN' | 'NETTOYAGE'
+  | 'SECURITE' | 'LOYER' | 'FOURNITURES' | 'COMMUNICATION' | 'TAXES' | 'AUTRE'
+
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  ELECTRICITE: 'Électricité',
+  CARBURANT: 'Carburant',
+  EAU: 'Eau',
+  PERSONNEL: 'Personnel',
+  ENTRETIEN: 'Entretien',
+  NETTOYAGE: 'Nettoyage',
+  SECURITE: 'Sécurité',
+  LOYER: 'Loyer',
+  FOURNITURES: 'Fournitures',
+  COMMUNICATION: 'Communication',
+  TAXES: 'Taxes et impôts',
+  AUTRE: 'Autre',
+}
+
+export const EXPENSE_CATEGORY_ICONS: Record<ExpenseCategory, string> = {
+  ELECTRICITE: 'bolt',
+  CARBURANT: 'local_gas_station',
+  EAU: 'water_drop',
+  PERSONNEL: 'badge',
+  ENTRETIEN: 'build',
+  NETTOYAGE: 'cleaning_services',
+  SECURITE: 'security',
+  LOYER: 'home_work',
+  FOURNITURES: 'inventory_2',
+  COMMUNICATION: 'campaign',
+  TAXES: 'account_balance',
+  AUTRE: 'more_horiz',
+}
+
+export const EXPENSE_CATEGORY_HINTS: Record<ExpenseCategory, string> = {
+  ELECTRICITE: 'Facture SNEL, crédit prépayé…',
+  CARBURANT: 'Gasoil du groupe électrogène',
+  EAU: 'Facture REGIDESO, citerne…',
+  PERSONNEL: 'Salaire, prime, journalier…',
+  ENTRETIEN: 'Réparation climatisation, peinture…',
+  NETTOYAGE: 'Équipe de nettoyage, produits…',
+  SECURITE: 'Gardiennage, police…',
+  LOYER: 'Loyer de la salle',
+  FOURNITURES: 'Chaises, nappes, vaisselle…',
+  COMMUNICATION: 'Publicité, crédit téléphone…',
+  TAXES: 'Taxe, patente, impôt…',
+  AUTRE: 'Décrivez la dépense',
+}
+
+export interface VenueExpense {
+  id: number
+  category: ExpenseCategory
+  label: string
+  amount: number
+  currency: VenueCurrency
+  method: PaymentMethod
+  venueId?: number | null
+  venueName?: string | null
+  reference?: string | null
+  spentAt: string
+  note?: string | null
+  recordedBy?: number | null
+  recordedByName?: string | null
+}
+
+export interface ExpenseCategoryTotal {
+  category: ExpenseCategory
+  currency: VenueCurrency
+  amount: number
+  count: number
+}
+
+export interface ExpenseList {
+  from: string
+  to: string
+  /** false : seules les dépenses saisies par l'utilisateur connecté. */
+  allRecorders: boolean
+  items: VenueExpense[]
+  total: CurrencyAmount[]
+  byCategory: ExpenseCategoryTotal[]
+}
+
+export interface ExpensePayload {
+  category: ExpenseCategory
+  label: string
+  amount: number
+  currency: VenueCurrency
+  method?: PaymentMethod
+  venueId?: number | null
+  reference?: string
+  spentAt?: string
+  note?: string
+}
+
+export async function listExpenses(params: {
+  from?: string; to?: string; venueId?: number; category?: ExpenseCategory
+}): Promise<ExpenseList> {
+  return decodeMap((await http.get('/api/venues/expenses', { params })).data) as unknown as ExpenseList
+}
+
+export async function createExpense(payload: ExpensePayload): Promise<VenueExpense> {
+  return decodeMap((await http.post('/api/venues/expenses', payload)).data) as unknown as VenueExpense
+}
+
+export async function updateExpense(id: number, payload: ExpensePayload): Promise<VenueExpense> {
+  return decodeMap((await http.put(`/api/venues/expenses/${id}`, payload)).data) as unknown as VenueExpense
+}
+
+export async function cancelExpense(id: number, reason?: string): Promise<void> {
+  await http.delete(`/api/venues/expenses/${id}`, { params: reason ? { reason } : {} })
 }
 
 // ---- Clients ---------------------------------------------------------------------

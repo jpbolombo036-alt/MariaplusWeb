@@ -151,6 +151,7 @@ const TITLES: Array<[string, string]> = [
   ['/dashboard/venue/clients', 'Clients de salle'],
   ['/dashboard/venue/exchange-rate', 'Taux de change'],
   ['/dashboard/venue/my-cash', 'Ma caisse'],
+  ['/dashboard/venue/expenses', 'Dépenses'],
   ['/dashboard/venue', 'Ma salle'],
   ['/dashboard/profile', 'Mon profil'],
   ['/dashboard', 'Dashboard'],

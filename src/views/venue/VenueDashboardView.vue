@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VenuePageHeader title="Ma salle" subtitle="Encaissements, impayés et occupation de vos salles.">
+    <VenuePageHeader title="Ma salle" subtitle="Encaissements, dépenses, impayés et occupation de vos salles.">
       <input v-model="month" type="month" class="v-input !w-auto" aria-label="Mois" />
       <select v-model="venueId" class="v-input !w-auto" aria-label="Salle">
         <option :value="undefined">Toutes les salles</option>
@@ -62,6 +62,35 @@
         </div>
       </div>
 
+      <!-- Dépenses et résultat -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <router-link to="/dashboard/venue/expenses" class="v-card p-5 hover:bg-primary-light/20 transition-colors">
+          <p class="text-[12px] font-semibold text-slate-500 flex items-center justify-between">Dépensé ce mois <span class="text-primary">Voir</span></p>
+          <p v-for="c in dash.spent ?? []" :key="'s' + c.currency" class="text-xl font-bold text-error mt-1">− {{ formatMoney(c.amount, c.currency) }}</p>
+          <p v-if="!(dash.spent ?? []).length" class="text-xl font-bold text-slate-900 mt-1">{{ formatMoney(0, 'USD') }}</p>
+          <p class="text-[11.5px] text-slate-500 mt-1">{{ dash.expenseCount ?? 0 }} dépense(s){{ venueId ? ' de cette salle' : '' }}</p>
+        </router-link>
+        <div class="v-card p-5 border-primary/30 bg-primary-light/40">
+          <p class="text-[12px] font-semibold text-primary">Résultat du mois</p>
+          <p v-for="c in dash.result ?? dash.collected" :key="'r' + c.currency" class="text-xl font-bold mt-1" :class="c.amount < 0 ? 'text-error' : 'text-success'">{{ formatMoney(c.amount, c.currency) }}</p>
+          <p v-if="!(dash.result ?? dash.collected).length" class="text-xl font-bold text-slate-900 mt-1">{{ formatMoney(0, 'USD') }}</p>
+          <p class="text-[11.5px] text-slate-500 mt-1">Encaissé net − dépensé, par devise</p>
+        </div>
+        <div class="v-card p-5">
+          <p class="text-[12px] font-semibold text-slate-500 mb-2">Principaux postes de dépense</p>
+          <p v-if="!(dash.expensesByCategory ?? []).length" class="text-[13px] text-slate-500">Aucune dépense ce mois-ci.</p>
+          <ul v-else class="space-y-1.5">
+            <li v-for="c in (dash.expensesByCategory ?? []).slice(0, 4)" :key="c.category + c.currency" class="flex items-center justify-between gap-3 text-[13px]">
+              <span class="flex items-center gap-1.5 text-slate-700">
+                <span class="material-symbols-outlined text-[16px] text-primary" aria-hidden="true">{{ EXPENSE_CATEGORY_ICONS[c.category] }}</span>
+                {{ EXPENSE_CATEGORY_LABELS[c.category] }}
+              </span>
+              <span class="font-semibold text-slate-900 whitespace-nowrap">{{ formatMoney(c.amount, c.currency) }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
       <div class="v-card p-5 mb-6">
         <p class="text-[13px] font-bold text-slate-900 mb-3">Réservations du mois par statut</p>
         <div class="flex flex-wrap gap-2">
@@ -85,6 +114,7 @@
               <tr class="bg-slate-50/80">
                 <th class="v-th">Caissier</th><th class="v-th text-right">Aujourd'hui</th><th class="v-th text-right">Sur le mois</th>
                 <th class="v-th text-right">Espèces</th><th class="v-th text-right">Mobile Money</th><th class="v-th text-right">Virement</th>
+                <th class="v-th text-right">Dépensé</th><th class="v-th text-right">Espèces en caisse</th>
                 <th class="v-th text-right">Paiements</th>
               </tr>
             </thead>
@@ -95,6 +125,14 @@
                   <div v-for="a in col" :key="a.currency" :class="{ 'font-semibold text-slate-900': i === 1 }">{{ formatMoney(a.amount, a.currency) }}</div>
                   <span v-if="!col.length" class="text-slate-400">—</span>
                 </td>
+                <td class="v-td text-right whitespace-nowrap text-error">
+                  <div v-for="a in c.spent ?? []" :key="a.currency">− {{ formatMoney(a.amount, a.currency) }}</div>
+                  <span v-if="!(c.spent ?? []).length" class="text-slate-400">—</span>
+                </td>
+                <td class="v-td text-right whitespace-nowrap font-semibold text-slate-900">
+                  <div v-for="a in c.cashInHand ?? c.cash" :key="a.currency">{{ formatMoney(a.amount, a.currency) }}</div>
+                  <span v-if="!(c.cashInHand ?? c.cash).length" class="text-slate-400">—</span>
+                </td>
                 <td class="v-td text-right">
                   {{ c.paymentCount }}
                   <div v-if="c.refundCount" class="text-[11px] text-error">{{ c.refundCount }} rembours.</div>
@@ -104,7 +142,7 @@
           </table>
         </div>
         <p class="px-5 py-3 text-[11.5px] text-slate-500 border-t border-slate-100">
-          Montants nets des remboursements. Les espèces doivent se retrouver dans la caisse de chaque personne.
+          Montants nets des remboursements. « Espèces en caisse » = espèces encaissées − dépenses payées en espèces : ce que chaque personne doit vous remettre.
         </p>
       </div>
 
@@ -197,7 +235,7 @@ import BookingStatusBadge from '../../components/venue/BookingStatusBadge.vue'
 import { useAuthStore } from '../../stores/auth'
 import { Perm } from '../../permissions'
 import {
-  PAYMENT_METHOD_LABELS, downloadVenueExport, formatDateTime, formatMoney, getExchangeRate, getVenueDashboard, listVenues,
+  EXPENSE_CATEGORY_ICONS, EXPENSE_CATEGORY_LABELS, PAYMENT_METHOD_LABELS, downloadVenueExport, formatDateTime, formatMoney, getExchangeRate, getVenueDashboard, listVenues,
   type ExchangeRate, type Venue, type VenueDashboard,
 } from '../../api/venues'
 
