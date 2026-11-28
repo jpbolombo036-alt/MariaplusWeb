@@ -46,6 +46,7 @@ const tabs = [
   { label: 'Organisations', icon: 'corporate_fare', to: '/dashboard/admin/organizations', perm: Perm.organizationView },
   { label: 'Événements', icon: 'event', to: '/dashboard/admin/events', perm: Perm.eventView },
   { label: 'Catalogue boissons', icon: 'local_bar', to: '/dashboard/admin/drink-catalog' },
+  { label: 'WhatsApp', icon: 'forum', to: '/dashboard/admin/whatsapp' },
 ]
 
 function isActive(to: string): boolean {
