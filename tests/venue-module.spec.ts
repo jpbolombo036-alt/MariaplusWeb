@@ -337,3 +337,29 @@ test('the manager sees takings per cashier, split between cash and Mobile Money'
   await expect(block.getByRole('row', { name: /Gaston Salle/ })).toContainText('100,00 USD')
   await expect(block.getByText('2 personne(s)')).toBeVisible()
 })
+
+test('the manager fills the quote and receipt header (legal mentions)', async ({ page }) => {
+  let saved: Record<string, unknown> | undefined
+  await signIn(page, true, async (route, url) => {
+    const method = route.request().method()
+    if (url.pathname === '/api/venues' && method === 'GET') await fulfillJson(route, [venue])
+    else if (url.pathname === '/api/venues/deleted') await fulfillJson(route, [])
+    else if (url.pathname === '/api/venues/document-settings' && method === 'GET') await fulfillJson(route, { hasLogo: false })
+    else if (url.pathname === '/api/venues/document-settings' && method === 'PUT') {
+      saved = route.request().postDataJSON()
+      await fulfillJson(route, { ...saved, hasLogo: false })
+    } else return false
+    return true
+  })
+  await page.goto('/dashboard/venue/venues')
+  await page.getByRole('button', { name: /En-tête des devis et reçus/ }).click()
+  await page.getByLabel('Raison sociale').fill('Exodus Events SARL')
+  await page.getByLabel('RCCM').fill('CD/BKV/RCCM/24-B-00123')
+  await page.getByLabel("N° d'impôt (NIF)").fill('A2412345B')
+  await page.getByLabel('Pied de page').fill('Acompte non remboursable.')
+  await page.getByRole('button', { name: "Enregistrer l'en-tête" }).click()
+  await expect(page.getByText('En-tête des documents enregistré')).toBeVisible()
+  expect(saved).toMatchObject({ legalName: 'Exodus Events SARL', rccm: 'CD/BKV/RCCM/24-B-00123', nif: 'A2412345B',
+    footerNote: 'Acompte non remboursable.' })
+  await expect(page.getByText('Exodus Events SARL · RCCM CD/BKV/RCCM/24-B-00123')).toBeVisible()
+})
