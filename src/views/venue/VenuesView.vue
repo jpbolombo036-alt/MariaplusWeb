@@ -7,6 +7,8 @@
       </button>
     </VenuePageHeader>
 
+    <VenueDocumentSettingsCard v-if="canManage" class="mb-6" />
+
     <!-- Formulaire création / modification -->
     <form v-if="editing" class="v-card p-5 mb-6 space-y-4" @submit.prevent="save">
       <h2 class="text-[16px] font-bold text-slate-900">{{ editing.id ? 'Modifier la salle' : 'Nouvelle salle' }}</h2>
@@ -128,6 +130,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import VenuePageHeader from '../../components/venue/VenuePageHeader.vue'
+import VenueDocumentSettingsCard from '../../components/venue/VenueDocumentSettingsCard.vue'
 import { http } from '../../api/http'
 import { useAuthStore } from '../../stores/auth'
 import { useNotificationStore } from '../../stores/notifications'

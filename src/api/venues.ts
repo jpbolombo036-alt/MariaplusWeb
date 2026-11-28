@@ -343,6 +343,51 @@ export async function setExchangeRate(cdfPerUsd: number, note?: string): Promise
   return { current: (j.current ?? null) as ExchangeRate | null, history: decodeList(j.history) as ExchangeRate[] }
 }
 
+// ---- En-tête des devis et reçus ----------------------------------------------------
+
+export interface DocumentSettings {
+  legalName?: string | null
+  rccm?: string | null
+  idNat?: string | null
+  nif?: string | null
+  address?: string | null
+  phone?: string | null
+  email?: string | null
+  footerNote?: string | null
+  hasLogo?: boolean
+}
+
+export async function getDocumentSettings(): Promise<DocumentSettings> {
+  return decodeMap((await http.get('/api/venues/document-settings')).data) as DocumentSettings
+}
+
+export async function updateDocumentSettings(payload: DocumentSettings): Promise<DocumentSettings> {
+  return decodeMap((await http.put('/api/venues/document-settings', payload)).data) as DocumentSettings
+}
+
+/** Logo des documents : JPEG ou PNG, 1 Mo max. */
+export async function uploadDocumentLogo(file: File): Promise<DocumentSettings> {
+  const form = new FormData()
+  form.append('file', file)
+  return decodeMap((await http.put('/api/venues/document-settings/logo', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })).data) as DocumentSettings
+}
+
+export async function deleteDocumentLogo(): Promise<DocumentSettings> {
+  return decodeMap((await http.delete('/api/venues/document-settings/logo')).data) as DocumentSettings
+}
+
+/** URL locale (blob) du logo, ou null s'il n'y en a pas. */
+export async function loadDocumentLogo(): Promise<string | null> {
+  try {
+    const res = await http.get('/api/venues/document-settings/logo', { responseType: 'blob', silentStatuses: [404] })
+    return URL.createObjectURL(res.data as Blob)
+  } catch {
+    return null
+  }
+}
+
 // ---- Ma caisse ---------------------------------------------------------------------
 
 export interface CashMethodTotal {
