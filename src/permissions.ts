@@ -70,6 +70,9 @@ export const Perm = {
   bookingPaymentRecord: 'BOOKING_PAYMENT_RECORD',
   venueReportView: 'VENUE_REPORT_VIEW',
   bookingRefund: 'BOOKING_REFUND',
+  // Dépenses de salle (V59) : saisie (gérant, caissier) ; tout voir, modifier, annuler (gérant).
+  expenseRecord: 'EXPENSE_RECORD',
+  expenseManage: 'EXPENSE_MANAGE',
 } as const
 
 /** Vérifie qu'un utilisateur possède une permission (n'importe laquelle si plusieurs). */

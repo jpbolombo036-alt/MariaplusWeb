@@ -78,6 +78,7 @@ const router = createRouter({
             { path: 'clients', name: 'venue-clients', component: () => import('../views/venue/VenueClientsView.vue'), meta: { wide: true } },
             { path: 'clients/:clientId', name: 'venue-client-detail', component: () => import('../views/venue/VenueClientDetailView.vue') },
             { path: 'my-cash', name: 'venue-my-cash', component: () => import('../views/venue/VenueMyCashView.vue'), meta: { wide: true } },
+            { path: 'expenses', name: 'venue-expenses', component: () => import('../views/venue/VenueExpensesView.vue'), meta: { wide: true } },
             { path: 'exchange-rate', name: 'venue-exchange-rate', component: () => import('../views/venue/VenueExchangeRateView.vue') },
           ],
         },
@@ -152,6 +153,7 @@ router.beforeEach(async (to) => {
     await venueModule.load()
     if (!venueModule.enabled) return { path: '/dashboard' }
     // Sans accès aux rapports (agent de salle) : la page d'accueil du module est la liste des réservations.
+    if (to.name === 'venue-expenses' && !auth.can([Perm.expenseRecord])) return { path: '/dashboard/venue' }
     if (to.name === 'venue-dashboard' && !auth.can([Perm.venueReportView])) {
       return { name: auth.can([Perm.bookingPaymentRecord]) ? 'venue-my-cash' : 'venue-bookings' }
     }
