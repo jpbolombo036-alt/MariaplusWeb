@@ -15,6 +15,10 @@
 // ni espaces).
 const DEFAULT_WHATSAPP_CONTACT = '243847381745'
 
+// Adresse email professionnelle de la plateforme (page d'accueil, pied de page).
+// Surchargable via VITE_CONTACT_EMAIL.
+const DEFAULT_CONTACT_EMAIL = 'contact@eventiaeasy.com'
+
 export function resolveApiBaseUrl(fromEnv: string | undefined, origin: string): string {
   // Le cookie HttpOnly /auth reste ainsi first-party, sans stockage JS du token.
   // Une URL explicite reste possible pour une API locale ou un autre hébergement.
@@ -71,4 +75,5 @@ export const ApiConfig = {
   whatsappContactNumber:
     (import.meta.env.VITE_WHATSAPP_CONTACT as string | undefined)?.replace(/[^0-9]/g, '') ||
     DEFAULT_WHATSAPP_CONTACT,
+  contactEmail: (import.meta.env.VITE_CONTACT_EMAIL as string | undefined)?.trim() || DEFAULT_CONTACT_EMAIL,
 }

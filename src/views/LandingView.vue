@@ -245,6 +245,12 @@
             </RouterLink>
           </div>
           <ul class="space-y-3 text-[15px]">
+            <li>
+              <a :href="`mailto:${contactEmail}`" class="flex items-center gap-3 rounded-lg border border-outline-variant p-4 hover:border-primary/50 transition-colors">
+                <span class="material-symbols-outlined text-primary" aria-hidden="true">mail</span>
+                <span><span class="block font-semibold">Email</span><span class="text-on-surface-variant">{{ contactEmail }}</span></span>
+              </a>
+            </li>
             <li v-if="whatsappUrl">
               <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 rounded-lg border border-outline-variant p-4 hover:border-primary/50 transition-colors">
                 <WhatsappIcon class="w-6 h-6 text-[#25D366]" />
@@ -269,18 +275,70 @@
     </main>
 
     <!-- ===== Pied de page ===== -->
-    <footer class="border-t border-outline-variant">
-      <div class="max-w-6xl mx-auto px-4 md:px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] text-on-surface-variant">
-        <div class="flex items-center gap-2">
-          <img src="/logo.png" alt="" class="w-7 h-7 rounded-md object-contain" />
-          <span class="font-semibold text-on-surface">Eventia<span class="text-primary">Easy</span></span>
-          <span>· Gestion d'événements et de salles de fête</span>
+    <footer class="border-t border-outline-variant bg-surface-container-low">
+      <div class="max-w-6xl mx-auto px-4 md:px-6 pt-14 pb-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.3fr]">
+        <div>
+          <RouterLink to="/" class="inline-flex items-center gap-2.5">
+            <img src="/logo.png" alt="" class="w-9 h-9 rounded-lg object-contain ring-1 ring-outline-variant" />
+            <span class="text-lg font-bold tracking-tight">Eventia<span class="text-primary">Easy</span></span>
+          </RouterLink>
+          <p class="mt-4 text-[14px] leading-relaxed text-on-surface-variant max-w-xs">
+            La plateforme de gestion d'événements et de salles de fête, conçue en RD Congo.
+          </p>
+          <a href="https://www.facebook.com/EventiaEasy" target="_blank" rel="noopener noreferrer"
+            class="mt-5 inline-flex items-center gap-2 text-[14px] font-medium text-on-surface-variant hover:text-primary transition-colors"
+            aria-label="EventiaEasy sur Facebook">
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.971H15.83c-1.491 0-1.956.93-1.956 1.886v2.264h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+            Facebook
+          </a>
         </div>
-        <nav class="flex flex-wrap justify-center gap-5" aria-label="Pied de page">
-          <a v-for="s in sections" :key="s.hash" :href="s.hash" class="hover:text-on-surface">{{ s.label }}</a>
-          <RouterLink to="/login" class="hover:text-on-surface">Se connecter</RouterLink>
+
+        <nav aria-label="Plateforme">
+          <p class="text-[13px] font-semibold uppercase tracking-wider text-on-surface">Plateforme</p>
+          <ul class="mt-4 space-y-3 text-[14px] text-on-surface-variant">
+            <li v-for="s in sections.filter((x) => x.hash !== '#contact')" :key="s.hash">
+              <a :href="s.hash" class="hover:text-primary transition-colors">{{ s.label }}</a>
+            </li>
+          </ul>
         </nav>
-        <span>© {{ year }} EventiaEasy</span>
+
+        <nav aria-label="Votre espace">
+          <p class="text-[13px] font-semibold uppercase tracking-wider text-on-surface">Votre espace</p>
+          <ul class="mt-4 space-y-3 text-[14px] text-on-surface-variant">
+            <li><RouterLink to="/login" class="hover:text-primary transition-colors">Se connecter</RouterLink></li>
+            <li><RouterLink to="/login?mode=register" class="hover:text-primary transition-colors">Créer mon espace</RouterLink></li>
+          </ul>
+        </nav>
+
+        <div>
+          <p class="text-[13px] font-semibold uppercase tracking-wider text-on-surface">Contact</p>
+          <ul class="mt-4 space-y-3 text-[14px] text-on-surface-variant">
+            <li>
+              <a :href="`mailto:${contactEmail}`" class="inline-flex items-center gap-2 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">mail</span>{{ contactEmail }}
+              </a>
+            </li>
+            <li v-if="whatsappUrl">
+              <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 hover:text-primary transition-colors">
+                <WhatsappIcon class="w-[18px] h-[18px]" />WhatsApp · {{ phoneLabel }}
+              </a>
+            </li>
+            <li>
+              <a :href="`tel:${phoneTel}`" class="inline-flex items-center gap-2 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">call</span>{{ phoneLabel }}
+              </a>
+            </li>
+            <li class="inline-flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">location_on</span>RD Congo
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-outline-variant">
+        <div class="max-w-6xl mx-auto px-4 md:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[13px] text-on-surface-variant">
+          <span>© {{ year }} EventiaEasy. Tous droits réservés.</span>
+          <span>Gestion d'événements et de salles de fête</span>
+        </div>
       </div>
     </footer>
   </div>
@@ -316,6 +374,7 @@ const whatsappUrl = contactNumber
   ? `https://wa.me/${contactNumber}?text=${encodeURIComponent("Bonjour EventiaEasy, je souhaite avoir plus d'informations.")}`
   : ''
 const phoneTel = `+${contactNumber || '243847381745'}`
+const contactEmail = ApiConfig.contactEmail
 /** « +243 847 381 745 » à partir de « 243847381745 ». */
 const phoneLabel = phoneTel.replace(/^\+(\d{3})(\d{3})(\d{3})(\d{3})$/, '+$1 $2 $3 $4')
 
