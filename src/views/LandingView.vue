@@ -1,45 +1,30 @@
 <template>
   <div class="min-h-screen bg-background font-sans text-on-surface overflow-x-clip">
-    <!-- ===== BOUTON WHATSAPP FLOTTANT ===== -->
+    <!-- ===== Bouton WhatsApp ===== -->
     <a
       v-if="whatsappUrl"
       :href="whatsappUrl"
       target="_blank"
       rel="noopener noreferrer"
-      class="fixed bottom-5 right-5 z-[60] group flex items-center gap-0 hover:gap-3 rounded-full bg-[#25D366] text-white font-semibold shadow-xl shadow-[#25D366]/30 hover:shadow-2xl hover:shadow-[#25D366]/40 hover:-translate-y-0.5 transition-all duration-300 pr-5 pl-[18px]"
-      style="height: 56px"
-      :aria-label="'Contacter EventiaEasy sur WhatsApp'"
+      class="fixed bottom-5 right-5 z-[60] h-14 w-14 rounded-full bg-[#25D366] text-white grid place-items-center shadow-lg shadow-black/20 hover:scale-105 transition-transform"
+      aria-label="Écrire à EventiaEasy sur WhatsApp"
     >
-      <!-- Icône WhatsApp officielle (SVG, pas de dépendance) -->
-      <svg viewBox="0 0 24 24" class="w-7 h-7 shrink-0 fill-current" aria-hidden="true">
-        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
-      </svg>
-      <span class="max-w-0 overflow-hidden whitespace-nowrap text-sm transition-all duration-300 group-hover:max-w-[180px]">
-        Contactez-nous
-      </span>
-      <!-- Halo pulsé -->
-      <span class="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20 -z-10"></span>
+      <WhatsappIcon class="w-7 h-7" />
     </a>
 
-    <!-- ===== NAVBAR ===== -->
-    <header class="sticky top-0 z-50 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/50" @keydown.esc="closeMobileMenu">
-      <div class="max-w-content mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-        <RouterLink to="/" class="flex items-center gap-2 group">
-          <span class="w-9 h-9 rounded-xl overflow-hidden ring-1 ring-primary/20 grid place-items-center group-hover:scale-105 transition-transform">
-            <img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" />
-          </span>
+    <!-- ===== Navigation ===== -->
+    <header class="sticky top-0 z-50 bg-background/85 backdrop-blur border-b border-outline-variant" @keydown.esc="closeMobileMenu">
+      <div class="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
+        <RouterLink to="/" class="flex items-center gap-2.5 shrink-0">
+          <img src="/logo.png" alt="" class="w-9 h-9 rounded-lg object-contain ring-1 ring-outline-variant" />
           <span class="text-lg font-bold tracking-tight">Eventia<span class="text-primary">Easy</span></span>
         </RouterLink>
-        <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-on-surface-variant">
-          <RouterLink to="/" class="hover:text-primary transition-colors">Accueil</RouterLink>
-          <RouterLink :to="{ hash: '#fonctionnalites' }" class="hover:text-primary transition-colors">Fonctionnalités</RouterLink>
-          <RouterLink :to="{ hash: '#comment' }" class="hover:text-primary transition-colors">Comment ça marche</RouterLink>
-          <RouterLink :to="{ hash: '#temoignages' }" class="hover:text-primary transition-colors">Témoignages</RouterLink>
-          <RouterLink :to="{ hash: '#contact' }" class="hover:text-primary transition-colors">Contact</RouterLink>
+        <nav class="hidden lg:flex items-center gap-7 text-[14px] font-medium text-on-surface-variant" aria-label="Sections">
+          <a v-for="s in sections" :key="s.hash" :href="s.hash" class="hover:text-on-surface transition-colors">{{ s.label }}</a>
         </nav>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
           <button
-            class="w-10 h-10 rounded-full grid place-items-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
+            class="w-10 h-10 rounded-lg grid place-items-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
             type="button"
             :aria-label="themeStore.dark ? 'Activer le mode clair' : 'Activer le mode sombre'"
             :aria-pressed="themeStore.dark"
@@ -47,289 +32,430 @@
           >
             <span aria-hidden="true" class="material-symbols-outlined text-[20px]">{{ themeStore.dark ? 'light_mode' : 'dark_mode' }}</span>
           </button>
-          <RouterLink to="/login"
-            class="hidden md:inline-flex px-5 h-10 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold items-center gap-1.5 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
-            Se connecter <span class="material-symbols-outlined text-base">arrow_forward</span>
+          <RouterLink to="/login" class="hidden sm:inline-flex h-10 px-4 rounded-lg text-[14px] font-semibold items-center hover:bg-surface-container transition-colors">
+            Se connecter
           </RouterLink>
-          <button ref="mobileMenuButton" type="button" class="md:hidden w-10 h-10 rounded-full grid place-items-center hover:bg-primary/10"
+          <RouterLink to="/login?mode=register" class="hidden sm:inline-flex h-10 px-4 rounded-lg bg-primary text-white text-[14px] font-semibold items-center hover:bg-primary-dark transition-colors">
+            Créer mon espace
+          </RouterLink>
+          <button
+            ref="mobileMenuButton"
+            type="button"
+            class="lg:hidden w-10 h-10 rounded-lg grid place-items-center hover:bg-surface-container"
             :aria-label="mobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'"
-            :aria-expanded="mobileMenuOpen" aria-controls="landing-mobile-menu" @click="mobileMenuOpen = !mobileMenuOpen">
+            :aria-expanded="mobileMenuOpen"
+            aria-controls="landing-mobile-menu"
+            @click="mobileMenuOpen = !mobileMenuOpen"
+          >
             <span aria-hidden="true" class="material-symbols-outlined">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
           </button>
         </div>
       </div>
-      <nav v-if="mobileMenuOpen" id="landing-mobile-menu" aria-label="Navigation mobile" class="md:hidden px-4 py-4 border-t border-outline-variant bg-surface-container-lowest flex flex-col gap-1">
-        <RouterLink v-for="section in mobileSections" :key="section.hash" :to="{ path: '/', hash: section.hash }"
-          class="px-3 py-3 rounded-lg text-sm font-medium hover:bg-primary/10" @click="closeMobileMenu">{{ section.label }}</RouterLink>
-        <RouterLink to="/login" class="px-3 py-3 rounded-lg text-sm font-semibold text-primary" @click="closeMobileMenu">Se connecter</RouterLink>
-        <RouterLink to="/login?mode=register" class="px-3 py-3 rounded-lg text-sm font-semibold text-primary" @click="closeMobileMenu">Créer mon espace</RouterLink>
+      <nav v-if="mobileMenuOpen" id="landing-mobile-menu" aria-label="Navigation mobile" class="lg:hidden px-4 py-3 border-t border-outline-variant bg-background flex flex-col">
+        <a v-for="s in sections" :key="s.hash" :href="s.hash" class="px-3 py-3 rounded-lg text-[15px] font-medium hover:bg-surface-container" @click="closeMobileMenu">{{ s.label }}</a>
+        <RouterLink to="/login" class="px-3 py-3 rounded-lg text-[15px] font-semibold" @click="closeMobileMenu">Se connecter</RouterLink>
+        <RouterLink to="/login?mode=register" class="mt-1 px-3 py-3 rounded-lg text-[15px] font-semibold bg-primary text-white text-center" @click="closeMobileMenu">Créer mon espace</RouterLink>
       </nav>
     </header>
 
-    <!-- ===== HERO ===== -->
-    <section class="relative isolate overflow-hidden">
-      <!-- Fond dégradé vivant -->
-      <div class="absolute inset-0 -z-20 bg-gradient-to-br from-primary-light via-background to-surface"></div>
-      <!-- Blobs colorés -->
-      <div class="absolute -top-24 -left-24 w-96 h-96 -z-10 rounded-full blur-3xl opacity-40 animate-float-slow"
-        style="background: radial-gradient(circle, #5b2ecc 0%, transparent 65%)"></div>
-      <div class="absolute top-40 -right-32 w-[28rem] h-[28rem] -z-10 rounded-full blur-3xl opacity-30 animate-float-slower"
-        style="background: radial-gradient(circle, #8b5cf6 0%, transparent 65%)"></div>
-      <div class="absolute bottom-0 left-1/3 w-80 h-80 -z-10 rounded-full blur-3xl opacity-20 animate-float-slow"
-        style="background: radial-gradient(circle, #f4a340 0%, transparent 65%)"></div>
-
-      <div class="relative max-w-content mx-auto px-4 md:px-8 pt-16 md:pt-24 pb-20 text-center">
-        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-7 ring-1 ring-primary/20">
-          <span class="material-symbols-outlined text-base">auto_awesome</span> La gestion d'événements simplifiée
-        </span>
-
-        <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] max-w-4xl mx-auto">
-          <span class="block">Organisez des</span>
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary-dark to-primary">événements d'exception</span>
-          <span class="block">avec <span class="relative inline-block">élégance
-            <svg class="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none"><path d="M2 10C60 3 140 3 198 9" stroke="#5b2ecc" stroke-width="4" stroke-linecap="round"/></svg>
-          </span></span>
-        </h1>
-
-        <p class="mt-7 text-lg md:text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-          Invitations digitales, RSVP en temps réel, check-in par QR code et suivi complet de vos invités — tout au même endroit.
-        </p>
-
-        <div class="mt-10 flex flex-wrap justify-center gap-4">
-          <RouterLink to="/login?mode=register" class="group px-8 h-12 rounded-full bg-gradient-to-r from-primary to-primary-dark text-white font-semibold inline-flex items-center gap-2 shadow-xl shadow-primary/30 hover:shadow-primary/45 hover:-translate-y-0.5 transition-all">
-            Commencer gratuitement <span class="material-symbols-outlined text-lg group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
-          </RouterLink>
-          <a href="#comment" class="px-8 h-12 rounded-full border-2 border-primary/30 text-primary font-semibold inline-flex items-center gap-2 bg-primary-light/30 hover:bg-primary-light/60 transition-colors">
-            <span class="material-symbols-outlined text-lg">play_circle</span> Découvrir
-          </a>
-        </div>
-
-        <!-- Stats -->
-        <div class="mt-16 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
-          <div v-for="s in stats" :key="s.label" class="flex flex-col items-center rounded-2xl bg-white/70 backdrop-blur border border-outline-variant/40 py-5 shadow-soft">
-            <span class="text-3xl md:text-4xl font-extrabold text-primary">{{ s.value }}</span>
-            <span class="text-sm text-on-surface-variant mt-1">{{ s.label }}</span>
+    <main>
+      <!-- ===== Accroche ===== -->
+      <section class="max-w-6xl mx-auto px-4 md:px-6 pt-14 md:pt-20 pb-16 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center">
+        <div>
+          <p class="inline-flex items-center gap-2 text-[13px] font-semibold text-primary bg-primary-light rounded-full px-3 py-1">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">location_on</span>
+            Conçu en RD Congo, pour les événements d'ici
+          </p>
+          <h1 class="mt-5 text-[34px] leading-[1.1] md:text-5xl md:leading-[1.08] font-extrabold tracking-tight">
+            Vos invitations, vos invités et votre salle de fête, gérés au même endroit.
+          </h1>
+          <p class="mt-5 text-[17px] leading-relaxed text-on-surface-variant max-w-xl">
+            EventiaEasy envoie vos invitations par WhatsApp, recueille les réponses de vos invités, contrôle l'entrée par QR code
+            le jour&nbsp;J — et aide les salles de fête à tenir leurs réservations et leur caisse.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <RouterLink to="/login?mode=register" class="h-12 px-6 rounded-lg bg-primary text-white font-semibold inline-flex items-center gap-2 hover:bg-primary-dark transition-colors">
+              Créer mon espace
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">arrow_forward</span>
+            </RouterLink>
+            <a v-if="whatsappUrl" :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
+              class="h-12 px-6 rounded-lg border border-outline-variant bg-surface-container-lowest font-semibold inline-flex items-center gap-2 hover:border-primary/50 transition-colors">
+              <WhatsappIcon class="w-5 h-5 text-[#25D366]" />
+              Parler à l'équipe
+            </a>
           </div>
+          <ul class="mt-8 grid sm:grid-cols-3 gap-3 text-[13px] text-on-surface-variant">
+            <li v-for="p in proofs" :key="p" class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-[18px] text-success" aria-hidden="true">check_circle</span>
+              {{ p }}
+            </li>
+          </ul>
         </div>
-      </div>
-    </section>
 
-    <!-- ===== FEATURES ===== -->
-    <section id="fonctionnalites" class="max-w-content mx-auto px-4 md:px-8 py-20">
-      <div class="text-center mb-14">
-        <span class="text-sm font-semibold text-primary uppercase tracking-widest">Fonctionnalités</span>
-        <h2 class="mt-3 text-3xl md:text-5xl font-extrabold">Pensé pour chaque étape</h2>
-        <p class="text-on-surface-variant mt-3 max-w-xl mx-auto">Du premier invité à l'enregistrement le jour J, tout est réuni dans une plateforme claire.</p>
-      </div>
-
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div v-for="(f, i) in features" :key="f.title"
-          class="reveal rounded-2xl bg-white border border-outline-variant/40 p-7 shadow-soft hover:shadow-card hover:-translate-y-1 transition-all duration-300"
-          :style="{ transitionDelay: (i * 60) + 'ms' }">
-          <div class="w-12 h-12 rounded-xl grid place-items-center mb-5" :class="f.bg">
-            <span class="material-symbols-outlined" :class="f.color">{{ f.icon }}</span>
+        <!-- Illustration produit (exemple) -->
+        <div class="relative" aria-label="Aperçu de l'invitation et des réponses (exemple)">
+          <div class="rounded-2xl overflow-hidden border border-outline-variant shadow-xl shadow-black/10 aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5]">
+            <img src="/images/invitations/preview-reception.jpg" alt="Table de réception dressée pour un mariage" class="w-full h-full object-cover" />
           </div>
-          <h3 class="text-lg font-bold mb-2">{{ f.title }}</h3>
-          <p class="text-sm text-on-surface-variant leading-relaxed">{{ f.desc }}</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== COMMENT ÇA MARCHE ===== -->
-    <section id="comment" class="bg-surface-container-low/60 border-y border-outline-variant/40 py-20">
-      <div class="max-w-content mx-auto px-4 md:px-8">
-        <div class="text-center mb-14">
-          <span class="text-sm font-semibold text-primary uppercase tracking-widest">Comment ça marche</span>
-          <h2 class="mt-3 text-3xl md:text-4xl font-extrabold">3 étapes vers un événement réussi</h2>
-        </div>
-        <div class="grid md:grid-cols-3 gap-8">
-          <div v-for="(s, i) in steps" :key="s.title" class="relative reveal text-center">
-            <div class="relative inline-flex w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white items-center justify-center shadow-xl shadow-primary/25 mb-5">
-              <span class="material-symbols-outlined text-3xl">{{ s.icon }}</span>
-              <span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white border border-outline-variant text-primary text-sm font-bold flex items-center justify-center shadow-sm">{{ i + 1 }}</span>
+          <div class="absolute left-3 sm:-left-6 top-6 w-[230px] rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Invitation · exemple</p>
+            <p class="mt-1 text-[17px] font-bold">Grace &amp; Patrick</p>
+            <p class="text-[12.5px] text-on-surface-variant">Samedi 20 mars · 14 h · Bukavu</p>
+            <div class="mt-3 flex gap-2">
+              <span class="flex-1 h-8 rounded-md bg-primary text-white text-[12px] font-semibold grid place-items-center">Je serai là</span>
+              <span class="flex-1 h-8 rounded-md border border-outline-variant text-[12px] font-semibold grid place-items-center">Je ne peux pas</span>
             </div>
-            <h3 class="text-lg font-bold">{{ s.title }}</h3>
-            <p class="text-sm text-on-surface-variant mt-2 max-w-xs mx-auto">{{ s.desc }}</p>
           </div>
-        </div>
-      </div>
-    </section>
-
-
-    <!-- ===== TÉMOIGNAGES ===== -->
-    <section id="temoignages" class="max-w-content mx-auto px-4 md:px-8 py-20">
-      <div class="text-center mb-14">
-        <span class="text-sm font-semibold text-primary uppercase tracking-widest">Ils nous font confiance</span>
-        <h2 class="mt-3 text-3xl md:text-4xl font-extrabold">Des événements inoubliables</h2>
-      </div>
-      <div class="grid md:grid-cols-3 gap-6">
-        <div v-for="t in testimonials" :key="t.name" class="reveal rounded-2xl bg-white border border-outline-variant/40 p-7 shadow-soft hover:shadow-card transition-all duration-300">
-          <div class="text-amber-400 mb-3 text-lg">★★★★★</div>
-          <p class="text-sm text-on-surface-variant italic leading-relaxed">“{{ t.text }}”</p>
-          <div class="mt-5 flex items-center gap-3">
-            <span class="w-10 h-10 rounded-lg grid place-items-center text-sm font-bold text-white" :style="{ background: t.color }">{{ t.initials }}</span>
-            <div>
-              <div class="font-semibold text-sm">{{ t.name }}</div>
-              <div class="text-xs text-on-surface-variant">{{ t.role }}</div>
+          <div class="absolute right-3 sm:-right-5 bottom-8 w-[220px] rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-4">
+            <div class="flex items-center gap-2">
+              <span class="w-8 h-8 rounded-full bg-success-light text-success grid place-items-center">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">how_to_reg</span>
+              </span>
+              <div class="min-w-0">
+                <p class="text-[13px] font-semibold">Réponse reçue</p>
+                <p class="text-[12px] text-on-surface-variant">2 personnes · Jus d'orange</p>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center gap-2 text-[12px] text-on-surface-variant">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">qr_code_2</span>
+              QR code d'entrée envoyé
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ===== CTA ===== -->
-    <section id="contact" class="max-w-content mx-auto px-4 md:px-8 pb-20">
-      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary-dark to-[#2a1066] text-white p-10 md:p-16 text-center shadow-2xl shadow-primary/30">
-        <div class="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-white/10 blur-2xl"></div>
-        <div class="absolute -bottom-20 -left-10 w-80 h-80 rounded-full bg-fuchsia-400/20 blur-2xl"></div>
-        <span class="material-symbols-outlined text-5xl mb-4 relative">celebration</span>
-        <h2 class="text-3xl md:text-4xl font-extrabold relative">Prêt à célébrer en toute sérénité ?</h2>
-        <p class="mt-4 text-white/80 max-w-xl mx-auto relative">Rejoignez EventiaEasy et prenez le contrôle de vos événements dès aujourd'hui.</p>
-        <RouterLink to="/login?mode=register" class="mt-8 inline-flex items-center gap-2 px-8 h-12 rounded-full bg-white text-primary-dark font-bold shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all relative">
-          Créer mon espace <span class="material-symbols-outlined">arrow_forward</span>
-        </RouterLink>
-
-        <!-- Contacts -->
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-6 text-white/90 relative">
-          <a href="tel:+243847381745" class="inline-flex items-center gap-2 text-sm font-medium hover:text-white transition-colors">
-            <span class="material-symbols-outlined text-lg">call</span>
-            +243 847 381 745
-          </a>
-          <span class="w-1 h-1 rounded-full bg-white/50"></span>
-          <a href="https://www.facebook.com/EventiaEasy" target="_blank" rel="noopener"
-             class="inline-flex items-center gap-2 text-sm font-medium hover:text-white transition-colors">
-            <span class="material-symbols-outlined text-lg">thumb_up</span>
-            Facebook · EventiaEasy
-          </a>
+      <!-- ===== Pour qui ===== -->
+      <section class="border-y border-outline-variant bg-surface-container-low">
+        <div class="max-w-6xl mx-auto px-4 md:px-6 py-16">
+          <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">Pour qui ?</h2>
+          <div class="mt-8 grid md:grid-cols-3 gap-5">
+            <article v-for="a in audiences" :key="a.title" class="rounded-xl bg-surface-container-lowest border border-outline-variant p-6">
+              <span class="w-11 h-11 rounded-lg bg-primary-light text-primary grid place-items-center">
+                <span class="material-symbols-outlined" aria-hidden="true">{{ a.icon }}</span>
+              </span>
+              <h3 class="mt-4 text-[17px] font-bold">{{ a.title }}</h3>
+              <p class="mt-2 text-[14px] leading-relaxed text-on-surface-variant">{{ a.text }}</p>
+            </article>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ===== FOOTER ===== -->
-    <footer class="border-t border-outline-variant/40 bg-surface-container-low/40">
-      <div class="max-w-content mx-auto px-4 md:px-8 py-10">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div class="flex items-center gap-2">
-            <span class="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-primary/20 grid place-items-center"><img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" /></span>
-            <span class="font-bold">Eventia<span class="text-primary">Easy</span></span>
+      <!-- ===== Fonctionnalités événements ===== -->
+      <section id="fonctionnalites" class="max-w-6xl mx-auto px-4 md:px-6 py-20 scroll-mt-20">
+        <div class="max-w-2xl">
+          <p class="text-[13px] font-semibold uppercase tracking-wider text-primary">Événements</p>
+          <h2 class="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">De l'invitation jusqu'à l'entrée de la salle</h2>
+          <p class="mt-3 text-[16px] text-on-surface-variant">Mariages, anniversaires, baptêmes, collations, remises de diplôme : chaque étape est couverte.</p>
+        </div>
+        <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+          <article v-for="f in features" :key="f.title">
+            <span class="material-symbols-outlined text-[28px] text-primary" aria-hidden="true">{{ f.icon }}</span>
+            <h3 class="mt-3 text-[17px] font-bold">{{ f.title }}</h3>
+            <p class="mt-2 text-[14px] leading-relaxed text-on-surface-variant">{{ f.text }}</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===== Module Salles ===== -->
+      <section id="salles" class="bg-[#14161d] text-white scroll-mt-16">
+        <div class="max-w-6xl mx-auto px-4 md:px-6 py-20 grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <p class="text-[13px] font-semibold uppercase tracking-wider text-[#b9a5ff]">Salles de fête</p>
+            <h2 class="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">Réservations, paiements et caisse de votre salle</h2>
+            <p class="mt-3 text-[16px] text-white/70">
+              Un espace dédié aux gérants et à leurs caissiers, pensé pour la réalité des salles en RDC : dollars et francs congolais, Mobile Money,
+              acomptes et soldes.
+            </p>
+            <ul class="mt-8 space-y-4">
+              <li v-for="v in venueFeatures" :key="v.title" class="flex gap-3">
+                <span class="material-symbols-outlined text-[22px] text-[#b9a5ff] shrink-0" aria-hidden="true">{{ v.icon }}</span>
+                <div>
+                  <p class="font-semibold">{{ v.title }}</p>
+                  <p class="text-[14px] text-white/65 leading-relaxed">{{ v.text }}</p>
+                </div>
+              </li>
+            </ul>
           </div>
 
-          <!-- Contacts -->
-          <div class="flex flex-wrap items-center justify-center gap-5 text-sm text-on-surface-variant">
-            <a href="tel:+243847381745"
-               class="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
-              <span class="material-symbols-outlined text-base">call</span>
-              +243 847 381 745
-            </a>
-            <a href="https://www.facebook.com/EventiaEasy" target="_blank" rel="noopener"
-               class="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
-              <span class="material-symbols-outlined text-base">thumb_up</span>
-              Facebook · EventiaEasy
-            </a>
+          <!-- Illustration : fiche de réservation (exemple) -->
+          <div class="rounded-2xl bg-[#1d2029] border border-white/10 p-5 sm:p-6 shadow-2xl" aria-label="Aperçu d'une réservation de salle (exemple)">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-[12px] text-white/50">Réservation · exemple</p>
+                <p class="text-[18px] font-bold">Salle principale · samedi 20 mars</p>
+              </div>
+              <span class="rounded-full bg-[#34d399]/15 text-[#34d399] text-[12px] font-bold px-2.5 py-1">Confirmée</span>
+            </div>
+            <div class="mt-5 grid grid-cols-3 gap-3">
+              <div v-for="m in bookingSample" :key="m.label" class="rounded-lg bg-white/5 p-3">
+                <p class="text-[11.5px] text-white/50">{{ m.label }}</p>
+                <p class="text-[15px] font-bold" :class="m.tone">{{ m.value }}</p>
+              </div>
+            </div>
+            <div class="mt-5 divide-y divide-white/10 text-[13px]">
+              <div v-for="p in paymentSample" :key="p.ref" class="py-2.5 flex items-center justify-between gap-3">
+                <span class="text-white/70">{{ p.ref }} · {{ p.method }}</span>
+                <span class="font-semibold">{{ p.amount }}</span>
+              </div>
+            </div>
+            <p class="mt-4 text-[12px] text-white/50">Reçus et devis PDF à votre en-tête : logo, RCCM, Id. Nat., NIF.</p>
           </div>
-
-          <div class="text-sm text-on-surface-variant">© 2026 EventiaEasy. Tous droits réservés.</div>
         </div>
+      </section>
+
+      <!-- ===== Comment ça marche ===== -->
+      <section id="comment" class="max-w-6xl mx-auto px-4 md:px-6 py-20 scroll-mt-20">
+        <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Comment ça marche</h2>
+        <ol class="mt-10 grid md:grid-cols-4 gap-8">
+          <li v-for="(s, i) in steps" :key="s.title">
+            <span class="w-9 h-9 rounded-full border-2 border-primary text-primary font-bold grid place-items-center">{{ i + 1 }}</span>
+            <h3 class="mt-4 text-[17px] font-bold">{{ s.title }}</h3>
+            <p class="mt-2 text-[14px] leading-relaxed text-on-surface-variant">{{ s.text }}</p>
+          </li>
+        </ol>
+      </section>
+
+      <!-- ===== Questions fréquentes ===== -->
+      <section id="questions" class="border-t border-outline-variant bg-surface-container-low scroll-mt-16">
+        <div class="max-w-3xl mx-auto px-4 md:px-6 py-20">
+          <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Questions fréquentes</h2>
+          <div class="mt-8 divide-y divide-outline-variant border-y border-outline-variant">
+            <details v-for="q in faq" :key="q.q" class="group py-4">
+              <summary class="flex items-center justify-between gap-4 cursor-pointer list-none font-semibold text-[16px]">
+                {{ q.q }}
+                <span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-45" aria-hidden="true">add</span>
+              </summary>
+              <p class="mt-3 text-[15px] leading-relaxed text-on-surface-variant">{{ q.a }}</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Contact ===== -->
+      <section id="contact" class="max-w-6xl mx-auto px-4 md:px-6 py-20 scroll-mt-20">
+        <div class="rounded-2xl border border-outline-variant bg-surface-container-lowest p-8 md:p-12 grid md:grid-cols-[1.3fr_1fr] gap-10 items-center">
+          <div>
+            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight">Parlons de votre prochain événement</h2>
+            <p class="mt-3 text-[16px] text-on-surface-variant">
+              Créez votre espace, puis notre équipe l'active et vous accompagne pour vos premières invitations ou la mise en place de votre salle.
+            </p>
+            <RouterLink to="/login?mode=register" class="mt-7 h-12 px-6 rounded-lg bg-primary text-white font-semibold inline-flex items-center gap-2 hover:bg-primary-dark transition-colors">
+              Créer mon espace
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">arrow_forward</span>
+            </RouterLink>
+          </div>
+          <ul class="space-y-3 text-[15px]">
+            <li v-if="whatsappUrl">
+              <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 rounded-lg border border-outline-variant p-4 hover:border-primary/50 transition-colors">
+                <WhatsappIcon class="w-6 h-6 text-[#25D366]" />
+                <span><span class="block font-semibold">WhatsApp</span><span class="text-on-surface-variant">{{ phoneLabel }}</span></span>
+              </a>
+            </li>
+            <li>
+              <a :href="`tel:${phoneTel}`" class="flex items-center gap-3 rounded-lg border border-outline-variant p-4 hover:border-primary/50 transition-colors">
+                <span class="material-symbols-outlined text-primary" aria-hidden="true">call</span>
+                <span><span class="block font-semibold">Téléphone</span><span class="text-on-surface-variant">{{ phoneLabel }}</span></span>
+              </a>
+            </li>
+            <li>
+              <a href="https://www.facebook.com/EventiaEasy" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 rounded-lg border border-outline-variant p-4 hover:border-primary/50 transition-colors">
+                <span class="material-symbols-outlined text-primary" aria-hidden="true">public</span>
+                <span><span class="block font-semibold">Facebook</span><span class="text-on-surface-variant">EventiaEasy</span></span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== Pied de page ===== -->
+    <footer class="border-t border-outline-variant">
+      <div class="max-w-6xl mx-auto px-4 md:px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] text-on-surface-variant">
+        <div class="flex items-center gap-2">
+          <img src="/logo.png" alt="" class="w-7 h-7 rounded-md object-contain" />
+          <span class="font-semibold text-on-surface">Eventia<span class="text-primary">Easy</span></span>
+          <span>· Gestion d'événements et de salles de fête</span>
+        </div>
+        <nav class="flex flex-wrap justify-center gap-5" aria-label="Pied de page">
+          <a v-for="s in sections" :key="s.hash" :href="s.hash" class="hover:text-on-surface">{{ s.label }}</a>
+          <RouterLink to="/login" class="hover:text-on-surface">Se connecter</RouterLink>
+        </nav>
+        <span>© {{ year }} EventiaEasy</span>
       </div>
     </footer>
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useThemeStore } from '../stores/theme'
 import { ApiConfig } from '../api/config'
+import WhatsappIcon from '../components/common/WhatsappIcon.vue'
 
 const themeStore = useThemeStore()
 const mobileMenuOpen = ref(false)
 const mobileMenuButton = ref<HTMLButtonElement | null>(null)
-const mobileSections = [
-  { label: 'Accueil', hash: '' },
-  { label: 'Fonctionnalités', hash: '#fonctionnalites' },
-  { label: 'Comment ça marche', hash: '#comment' },
-  { label: 'Témoignages', hash: '#temoignages' },
-  { label: 'Contact', hash: '#contact' },
-]
+const year = new Date().getFullYear()
+
 function closeMobileMenu() {
   mobileMenuOpen.value = false
   mobileMenuButton.value?.focus()
 }
 
-// Lien WhatsApp (wa.me) : ouvre la conversation avec le numéro de la
-// plateforme. Message d'accueil pré-rempli ; masqué si non configuré.
-const whatsappUrl = ApiConfig.whatsappContactNumber
-  ? `https://wa.me/${ApiConfig.whatsappContactNumber}?text=${encodeURIComponent(
-      "Bonjour EventiaEasy, je souhaite avoir plus d'informations sur vos services.",
-    )}`
-  : ''
+const sections = [
+  { label: 'Fonctionnalités', hash: '#fonctionnalites' },
+  { label: 'Salles de fête', hash: '#salles' },
+  { label: 'Comment ça marche', hash: '#comment' },
+  { label: 'Questions', hash: '#questions' },
+  { label: 'Contact', hash: '#contact' },
+]
 
-const stats = [
-  { value: '500+', label: 'Événements organisés' },
-  { value: '50k+', label: 'Invités gérés' },
-  { value: '98%', label: 'Satisfaction' },
+// Numéro de la plateforme (lien wa.me) : configurable, masqué si absent.
+const contactNumber = ApiConfig.whatsappContactNumber
+const whatsappUrl = contactNumber
+  ? `https://wa.me/${contactNumber}?text=${encodeURIComponent("Bonjour EventiaEasy, je souhaite avoir plus d'informations.")}`
+  : ''
+const phoneTel = `+${contactNumber || '243847381745'}`
+/** « +243 847 381 745 » à partir de « 243847381745 ». */
+const phoneLabel = phoneTel.replace(/^\+(\d{3})(\d{3})(\d{3})(\d{3})$/, '+$1 $2 $3 $4')
+
+const proofs = [
+  'Invitations envoyées par WhatsApp',
+  'Contrôle d’entrée par QR code, même sans internet',
+  'Dollars et francs congolais',
+]
+
+const audiences = [
+  {
+    icon: 'favorite',
+    title: 'Familles et mariés',
+    text: 'Préparez votre liste d’invités, envoyez les invitations et suivez qui vient, avec combien d’accompagnants.',
+  },
+  {
+    icon: 'groups',
+    title: 'Organisateurs d’événements',
+    text: 'Gérez plusieurs événements et répartissez le travail : gestionnaires d’invités et agents d’accueil n’accèdent qu’à l’événement qui leur est confié.',
+  },
+  {
+    icon: 'storefront',
+    title: 'Salles de fête',
+    text: 'Tenez le calendrier de vos salles, encaissez les acomptes, suivez les impayés et la caisse de chacun de vos caissiers.',
+  },
 ]
 
 const features = [
-  { icon: 'mail', title: 'Invitations digitales', desc: 'Créez, envoyez et suivez vos invitations par email ou lien, avec relances automatisées.', bg: 'bg-primary-light', color: 'text-primary' },
-  { icon: 'pie_chart', title: 'Analytique RSVP', desc: 'Tableaux de bord visuels pour suivre les réponses et anticiper le jour J.', bg: 'bg-green-50', color: 'text-green-600' },
-  { icon: 'qr_code_scanner', title: 'Check-in fluide', desc: 'Scannez les QR codes à l’entrée et synchronisez en temps réel multi-appareils.', bg: 'bg-blue-50', color: 'text-blue-600' },
-  { icon: 'table_restaurant', title: 'Placement des tables', desc: 'Affectez vos invités aux tables et visualisez la capacité en un coup d’œil.', bg: 'bg-amber-50', color: 'text-amber-600' },
-  { icon: 'group', title: 'Gestion des invités', desc: 'Importez, catégorisez et suivez chaque invité avec ses accompagnants.', bg: 'bg-primary-light', color: 'text-primary' },
-  { icon: 'auto_awesome', title: 'Expérience premium', desc: 'Une interface élégante et moderne pensée pour impressionner vos invités.', bg: 'bg-fuchsia-50', color: 'text-fuchsia-600' },
+  {
+    icon: 'mark_email_read',
+    title: 'Invitations par WhatsApp',
+    text: 'Chaque invité reçoit son invitation personnelle sur WhatsApp, avec un lien vers sa carte. Vous voyez qui l’a ouverte, et pouvez relancer.',
+  },
+  {
+    icon: 'style',
+    title: 'Cartes d’invitation soignées',
+    text: 'Trois modèles de carte, photos du couple, message, programme, lieu avec carte, et couleurs de tenue demandées.',
+  },
+  {
+    icon: 'how_to_reg',
+    title: 'Réponses en ligne',
+    text: 'L’invité confirme ou décline, indique le nombre de personnes, choisit sa boisson et vous laisse un mot — sans créer de compte.',
+  },
+  {
+    icon: 'qr_code_scanner',
+    title: 'Check-in par QR code',
+    text: 'À l’entrée, l’agent scanne le QR code de l’invitation. Le scan fonctionne hors connexion et se synchronise ensuite, sans doublon.',
+  },
+  {
+    icon: 'table_restaurant',
+    title: 'Tables et placement',
+    text: 'Créez vos tables, placez les invités selon la capacité de chaque table et retrouvez le plan le jour J.',
+  },
+  {
+    icon: 'upload_file',
+    title: 'Liste d’invités et catégories',
+    text: 'Ajoutez vos invités un par un ou importez un fichier Excel ou CSV, puis classez-les par catégorie (famille, amis, collègues…).',
+  },
+  {
+    icon: 'photo_library',
+    title: 'Galerie photo',
+    text: 'Partagez les photos de l’événement avec vos invités, sur la même page que leur invitation.',
+  },
+  {
+    icon: 'notifications_active',
+    title: 'Rappels automatiques',
+    text: 'L’application vous rappelle les événements qui approchent, et peut relancer les invités qui n’ont pas encore répondu.',
+  },
+  {
+    icon: 'insights',
+    title: 'Statistiques et exports',
+    text: 'Réponses, présents, placements par catégorie : tout est suivi en direct et exportable en Excel ou en PDF.',
+  },
+]
+
+const venueFeatures = [
+  {
+    icon: 'event_available',
+    title: 'Calendrier sans double réservation',
+    text: 'Options avec date limite, confirmations, plusieurs salles : un créneau déjà pris ne peut pas être réservé une seconde fois.',
+  },
+  {
+    icon: 'payments',
+    title: 'Paiements en USD et en CDF',
+    text: 'Espèces, M-Pesa, Orange Money, Airtel Money ou virement, au taux du jour que vous fixez. Le reste à payer est calculé pour vous.',
+  },
+  {
+    icon: 'point_of_sale',
+    title: 'Caissiers et contrôle de caisse',
+    text: 'Vos caissiers encaissent et impriment les reçus ; vous voyez ce que chacun a encaissé, en espèces et en Mobile Money.',
+  },
+  {
+    icon: 'receipt_long',
+    title: 'Devis, reçus et remboursements',
+    text: 'Documents PDF à votre en-tête, remboursement total ou partiel à l’annulation, tableau de bord des encaissements et des impayés.',
+  },
+]
+
+const bookingSample = [
+  { label: 'Total', value: '2 500 USD', tone: '' },
+  { label: 'Payé', value: '1 500 USD', tone: 'text-[#34d399]' },
+  { label: 'Reste', value: '1 000 USD', tone: 'text-[#f87171]' },
+]
+
+const paymentSample = [
+  { ref: 'REC-00012', method: 'Espèces', amount: '1 000,00 USD' },
+  { ref: 'REC-00013', method: 'M-Pesa', amount: '1 400 000,00 CDF' },
 ]
 
 const steps = [
-  { icon: 'add_circle', title: 'Créez votre événement', desc: 'Renseignez les informations clés de votre mariage ou événement en quelques minutes.' },
-  { icon: 'send', title: 'Invitez vos convives', desc: 'Envoyez des invitations digitales et relancez automatiquement les absents.' },
-  { icon: 'celebration', title: 'Célébrez en confiance', desc: 'Gérez le RSVP, le check-in et le placement le jour J en temps réel.' },
+  { title: 'Créez votre espace', text: 'Inscription en quelques minutes avec votre nom, votre email et le nom de votre organisation.' },
+  { title: 'Activation par notre équipe', text: 'Nous activons votre espace et les modules dont vous avez besoin, puis vous guidons pour démarrer.' },
+  { title: 'Invitez ou réservez', text: 'Ajoutez vos invités et envoyez les invitations, ou enregistrez vos réservations et paiements de salle.' },
+  { title: 'Le jour J', text: 'Vos agents scannent les QR codes à l’entrée ; vous suivez les arrivées et le placement en direct.' },
 ]
 
-const testimonials = [
-  { initials: 'SG', name: 'Sophie & David', role: 'Mariage · Lyon', text: 'EventiaEasy nous a simplifié toute l’organisation. Le suivi RSVP est génial, nos 180 invités ont tout géré en ligne.', color: 'linear-gradient(135deg,#5b2ecc,#8b5cf6)' },
-  { initials: 'KM', name: 'Kevin M.', role: 'Wedding planner', text: 'La plateforme la plus complète que j’ai utilisée : invitations, tables, check-in. Mes clients sont conquis.', color: 'linear-gradient(135deg,#176b5b,#2dd4a7)' },
-  { initials: 'AL', name: 'Alexia L.', role: 'Événement privé', text: 'Interface magnifique et intuitive. Le QR code à l’entrée a fluidifié toute la réception.', color: 'linear-gradient(135deg,#f4a340,#fbbf24)' },
+const faq = [
+  {
+    q: 'Mes invités doivent-ils installer une application ?',
+    a: 'Non. Ils reçoivent un lien sur WhatsApp et répondent depuis leur téléphone, dans le navigateur, sans créer de compte.',
+  },
+  {
+    q: 'Comment les invitations sont-elles envoyées ?',
+    a: 'Par WhatsApp, à chaque invité, avec son lien personnel. Vous pouvez aussi copier le lien d’une invitation pour la partager vous-même.',
+  },
+  {
+    q: 'Le contrôle à l’entrée fonctionne-t-il sans internet ?',
+    a: 'Oui. L’agent d’accueil peut scanner hors connexion ; les entrées sont synchronisées dès le retour du réseau, sans compter deux fois le même invité.',
+  },
+  {
+    q: 'Puis-je confier une partie du travail à mon équipe ?',
+    a: 'Oui. Vous ajoutez des gestionnaires d’invités et des agents d’accueil, chacun limité à l’événement qui lui est confié, et des caissiers pour votre salle. Chacun ne voit que ce dont il a besoin.',
+  },
+  {
+    q: 'Je gère une salle de fête : qu’est-ce que le module Salles ?',
+    a: 'Un espace pour vos salles, vos clients, vos réservations et vos encaissements en USD et en CDF, avec devis, reçus, remboursements et suivi de la caisse. Il est activé par notre équipe à votre demande.',
+  },
+  {
+    q: 'Comment démarrer ?',
+    a: 'Créez votre espace, puis contactez-nous sur WhatsApp ou par téléphone : nous activons votre compte et vous accompagnons pour la première mise en place.',
+  },
 ]
-
-onMounted(() => {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          e.target.classList.add('revealed')
-          observer.unobserve(e.target)
-        }
-      })
-    },
-    { threshold: 0.12 },
-  )
-  document.querySelectorAll('.reveal').forEach((el) => observer.observe(el))
-})
 </script>
-
-<style scoped>
-.reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-}
-.reveal.revealed {
-  opacity: 1;
-  transform: translateY(0);
-}
-@keyframes floatSlow {
-  0%, 100% { transform: translateY(0) translateX(0); }
-  50% { transform: translateY(-20px) translateX(10px); }
-}
-@keyframes floatSlower {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-30px); }
-}
-.animate-float-slow {
-  animation: floatSlow 8s ease-in-out infinite;
-}
-.animate-float-slower {
-  animation: floatSlower 12s ease-in-out infinite;
-}
-</style>
-
