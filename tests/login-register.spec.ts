@@ -43,12 +43,16 @@ test('registration runs in two steps and flags a venue owner', async ({ page }) 
   await expect(page.getByLabel('Prénom')).toHaveValue('Grace')
 })
 
-test('the login page has no horizontal scroll on a phone and shows the product preview', async ({ page }) => {
+test('login: product preview beside the form on a computer, centered card on a phone', async ({ page }) => {
   await mockApi(page, async () => false)
-  await page.setViewportSize({ width: 375, height: 812 })
+  await page.setViewportSize({ width: 1366, height: 800 })
   await page.goto('/login')
   await expect(page.getByRole('heading', { name: 'Connexion à votre espace' })).toBeVisible()
   await expect(page.getByLabel("Aperçu d'EventiaEasy (exemple)")).toBeVisible()
+
+  await page.setViewportSize({ width: 375, height: 812 })
+  await expect(page.getByRole('heading', { name: 'Connexion à votre espace' })).toBeVisible()
+  await expect(page.getByLabel("Aperçu d'EventiaEasy (exemple)")).toBeHidden()
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBe(0)
 })
