@@ -1,282 +1,243 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center p-4 md:p-8 font-sans text-on-surface">
-    <main class="w-full max-w-[1400px] min-h-[760px] bg-surface-container-lowest rounded-3xl shadow-2xl flex flex-col lg:flex-row overflow-hidden relative">
-      <!-- Hero gauche (masqué < lg) -->
-      <section class="hidden lg:flex w-full lg:w-5/12 bg-image-overlay p-12 flex-col justify-between text-white relative">
-        <div class="flex items-center gap-3 z-10">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md border border-primary/30 overflow-hidden">
-            <span class="w-10 h-10 rounded-xl overflow-hidden grid place-items-center"><img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" /></span>
-          </div>
-          <span class="text-2xl font-bold tracking-tight">Eventia<span class="text-primary">Easy</span></span>
+  <div class="min-h-screen relative isolate flex flex-col font-sans text-on-surface bg-background lg:bg-[#17122f]">
+    <!-- Ordinateur (version A) : photo de réception floutée en plein écran -->
+    <div class="hidden lg:block absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+      <img src="/images/invitations/preview-reception.jpg" alt="" class="w-full h-full object-cover scale-110 blur-[6px]" />
+      <div class="absolute inset-0 bg-gradient-to-br from-[#17122f]/95 via-[#2b1f63]/85 to-[#17122f]/95"></div>
+    </div>
+
+    <header class="w-full max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+      <RouterLink to="/" class="flex items-center gap-2.5">
+        <img src="/logo.png" alt="" class="w-9 h-9 rounded-lg object-contain ring-1 ring-outline-variant lg:ring-white/20" />
+        <span class="text-lg font-bold tracking-tight lg:text-white">Eventia<span class="text-primary lg:text-[#c4b5fd]">Easy</span></span>
+      </RouterLink>
+      <RouterLink to="/" class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-on-surface-variant hover:text-primary lg:text-white/75 lg:hover:text-white transition-colors">
+        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
+        Accueil
+      </RouterLink>
+    </header>
+
+    <!-- Mobile (version B) : vitrine du produit au-dessus du formulaire -->
+    <section class="lg:hidden px-4" aria-label="Aperçu d'EventiaEasy (exemple)">
+      <div class="relative h-[230px] rounded-3xl overflow-hidden shadow-lg shadow-primary/15">
+        <img src="/images/invitations/preview-reception.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-[#17122f]/95 via-[#17122f]/40 to-transparent"></div>
+        <div class="absolute left-3 top-3 w-[168px] rounded-xl bg-white/95 text-slate-900 shadow-lg px-3 py-2">
+          <p class="text-[10px] font-semibold uppercase tracking-wider text-primary">Invitation · exemple</p>
+          <p class="text-[14px] font-bold leading-tight">Grace &amp; Patrick</p>
+          <p class="text-[11px] text-slate-500">Sam. 20 mars · Bukavu</p>
         </div>
-
-        <div class="z-10 mt-16 max-w-md">
-          <h1 class="text-5xl font-bold leading-tight mb-6">Organisez.<br />Invitez.<br />Célébrez.</h1>
-          <div class="w-12 h-1 bg-primary mb-6"></div>
-          <p class="text-lg text-slate-300 leading-relaxed mb-6">
-            La solution complète pour gérer vos événements avec élégance et simplicité.
-          </p>
+        <div class="absolute right-3 top-[86px] rounded-xl bg-white/95 text-slate-900 shadow-lg px-2.5 py-2 flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 grid place-items-center">
+            <span class="material-symbols-outlined text-[17px]" aria-hidden="true">qr_code_scanner</span>
+          </span>
+          <span>
+            <span class="block text-[12px] font-semibold leading-tight">Entrée validée</span>
+            <span class="block text-[10.5px] text-slate-500">Table 4 · 2 pers.</span>
+          </span>
         </div>
-
-        <div class="z-10">
-          <div class="flex items-center gap-6 text-sm text-slate-300">
-            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-primary">diversity_2</span> Invités</span>
-            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-primary">qr_code_scanner</span> Check-in</span>
-            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-primary">bar_chart</span> RSVP</span>
-          </div>
+        <div class="absolute left-4 right-4 bottom-3.5 text-white">
+          <p class="text-[19px] font-extrabold leading-tight">Vos invités, votre salle, <span class="text-[#fcd34d]">au même endroit.</span></p>
+          <p class="mt-1.5 text-[11.5px] text-white/75">WhatsApp · QR hors ligne · USD et CDF</p>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Formulaire droit -->
-      <section class="flex-1 flex flex-col justify-center px-6 md:px-16 py-10 md:py-12 bg-surface-container-lowest">
-        <div class="max-w-md w-full mx-auto">
-          <!-- Retour à l'accueil : intégré en haut du formulaire -->
-          <RouterLink to="/"
-            class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-on-surface-variant hover:text-primary transition-colors mb-6 lg:mb-4 -ml-1">
-            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-            Retour à l'accueil
-          </RouterLink>
+    <main class="flex-1 flex items-start lg:items-center justify-center px-4 pt-6 pb-8 lg:py-10">
+      <div class="w-full max-w-[440px] lg:rounded-3xl lg:bg-surface-container-lowest lg:shadow-2xl lg:shadow-black/40 lg:ring-1 lg:ring-white/10 lg:px-9 lg:py-9">
+        <!-- ==================== CONNEXION ==================== -->
+        <template v-if="mode === 'login'">
+          <div class="hidden lg:grid w-12 h-12 mx-auto mb-4 rounded-2xl bg-primary-light text-primary place-items-center">
+            <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+          </div>
+          <h1 class="text-[24px] font-extrabold tracking-tight lg:text-center">Connexion à votre espace</h1>
+          <p class="mt-1 text-[14.5px] text-on-surface-variant lg:text-center">Événements, invités et salle de fête</p>
 
-          <div class="flex lg:hidden items-center justify-center gap-2 mb-6">
-            <span class="w-9 h-9 rounded-lg overflow-hidden grid place-items-center"><img src="/logo.png" alt="EventiaEasy" class="w-full h-full object-contain" /></span>
-            <span class="text-xl font-bold">EventiaEasy</span>
+          <div v-if="error" role="alert" class="mt-5 flex items-start gap-2.5 p-3.5 rounded-xl bg-error-light border border-error/20 text-error text-sm">
+            <span class="material-symbols-outlined text-[19px] shrink-0" aria-hidden="true">error</span>
+            <span>{{ error }}</span>
           </div>
 
-          <!-- Bascule Connexion / Inscription -->
-          <div class="flex items-center gap-1 p-1 rounded-xl bg-surface-container mb-8">
-            <button
-              type="button" @click="mode = 'login'"
-              class="flex-1 h-10 rounded-lg text-sm font-semibold transition-colors"
-              :class="mode === 'login' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-primary'"
-            >Se connecter</button>
-            <button
-              type="button" @click="mode = 'register'"
-              class="flex-1 h-10 rounded-lg text-sm font-semibold transition-colors"
-              :class="mode === 'register' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-primary'"
-            >Créer un compte</button>
-          </div>
-
-          <!-- ==================== CONNEXION ==================== -->
-          <template v-if="mode === 'login'">
-            <h2 class="text-2xl font-bold text-on-surface mb-1">Bon retour parmi nous</h2>
-            <p class="text-on-surface-variant mb-8">Accédez à votre espace de gestion</p>
-
-            <!-- Alerte d'erreur -->
-            <div v-if="error" class="mb-5 flex items-start gap-2.5 p-3.5 rounded-xl bg-error-light border border-error/20 text-error text-sm">
-              <span class="material-symbols-outlined text-[19px] shrink-0">error</span>
-              <span>{{ error }}</span>
-            </div>
-
-            <form class="space-y-4" @submit.prevent="onSubmit">
-            <div class="block">
-              <label for="login-email" class="text-sm font-medium text-on-surface mb-1 block">Email</label>
+          <form class="mt-6 space-y-4" @submit.prevent="onSubmit">
+            <div>
+              <label for="login-email" class="text-sm font-medium mb-1.5 block">Email</label>
               <div class="relative">
                 <span aria-hidden="true" class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">mail</span>
-                <input
-                  id="login-email" v-model="email" type="email" required autocomplete="email"
-                  class="w-full h-11 pl-11 pr-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary/20 text-body-lg transition-all"
-                  placeholder="vous@exemple.com"
-                />
+                <input id="login-email" v-model="email" type="email" required autocomplete="email" class="auth-input pl-11" placeholder="vous@exemple.com" />
               </div>
             </div>
 
-            <div class="block">
-              <label for="login-password" class="text-sm font-medium text-on-surface mb-1 block">Mot de passe</label>
+            <div>
+              <label for="login-password" class="text-sm font-medium mb-1.5 block">Mot de passe</label>
               <div class="relative">
                 <span aria-hidden="true" class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-on-surface-variant">lock</span>
-                <input
-                  id="login-password" v-model="password" :type="showPwd ? 'text' : 'password'" required autocomplete="current-password"
-                  class="w-full h-11 pl-11 pr-11 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary/20 text-body-lg transition-all"
-                  placeholder="••••••••"
-                />
-                <button type="button" @click="showPwd = !showPwd"
-                  class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors"
-                  :aria-label="showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
-                  :aria-pressed="showPwd">
+                <input id="login-password" v-model="password" :type="showPwd ? 'text' : 'password'" required autocomplete="current-password" class="auth-input pl-11 pr-11" placeholder="••••••••" />
+                <button type="button" class="auth-eye" :aria-label="showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'" :aria-pressed="showPwd" @click="showPwd = !showPwd">
                   <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showPwd ? 'visibility_off' : 'visibility' }}</span>
                 </button>
               </div>
+              <div class="mt-2 text-right">
+                <button type="button" class="text-[13px] font-semibold text-primary hover:underline" :aria-expanded="recoveryOpen" aria-controls="password-recovery" @click="recoveryOpen = !recoveryOpen">Mot de passe oublié ?</button>
+              </div>
             </div>
 
-            <div class="text-right">
-              <button type="button" class="text-sm font-semibold text-primary hover:underline" :aria-expanded="recoveryOpen" aria-controls="password-recovery" @click="recoveryOpen = !recoveryOpen">Mot de passe oublié ?</button>
-            </div>
-            <div v-if="recoveryOpen" id="password-recovery" class="rounded-xl border border-outline-variant p-4 text-sm">
+            <div v-if="recoveryOpen" id="password-recovery" class="rounded-xl border border-outline-variant bg-surface-container-low p-4 text-sm">
               <p v-if="recoverySent" role="status" data-testid="recovery-sent" class="font-medium">{{ recoverySent }}</p>
               <template v-else>
-                <p>Indiquez l'adresse de votre compte. Notre équipe vous enverra un mot de passe temporaire, en général par WhatsApp. Ne communiquez jamais votre mot de passe actuel.</p>
+                <p class="text-on-surface-variant">Indiquez l'adresse de votre compte. Notre équipe vous enverra un mot de passe temporaire, en général par WhatsApp. Ne communiquez jamais votre mot de passe actuel.</p>
                 <label for="recovery-email" class="block mt-3 mb-1 font-semibold">Email du compte</label>
                 <div class="flex gap-2">
-                  <input
-                    id="recovery-email" v-model="recoveryEmail" type="email" autocomplete="email"
-                    class="min-w-0 flex-1 px-3 py-2 rounded-lg border border-outline-variant bg-transparent outline-none focus:border-primary"
-                    @keydown.enter.prevent="sendRecovery"
-                  />
-                  <button
-                    type="button" :disabled="recoverySending"
-                    class="shrink-0 px-4 py-2 rounded-lg bg-primary text-white font-semibold disabled:opacity-60"
-                    @click="sendRecovery"
-                  >{{ recoverySending ? 'Envoi…' : 'Envoyer la demande' }}</button>
+                  <input id="recovery-email" v-model="recoveryEmail" type="email" autocomplete="email" class="auth-input !h-10 min-w-0 flex-1" @keydown.enter.prevent="sendRecovery" />
+                  <button type="button" :disabled="recoverySending" class="shrink-0 px-4 rounded-xl bg-primary text-white font-semibold disabled:opacity-60" @click="sendRecovery">{{ recoverySending ? 'Envoi…' : 'Envoyer la demande' }}</button>
                 </div>
                 <p v-if="recoveryError" role="alert" class="mt-2 text-error">{{ recoveryError }}</p>
               </template>
               <a :href="recoverySupportUrl" target="_blank" rel="noopener noreferrer" class="mt-3 inline-block font-semibold text-primary hover:underline">Ou écrivez-nous sur WhatsApp</a>
             </div>
 
-            <button
-              type="submit" :disabled="loading"
-              class="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-            >
-              <span v-if="loading" class="material-symbols-outlined animate-spin text-base">progress_activity</span>
+            <button type="submit" :disabled="loading" class="auth-primary">
+              <span v-if="loading" class="material-symbols-outlined animate-spin text-base" aria-hidden="true">progress_activity</span>
               {{ loading ? 'Connexion…' : 'Se connecter' }}
+              <span v-if="!loading" class="material-symbols-outlined text-[19px]" aria-hidden="true">arrow_forward</span>
             </button>
-            </form>
+          </form>
 
-            <p class="mt-6 text-sm text-on-surface-variant text-center">
-              Vous n'avez pas de compte ?
-              <button type="button" class="font-semibold text-primary hover:underline" @click="mode = 'register'; error = ''">Créez-en un gratuitement</button>
-            </p>
-          </template>
+          <div class="my-5 flex items-center gap-3 text-[12px] text-on-surface-variant" aria-hidden="true">
+            <span class="flex-1 h-px bg-outline-variant"></span>ou<span class="flex-1 h-px bg-outline-variant"></span>
+          </div>
+          <a :href="recoverySupportUrl" target="_blank" rel="noopener noreferrer"
+            class="w-full h-11 rounded-xl border border-outline-variant inline-flex items-center justify-center gap-2 text-[14px] font-semibold hover:border-primary/50 transition-colors">
+            <WhatsappIcon class="w-5 h-5 text-[#25D366]" />
+            Besoin d'aide ? WhatsApp
+          </a>
 
-          <!-- ==================== INSCRIPTION ==================== -->
-          <template v-else>
-            <h2 class="text-2xl font-bold text-on-surface mb-1">Créer votre compte organisateur</h2>
-            <p class="text-on-surface-variant mb-8">Votre organisation est créée automatiquement — vous êtes connecté dès l'inscription.</p>
+          <p class="mt-6 text-sm text-on-surface-variant text-center">
+            Nouveau sur EventiaEasy ?
+            <button type="button" class="font-semibold text-primary hover:underline" @click="mode = 'register'">Créer mon espace</button>
+          </p>
+        </template>
 
-            <form class="space-y-4" @submit.prevent="onSubmit">
+        <!-- ==================== INSCRIPTION (2 étapes) ==================== -->
+        <template v-else>
+          <div class="flex gap-2" aria-hidden="true">
+            <span class="flex-1 h-1.5 rounded-full bg-primary"></span>
+            <span class="flex-1 h-1.5 rounded-full transition-colors" :class="step === 2 ? 'bg-primary' : 'bg-surface-container-high'"></span>
+          </div>
+          <p class="mt-4 text-[12.5px] font-semibold text-primary">Étape {{ step }} sur 2</p>
+          <h1 class="mt-0.5 text-[24px] font-extrabold tracking-tight">{{ step === 1 ? 'Créer mon espace' : 'Votre organisation' }}</h1>
+          <p class="mt-1 text-[14.5px] text-on-surface-variant">
+            {{ step === 1 ? 'Vos informations de connexion.' : 'Vous êtes connecté dès la création de votre espace.' }}
+          </p>
+
+          <form class="mt-6 space-y-4" @submit.prevent="onSubmit">
+            <template v-if="step === 1">
               <div class="grid grid-cols-2 gap-3">
                 <label class="block">
-                  <span class="text-sm font-medium text-on-surface mb-1 block">Prénom *</span>
-                  <input v-model="reg.firstName" type="text" required
-                    class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                    placeholder="Jean-Pierre" />
+                  <span class="text-sm font-medium mb-1.5 block">Prénom</span>
+                  <input v-model="reg.firstName" type="text" required autocomplete="given-name" class="auth-input" placeholder="Jean-Pierre" />
                 </label>
                 <label class="block">
-                  <span class="text-sm font-medium text-on-surface mb-1 block">Nom *</span>
-                  <input v-model="reg.lastName" type="text" required
-                    class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                    placeholder="Bolombo" />
+                  <span class="text-sm font-medium mb-1.5 block">Nom</span>
+                  <input v-model="reg.lastName" type="text" required autocomplete="family-name" class="auth-input" placeholder="Bolombo" />
                 </label>
               </div>
-
               <label class="block">
-                <span class="text-sm font-medium text-on-surface mb-1 block">Email *</span>
-                <input v-model="reg.email" type="email" required autocomplete="email"
-                  class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                  placeholder="vous@exemple.com" />
+                <span class="text-sm font-medium mb-1.5 block">Email</span>
+                <input v-model="reg.email" type="email" required autocomplete="email" class="auth-input" placeholder="vous@exemple.com" />
               </label>
-
               <label class="block">
-                <span class="text-sm font-medium text-on-surface mb-1 block">Téléphone <span class="text-on-surface-variant font-normal">(optionnel)</span></span>
-                <input v-model="reg.phone" type="tel"
-                  class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                  placeholder="+33 6 12 34 56 78" />
+                <span class="text-sm font-medium mb-1.5 block">Téléphone WhatsApp <span class="text-on-surface-variant font-normal">(optionnel)</span></span>
+                <input v-model="reg.phone" type="tel" autocomplete="tel" class="auth-input" placeholder="+243 81 234 5678" />
               </label>
-
-              <div class="grid grid-cols-2 gap-3">
-                <label class="block">
-                  <span class="text-sm font-medium text-on-surface mb-1 block">Mot de passe *</span>
-                  <div class="relative">
-                    <input v-model="reg.password" :type="showRegPwd ? 'text' : 'password'" required minlength="8" autocomplete="new-password"
-                      class="w-full h-11 px-4 pr-11 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary/20 text-body-lg transition-all"
-                      placeholder="8 caractères minimum" />
-                    <button type="button" @click="showRegPwd = !showRegPwd"
-                      class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors"
-                      :aria-label="showRegPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
-                      :aria-pressed="showRegPwd">
-                      <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showRegPwd ? 'visibility_off' : 'visibility' }}</span>
-                    </button>
-                  </div>
-                  <!-- Jauge de robustesse -->
-                  <div v-if="reg.password" class="mt-2 flex items-center gap-2">
-                    <div class="flex-1 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
-                      <div class="h-full rounded-full transition-all duration-300" :class="strength.bar" :style="{ width: strength.percent + '%' }"></div>
-                    </div>
-                    <span class="text-[11px] font-semibold" :class="strength.text">{{ strength.label }}</span>
-                  </div>
-                </label>
-                <label class="block">
-                  <span class="text-sm font-medium text-on-surface mb-1 block">Confirmation *</span>
-                  <div class="relative">
-                    <input v-model="reg.confirm" :type="showRegConfirm ? 'text' : 'password'" required autocomplete="new-password"
-                      :class="['w-full h-11 px-4 pr-11 rounded-xl border bg-surface focus:ring-1 text-body-lg transition-all',
-                               confirmState === 'mismatch' ? 'border-error focus:border-error focus:ring-error/20' : '',
-                               confirmState === 'ok' ? 'border-success focus:border-success focus:ring-success/20' : 'border-outline-variant focus:border-primary focus:ring-primary/20']"
-                      placeholder="••••••••" />
-                    <button type="button" @click="showRegConfirm = !showRegConfirm"
-                      class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors"
-                      :aria-label="showRegConfirm ? 'Masquer la confirmation du mot de passe' : 'Afficher la confirmation du mot de passe'"
-                      :aria-pressed="showRegConfirm">
-                      <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showRegConfirm ? 'visibility_off' : 'visibility' }}</span>
-                    </button>
-                  </div>
-                  <span v-if="confirmState === 'mismatch'" class="block mt-1.5 text-[12px] text-error inline-flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[14px]">error</span>Ne correspond pas
+              <div>
+                <label for="reg-password" class="text-sm font-medium mb-1.5 block">Mot de passe</label>
+                <span class="relative block">
+                  <input id="reg-password" v-model="reg.password" :type="showRegPwd ? 'text' : 'password'" required minlength="8" autocomplete="new-password" class="auth-input pr-11" placeholder="8 caractères minimum" />
+                  <button type="button" class="auth-eye" :aria-label="showRegPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'" :aria-pressed="showRegPwd" @click="showRegPwd = !showRegPwd">
+                    <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showRegPwd ? 'visibility_off' : 'visibility' }}</span>
+                  </button>
+                </span>
+                <span v-if="reg.password" class="mt-2 flex items-center gap-2">
+                  <span class="flex-1 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+                    <span class="block h-full rounded-full transition-all duration-300" :class="strength.bar" :style="{ width: strength.percent + '%' }"></span>
                   </span>
-                  <span v-else-if="confirmState === 'ok'" class="block mt-1.5 text-[12px] text-success inline-flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[14px]">check_circle</span>Correspond
-                  </span>
-                </label>
+                  <span class="text-[11px] font-semibold" :class="strength.text">{{ strength.label }}</span>
+                </span>
               </div>
+              <div>
+                <label for="reg-confirm" class="text-sm font-medium mb-1.5 block">Confirmation du mot de passe</label>
+                <span class="relative block">
+                  <input id="reg-confirm" v-model="reg.confirm" :type="showRegConfirm ? 'text' : 'password'" required autocomplete="new-password"
+                    :class="['auth-input pr-11', confirmState === 'mismatch' ? '!border-error' : '', confirmState === 'ok' ? '!border-success' : '']"
+                    placeholder="••••••••" />
+                  <button type="button" class="auth-eye" :aria-label="showRegConfirm ? 'Masquer la confirmation du mot de passe' : 'Afficher la confirmation du mot de passe'" :aria-pressed="showRegConfirm" @click="showRegConfirm = !showRegConfirm">
+                    <span aria-hidden="true" class="material-symbols-outlined text-[19px]">{{ showRegConfirm ? 'visibility_off' : 'visibility' }}</span>
+                  </button>
+                </span>
+                <span v-if="confirmState === 'mismatch'" class="mt-1.5 text-[12px] text-error inline-flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]" aria-hidden="true">error</span>Ne correspond pas
+                </span>
+                <span v-else-if="confirmState === 'ok'" class="mt-1.5 text-[12px] text-success inline-flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]" aria-hidden="true">check_circle</span>Correspond
+                </span>
+              </div>
+            </template>
 
-              <div class="pt-2 border-t border-outline-variant/60">
-                <p class="text-xs font-semibold text-primary uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-base">apartment</span>Votre organisation
-                </p>
-
-                <label class="block">
-                  <span class="text-sm font-medium text-on-surface mb-1 block">Nom de l'organisation *</span>
-                  <input v-model="reg.organizationName" type="text" required
-                    class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                    placeholder="Ex. Les Événements d'Or" />
-                </label>
-
-                <div class="grid grid-cols-2 gap-3 mt-3">
-                  <label class="block">
-                    <span class="text-sm font-medium text-on-surface mb-1 block">Email org. <span class="text-on-surface-variant font-normal">(opt.)</span></span>
-                    <input v-model="reg.organizationEmail" type="email"
-                      class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                      placeholder="contact@org.com" />
-                  </label>
-                  <label class="block">
-                    <span class="text-sm font-medium text-on-surface mb-1 block">Tél. org. <span class="text-on-surface-variant font-normal">(opt.)</span></span>
-                    <input v-model="reg.organizationPhone" type="tel"
-                      class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                      placeholder="+33 1 23 45 67 89" />
+            <template v-else>
+              <fieldset>
+                <legend class="text-sm font-medium mb-1.5">Vous êtes</legend>
+                <div class="grid grid-cols-2 gap-3">
+                  <label v-for="o in profileOptions" :key="o.label"
+                    class="cursor-pointer rounded-xl border p-3.5 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/40"
+                    :class="reg.venueOwner === o.value ? 'border-primary bg-primary-light text-primary' : 'border-outline-variant hover:border-primary/50'">
+                    <input v-model="reg.venueOwner" type="radio" name="profile" :value="o.value" class="sr-only" />
+                    <span class="material-symbols-outlined" aria-hidden="true">{{ o.icon }}</span>
+                    <span class="mt-1 block text-[14px] font-semibold">{{ o.label }}</span>
+                    <span class="block text-[12px]" :class="reg.venueOwner === o.value ? 'text-primary/80' : 'text-on-surface-variant'">{{ o.hint }}</span>
                   </label>
                 </div>
-                <label class="block mt-3">
-                  <span class="text-sm font-medium text-on-surface mb-1 block">Adresse <span class="text-on-surface-variant font-normal">(optionnel)</span></span>
-                  <input v-model="reg.organizationAddress" type="text"
-                    class="w-full h-11 px-4 rounded-xl border border-outline-variant bg-surface focus:border-primary focus:ring-0 text-body-lg"
-                    placeholder="12 rue des Fleurs, Paris" />
-                </label>
-              </div>
+              </fieldset>
+              <label class="block">
+                <span class="text-sm font-medium mb-1.5 block">{{ reg.venueOwner ? 'Nom de la salle ou de la société' : "Nom de l'organisation" }}</span>
+                <input v-model="reg.organizationName" type="text" required class="auth-input" :placeholder="reg.venueOwner ? 'Ex. Salle Exodus' : 'Ex. Les Événements d’Or'" />
+              </label>
+              <label class="block">
+                <span class="text-sm font-medium mb-1.5 block">Ville ou adresse <span class="text-on-surface-variant font-normal">(optionnel)</span></span>
+                <input v-model="reg.organizationAddress" type="text" autocomplete="address-level2" class="auth-input" placeholder="Ex. Kinshasa, Gombe" />
+              </label>
+              <p v-if="reg.venueOwner" class="flex items-start gap-2 rounded-xl bg-primary-light p-3 text-[13px]">
+                <span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">info</span>
+                Notre équipe est prévenue et active le module Salles sur votre espace.
+              </p>
+              <p class="text-[12.5px] text-on-surface-variant">L'email et le téléphone de l'étape 1 servent aussi pour l'organisation ; vous pourrez les modifier plus tard.</p>
+            </template>
 
-              <div v-if="error" class="flex items-start gap-2.5 p-3.5 rounded-xl bg-error-light border border-error/20 text-error text-sm">
-                <span class="material-symbols-outlined text-[19px] shrink-0">error</span>
-                <span>{{ error }}</span>
-              </div>
+            <div v-if="error" role="alert" class="flex items-start gap-2.5 p-3.5 rounded-xl bg-error-light border border-error/20 text-error text-sm">
+              <span class="material-symbols-outlined text-[19px] shrink-0" aria-hidden="true">error</span>
+              <span>{{ error }}</span>
+            </div>
 
-              <button
-                type="submit" :disabled="loading || confirmState === 'mismatch'"
-                class="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-              >
-                <span v-if="loading" class="material-symbols-outlined animate-spin text-base">progress_activity</span>
-                {{ loading ? 'Création…' : 'Créer mon compte' }}
+            <div class="flex gap-3">
+              <button v-if="step === 2" type="button" class="h-12 px-5 rounded-xl border border-outline-variant font-semibold hover:border-primary/50 transition-colors" @click="step = 1; error = ''">Retour</button>
+              <button type="submit" :disabled="loading || confirmState === 'mismatch'" class="auth-primary flex-1">
+                <span v-if="loading" class="material-symbols-outlined animate-spin text-base" aria-hidden="true">progress_activity</span>
+                {{ step === 1 ? 'Continuer' : loading ? 'Création…' : 'Créer mon espace' }}
               </button>
-            </form>
+            </div>
+          </form>
 
-            <p class="mt-4 text-sm text-on-surface-variant text-center">
-              Vous avez déjà un compte ?
-              <button type="button" class="font-semibold text-primary hover:underline" @click="mode = 'login'">Se connecter</button>
-            </p>
-          </template>
-
-          <p class="mt-8 text-center text-xs text-on-surface-variant">© 2026 EventiaEasy. Tous droits réservés.</p>
-        </div>
-      </section>
+          <p class="mt-6 text-sm text-on-surface-variant text-center">
+            Vous avez déjà un compte ?
+            <button type="button" class="font-semibold text-primary hover:underline" @click="mode = 'login'">Me connecter</button>
+          </p>
+        </template>
+      </div>
     </main>
+
+    <footer class="pb-6 text-center text-[12px] text-on-surface-variant lg:text-white/60">
+      © {{ year }} EventiaEasy ·
+      <a :href="`mailto:${contactEmail}`" class="hover:underline">{{ contactEmail }}</a>
+    </footer>
   </div>
 </template>
 
@@ -287,6 +248,7 @@ import { useAuthStore } from '../stores/auth'
 import { ApiConfig } from '../api/config'
 import { requestPasswordReset } from '../api/user'
 import { apiErrorMessage } from '../api/http'
+import WhatsappIcon from '../components/common/WhatsappIcon.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -333,6 +295,14 @@ watch(mode, (value) => {
   }
 })
 const showPwd = ref(false)
+const step = ref<1 | 2>(1)
+watch(mode, () => { step.value = 1 })
+const year = new Date().getFullYear()
+const contactEmail = ApiConfig.contactEmail
+const profileOptions = [
+  { value: false, icon: 'celebration', label: "J'organise", hint: 'Mariages, fêtes, cérémonies' },
+  { value: true, icon: 'storefront', label: "J'ai une salle", hint: 'Réservations et caisse' },
+]
 const showRegPwd = ref(false)
 const showRegConfirm = ref(false)
 
@@ -372,6 +342,7 @@ const reg = ref({
   organizationEmail: '',
   organizationPhone: '',
   organizationAddress: '',
+  venueOwner: false,
 })
 
 onMounted(() => {
@@ -402,6 +373,10 @@ async function onSubmit() {
     error.value = 'Les mots de passe ne correspondent pas'
     return
   }
+  if (step.value === 1) {
+    step.value = 2
+    return
+  }
   loading.value = true
   try {
     await auth.register({
@@ -411,9 +386,10 @@ async function onSubmit() {
       phone: r.phone.trim() || undefined,
       password: r.password,
       organizationName: r.organizationName.trim(),
-      organizationEmail: r.organizationEmail.trim() || undefined,
-      organizationPhone: r.organizationPhone.trim() || undefined,
+      organizationEmail: r.organizationEmail.trim() || r.email.trim(),
+      organizationPhone: r.organizationPhone.trim() || r.phone.trim() || undefined,
       organizationAddress: r.organizationAddress.trim() || undefined,
+      venueOwner: r.venueOwner,
     })
     // POST /auth/register renvoie un LoginResponse → déjà connecté.
     router.replace('/dashboard')
@@ -426,10 +402,13 @@ async function onSubmit() {
 </script>
 
 <style scoped>
-.bg-image-overlay {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.82) 0%, rgba(15, 23, 42, 0.92) 100%),
-    url('https://lh3.googleusercontent.com/aida-public/AB6AXuBz0JuiswFRQ2xNi4j7pz5PvBfcQ_QZdJG_waZCGAKPceCnMUSwgSaRyktuFS_kgHQf9RB4j7zQuLBoOPcbY_Ijy-xBIhscsWTknghalJEcTGxkjHjOT61tnFdIKEJkebgPbrqw3b5Su_zOsENO9zvZB8L1pl3070kbwGKx1Kadj-sl1kdBqrThE18q0b18IQiS1LCVXP734Va2EtEUdOEzlaQGzT0ClwiZ2XtVOYDTh3BfCkmTTrPgSZvHS4TldlYTRC0');
-  background-size: cover;
-  background-position: center;
+.auth-input {
+  @apply w-full h-12 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-[15px] outline-none transition-all placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-4 focus:ring-primary/15;
+}
+.auth-eye {
+  @apply absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-on-surface-variant hover:text-on-surface transition-colors;
+}
+.auth-primary {
+  @apply h-12 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-white text-[15px] font-semibold shadow-lg shadow-primary/25 hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed transition-all;
 }
 </style>
